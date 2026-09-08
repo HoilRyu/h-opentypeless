@@ -63,3 +63,17 @@ H-OpenTypeless Local Code Signing 인증서와 개인키를 로그인 키체인�
 ## 한국어 교정 지침 완화
 사용자가 어색한 문장도 자연스럽게 고쳐 달라고 요청하여 Custom polish instructions를 새로 작성하고 앱 UI에서 저장했다. docs/fork/prompts/KOREAN_POLISH.txt가 복사 가능한 지침 사본이며 런타임 원본은 앱 설정이다. 동사/어미/어순 무조건 보존 제약을 제거하고 명확한 인식 오류와 문장 구조 교정을 허용했다. 의미·말투·숫자·조건·부정 표현 보존, 질문 답변/명령 실행 금지는 유지. 프롬프트만 바꿨으며 앱 재빌드/서명/권한 변경 없음.
 기존 Rust build_context_system_prompt(professional, general context, 선택/번역/씬 없음)와 기존/신규 지침을 조합하여 실제 Gemma4:12b reasoning_effort=none, temperature0.3로 예문5개씩 비교했다. 새 지침은 커미터 푸시→커밋과 푸시/알려줄→알려줘, 키보드 가림 문장 정리에 성공. 숫자·부정·작업 순서 예문3개 보존. 첫 예문은 지침 내 예시이므로 독립 일반화 검증으로 간주하지 않는다. 현재 앱별 ChatGPT 문맥과 실제 녹음 전체 경로를 그대로 재현한 테스트는 아니며 사용 중 추가 확인 필요. 테스트 자료는 ~/.local/share/h-opentypeless/prompt-eval에만 보관. 앱 저장값과 문서 지침 일치 확인.
+
+## H Android 통합 구현 진행
+이전 프롬프트 문서는2982ab1로 커밋·SSH푸시 후 작업 시작. H 안에 extensions/mobile(Axum) API 추가, 일반 설정 Android 연결 카드, h-mobile.json 별도설정/명시적내부IP/기본off/앱재시작재연결. 기존 STT Whisper-compatible 및 LLM 직접provider/공식 prompt builder 재사용. 상세 지원범위는 MOBILE_API.md. Android는 dev.hoilryu.hopentypeless.mobile로 독립 이관, PCM WAV 녹음으로 변경하여 Python/ffmpeg 불필요. 기존 편집키·반복·입력칸변경취소 유지.
+프런트454개, Rust584개(+native audio1ignored), Android14개, Android lint/build 및 Rust clippy 통과. 모바일 API4개에는 WAV 형식/업로드/브라우저요청거부/중복429/연결끄기취소 검증 포함. 최초 Mac 통합 빌드를 자체서명/설치, 접근성배너없음. UI에서192.168.0.123:8787 켬, H 프로세스가 정확한IP로 리슨하고 health 응답 확인.
+실제 합성음성 업로드는 키체인 암호 조회에서 대기. process sample로 keyring→SecKeychainFindGenericPassword 대기 확인, 사용자에게 H 인증정보 접근 승인 창 확인 요청. 기존 앱의 동기 keychain읽기를 모바일에 그대로 사용하면 timeout취소를 막는 문제 발견: 모바일에서는 spawn_blocking+20초timeout+별도세마포어(승인대기작업1개)로 보완 중. 키나 보안설정을 우회해 읽지 않았으며 STT/LLM 실제 통합 성공으로 아직 보고하지 않음.
+ADB devices/mdns 비어있고 과거192.168.0.117:46235는 connection refused. 사용자에게 현재 무선디버깅IP/포트 요청했으나 아직 답변 없음. APK는 ~/.local/share/h-opentypeless/android-build/app/outputs/apk/debug/app-debug.apk. JDK/SDK는 기존에 설치된 ~/.local/share/mobile-opentypeless/android-tools의 도구를 환경변수로 사용했으며 소스 의존성이 아님. H 소스에는 SDK/캐시/키/기존설정 이관없음.
+
+모바일 최신 수정: keychain spawn_blocking/20초 제한/동시 승인대기1개와 STT100초 제한 적용 완료. 모바일 Rust4개 재통과 후 자체 서명 빌드·/Applications 교체 완료. 재시작 후 저장된192.168.0.123:8787에서 health200 확인. 합성 WAV 실제 업로드는 HTTP502와 키체인 허용 안내를 반환하여 무한대기 보완 확인. STT/LLM 성공과 Android 설치는 사용자 승인/현재 ADB 주소 대기이며 미검증. 이번 모바일 변경은 아직 미커밋.
+
+## Android 설치 및 복구 검증 완료 (2026-09-08)
+사용자가 새 H Android 앱의 정상 음성 입력을 확인했다. 이번 검증에서 Mac H 앱 종료 시 API 연결 거부, 재실행 후 설정 유지/health200 및 합성 WAV→Qwen STT→Gemma4 교정 응답(warning=null)을 확인했다. 이전 키체인 대기는 현재 재현되지 않았다.
+실제 연결된 Android에서 연결 확인 성공 → Mac 앱 종료 → 연결 실패 안내 → Mac 재실행 → Android 재시작 없이 연결 확인 성공을 확인했다. 녹음 시작→취소 안내/준비 상태 복귀, 다시 녹음 시작→시험 입력칸에서 서버 주소 입력칸으로 직접 이동→준비 상태 복귀 및 녹음 임시 WAV 삭제 확인. 입력값 변경이나 자동 삽입 없음. 키보드 숨김 후 다시 열기도 확인했다.
+ApiTest에 진행 중 HTTP 요청 취소 후 새 요청 성공, 서버 연결 거부 후 동일 주소 재연결 성공 검사를 추가했다. Android 총16개 테스트와 lint 통과. 제품 코드는 이전 설치본과 같으며 이번 검증 추가분은 테스트/문서뿐이다.
+물리 Wi-Fi 끄기/켜기와 WireGuard 전환, 처리 중 입력칸 이동의 늦은 응답 실기기 주입은 별도 미검증이다. 서버 단절/복구 실기기 확인과 클라이언트 요청 취소 자동 테스트를 이 시나리오 전체의 실기기 검증으로 확대하지 않는다. Windows/Linux 실제 검증은 마지막 단계 유지.

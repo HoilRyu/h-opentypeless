@@ -1,0 +1,5 @@
+plugins { id 'com.android.application' version '8.13.2' apply false }
+// Build caches, APK intermediates and signing material stay outside Syncthing.
+allprojects {
+    layout.buildDirectory = new File(System.getProperty('user.home'), '.local/share/h-opentypeless/android-build/' + project.name)
+}

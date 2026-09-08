@@ -1,5 +1,6 @@
 pub mod audio_ducking;
 pub mod mac_window;
+pub mod mobile;
 
 use tauri_plugin_store::StoreExt;
 

@@ -927,6 +927,11 @@ pub fn run() {
             app.manage(dictionary_store);
             app.manage(app_mapping_store);
             app.manage(shared_client);
+            app.manage(extensions::mobile::Service::new(app.path().app_data_dir()?));
+            let mobile_app = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                mobile_app.state::<extensions::mobile::Service>().resume(mobile_app.clone()).await;
+            });
             app.manage(context_detector);
             app.manage(pipeline_handle);
             app.manage(commands::ask::AskDictationState::default());
@@ -1193,6 +1198,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            extensions::mobile::get_mobile_status,
+            extensions::mobile::set_mobile_config,
             extensions::audio_ducking::get_audio_ducking,
             extensions::audio_ducking::set_audio_ducking,
             start_recording,

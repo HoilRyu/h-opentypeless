@@ -1,0 +1,3 @@
+<input-method xmlns:android="http://schemas.android.com/apk/res/android" android:settingsActivity="dev.hoilryu.hopentypeless.mobile.SettingsActivity" android:supportsSwitchingToNextInputMethod="true">
+    <subtype android:imeSubtypeLocale="ko_KR" android:imeSubtypeMode="voice" android:label="@string/ime_name" />
+</input-method>

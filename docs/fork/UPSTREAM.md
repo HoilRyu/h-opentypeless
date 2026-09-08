@@ -27,3 +27,6 @@ origin: HoilRyu/h-opentypeless. upstream: tover0314-w/opentypeless.
 
 ## 출력 음량 조절
 별도 extensions/audio_ducking과 ForkSettings/AudioDuckingSetting에 구현. 원본 연결은 pipeline/commands/ask의 마이크 생명주기, lib 서비스 초기화/종료·명령등록, GeneralPane 컴포넌트 한 줄, Windows API 의존성에 한정. 상세는 AUDIO_DUCKING.md.
+
+## Android 연결
+별도 extensions/mobile, ForkSettings/MobileConnectionSetting, android/에 구현. 원본 연결은 lib.rs의 서비스 초기화·명령 등록과 GeneralPane 설정 카드에 한정하며 Cargo에 Axum/if-addrs 및 Tokio 네트워크 기능을 추가했다. 기존 STT/LLM 제공자와 프롬프트 빌더를 호출하고 원본 프롬프트 로직은 수정하지 않는다. 별도 Python 서버는 사용하지 않는다. 지원 제공자와 API 제약은 MOBILE_API.md 참조.

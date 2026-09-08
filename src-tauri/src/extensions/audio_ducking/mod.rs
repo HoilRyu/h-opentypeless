@@ -1,5 +1,6 @@
 //! Fork-only output attenuation; no server or provider dependencies.
 mod engine;
+pub(crate) use engine::save_json as save_config_json;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "macos")]

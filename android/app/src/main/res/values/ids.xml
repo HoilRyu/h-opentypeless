@@ -1,0 +1,4 @@
+<resources>
+    <item name="server_address" type="id" />
+    <item name="sample_input" type="id" />
+</resources>

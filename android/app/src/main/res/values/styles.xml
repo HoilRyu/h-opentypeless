@@ -1,0 +1,10 @@
+<resources>
+    <string name="connecting">H 앱에 연결 중…</string>
+    <string name="ime_name">H-OpenTypeless 음성</string>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#175FA8</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
