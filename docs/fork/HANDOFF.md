@@ -59,3 +59,7 @@ H-OpenTypeless Local Code Signing 인증서와 개인키를 로그인 키체인�
 자체 서명 업데이트 검증 완료(이 Mac): 사용자가 버전 A 접근성 권한 재등록 후 배너가 사라짐을 확인. extensions/mod.rs에 설정 파일 로드 실패 진단 로그를 추가한 버전 B를 h-build-macos.sh 전체 경로로 빌드/서명. 실행 파일 SHA256이 A와 다르고 designated requirement가 동일함을 확인. /Applications에 B를 교체·실행한 뒤 권한 재등록 없이 접근성 배너 없음. 로그 self-signed-build-b.log. 실제 발화/텍스트 입력의 사용자 재확인과 다른 Mac 다운로드 설치는 별도이며, 이번 결과로 모든 OS/장치의 권한 유지를 보장하지 않는다.
 
 사용자 최종 확인: 자체 서명 업데이트 후 음성 인식이 정상 작동한다고 보고했다. 해당 확인을 기록하고 자체 서명 구현/문서 커밋·SSH 푸시를 요청받았다. 다음 작업 순서는 NEXT_STEPS.md에 정리했다. 처리 중 창 이동 복사창 재검증과 다른 Mac 다운로드 설치는 별도 미완료다.
+
+## 한국어 교정 지침 완화
+사용자가 어색한 문장도 자연스럽게 고쳐 달라고 요청하여 Custom polish instructions를 새로 작성하고 앱 UI에서 저장했다. docs/fork/prompts/KOREAN_POLISH.txt가 복사 가능한 지침 사본이며 런타임 원본은 앱 설정이다. 동사/어미/어순 무조건 보존 제약을 제거하고 명확한 인식 오류와 문장 구조 교정을 허용했다. 의미·말투·숫자·조건·부정 표현 보존, 질문 답변/명령 실행 금지는 유지. 프롬프트만 바꿨으며 앱 재빌드/서명/권한 변경 없음.
+기존 Rust build_context_system_prompt(professional, general context, 선택/번역/씬 없음)와 기존/신규 지침을 조합하여 실제 Gemma4:12b reasoning_effort=none, temperature0.3로 예문5개씩 비교했다. 새 지침은 커미터 푸시→커밋과 푸시/알려줄→알려줘, 키보드 가림 문장 정리에 성공. 숫자·부정·작업 순서 예문3개 보존. 첫 예문은 지침 내 예시이므로 독립 일반화 검증으로 간주하지 않는다. 현재 앱별 ChatGPT 문맥과 실제 녹음 전체 경로를 그대로 재현한 테스트는 아니며 사용 중 추가 확인 필요. 테스트 자료는 ~/.local/share/h-opentypeless/prompt-eval에만 보관. 앱 저장값과 문서 지침 일치 확인.
