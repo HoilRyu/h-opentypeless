@@ -15,7 +15,11 @@ macOS·Windows·Linux용 포크다. 현재는 Mac의 독립 앱·직접 STT/LLM�
 Node 24, Rust stable, CMake 및 Xcode Command Line Tools가 필요하다. 저장소 루트에서 `./scripts/h-build-macos.sh`를 실행한다. 기본 빌드 사본은 `~/.local/share/h-opentypeless/build-source`이며 소스 스냅샷·node_modules·Rust target·dist를 함께 둔다. 개발 수정은 항상 H 저장소에서 한다. 이 스크립트는 선택한 외부 빌드 사본의 소스 파일을 동기화하므로 해당 위치에 별도 작업을 저장하지 않는다.
 
 산출물: `~/.local/share/h-opentypeless/build-source/src-tauri/target/debug/bundle/macos/H-OpenTypeless.app`.
-디버그·배포 서명 없는 로컬 검증용 앱이며, 배포용 서명/설치본은 아직 아니다.
+기본값은 영구 로컬 인증서를 사용하는 자체 서명 디버그 앱이다. Apple Developer ID 서명/공증된 배포본은 아니다.
+
+`H_SIGNING_IDENTITY`에 코드 서명 인증서 SHA-1 지문을 지정하거나, 저장소 밖 `~/.local/share/h-opentypeless/signing/identity.sha1`에 저장한다. 인증서와 개인키는 키체인에 있어야 하며 없으면 빌드 전에 실패한다. 완성된 번들은 `scripts/h-sign-macos.sh`로 서명하고 번들 무결성/인증서/앱 식별 조건을 검증한다. 이 스크립트는 현재 단일 실행 파일 번들을 대상으로 하며 향후 helper/framework 추가 시 중첩 코드의 개별 서명을 추가해야 한다.
+
+임시 서명 개발 산출물이 필요한 경우에만 `H_SIGN_MODE=adhoc ./scripts/h-build-macos.sh`를 사용한다. 이 산출물을 설치본에 덮어쓰면 권한 유지 검증이 무효화될 수 있다. 자체 인증서 신뢰를 시스템 전체에 추가할 필요는 없으며 개인키를 Git이나 Syncthing 소스에 넣지 않는다.
 
 Windows/Linux는 공식 Tauri/npm/Cargo 구조를 유지한다. 이 Mac 보조 스크립트는 그 플랫폼용 빌드 스크립트를 대신하지 않는다. 해당 OS의 빌드·실행 검증은 후속 단계다.
 

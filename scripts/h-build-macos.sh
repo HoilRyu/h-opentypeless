@@ -6,6 +6,12 @@ if [[ "$(uname -s)" != Darwin ]]; then
   exit 1
 fi
 source_root="$(cd "$(dirname "$0")/.." && pwd)"
+sign_mode="${H_SIGN_MODE:-self-signed}"
+case "$sign_mode" in
+  self-signed) "$source_root/scripts/h-sign-macos.sh" --check ;;
+  adhoc) ;;
+  *) echo 'H_SIGN_MODE must be self-signed or adhoc.' >&2; exit 1 ;;
+esac
 build_root="${H_BUILD_ROOT:-$HOME/.local/share/h-opentypeless/build-source}"
 mkdir -p "$build_root"
 build_root="$(cd "$build_root" && pwd)"
@@ -18,3 +24,7 @@ cd "$build_root"
 npm ci
 export CARGO_HTTP_MULTIPLEXING=false
 npm run tauri build -- --debug --bundles app --no-sign
+
+if [[ "$sign_mode" == self-signed ]]; then
+  "$source_root/scripts/h-sign-macos.sh" "$build_root/src-tauri/target/debug/bundle/macos/H-OpenTypeless.app"
+fi

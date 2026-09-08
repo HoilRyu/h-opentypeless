@@ -52,3 +52,10 @@
 ## 처리 중 창 이동 후 복사창 미표시 조사
 최근 history69에 TargetChanged / clipboard_fallback 기록 확인(음성 내용 읽지 않음). AskPanel은 native focus-loss 때 결과를 지우고 hide하므로 결과 창 표시와 늦은 포커스 이벤트가 겹치면 사라질 수 있다. 자동 focus-loss dismiss 제거, Esc/명시적 닫기는 유지. Ask 결과창을 모든 workspace에 표시하도록 설정(캡슐과 동일), show/unminimize 실패를 전달하고 voice popup 오류를 로그에 남기도록 보완. 프런트 회귀 테스트는 결과 이벤트 전후 focus-loss에도 결과 유지 및 Esc로 닫기 검증19개 통과. 실제 사용자 발화 시나리오 재현/해결 확정은 아직 아님. MACOS_SIGNING_PLAN.md에 권한 유지 서명 계획 작성. 현재 인증서0개, 서명은 변경하지 않음.
 복사창 보완: AskPanel19개 테스트/lint/Mac 빌드 성공(copy-popup-*.log). /Applications 설치·실행 완료. 설치 직후 접근성 필요 배너 표시, 실제 마이크→생각 중→창 전환 재검증은 사용자 확인 필요. 서명 인증서는 계획 단계이므로 이번 설치도 임시 서명이다. 사용자 지정 음량5%는 변경하지 않음.
+
+## 무료 Mac 자체 서명 적용
+H-OpenTypeless Local Code Signing 인증서와 개인키를 로그인 키체인에 등록. 지문83267F96432D2D0CED9C132F66750B97118C3968, 공개 인증서/identity.sha1은 ~/.local/share/h-opentypeless/signing에만 저장. 개인키 임시 파일 삭제, 시스템 trust 변경 없음. h-sign-macos.sh 추가, h-build-macos.sh 기본 self-signed/명시적 adhoc 모드 적용. 앱 번들 서명/strict 검증/DR 검사 통과 및 /Applications 설치·실행. 사용자에게 접근성 재등록 요청한 상태. 다음 코드 변경 빌드 간 권한 유지 검증, 실제 다운로드 설치 검증, 개인키 암호화 백업은 미완료. 인증서와 키를 재생성하지 말 것. Git SSH origin/upstream은 이전 턴에 확인 완료. 이번 소스 변경은 아직 미커밋.
+
+자체 서명 업데이트 검증 완료(이 Mac): 사용자가 버전 A 접근성 권한 재등록 후 배너가 사라짐을 확인. extensions/mod.rs에 설정 파일 로드 실패 진단 로그를 추가한 버전 B를 h-build-macos.sh 전체 경로로 빌드/서명. 실행 파일 SHA256이 A와 다르고 designated requirement가 동일함을 확인. /Applications에 B를 교체·실행한 뒤 권한 재등록 없이 접근성 배너 없음. 로그 self-signed-build-b.log. 실제 발화/텍스트 입력의 사용자 재확인과 다른 Mac 다운로드 설치는 별도이며, 이번 결과로 모든 OS/장치의 권한 유지를 보장하지 않는다.
+
+사용자 최종 확인: 자체 서명 업데이트 후 음성 인식이 정상 작동한다고 보고했다. 해당 확인을 기록하고 자체 서명 구현/문서 커밋·SSH 푸시를 요청받았다. 다음 작업 순서는 NEXT_STEPS.md에 정리했다. 처리 중 창 이동 복사창 재검증과 다른 Mac 다운로드 설치는 별도 미완료다.
