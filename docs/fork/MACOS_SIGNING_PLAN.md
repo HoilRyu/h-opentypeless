@@ -19,3 +19,15 @@
 
 - Apple TN3127: https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements
 - Tauri macOS signing: https://tauri.app/distribute/sign/macos/
+
+## 무료 자체 서명 실행 계획 (사용자 선택)
+
+유료 가입은 진행하지 않는다. 아래 작업은 아직 미실행이며, 먼저 현재 변경의 커밋·푸시를 마친 뒤 시작한다.
+
+1. 키체인에서 H-OpenTypeless 전용 코드 서명 인증서와 개인키를 한 번 생성한다. 매 빌드마다 생성하지 않는다. 인증서 용도는 Code Signing으로 제한하고, 개인키는 소스/Syncthing/GitHub에 저장하지 않는다. 암호화한 백업은 별도 보관한다. 시스템 전체 인증서 신뢰나 Gatekeeper/SIP 설정을 완화하지 않는다.
+2. scripts/h-build-macos.sh에 self-signed 모드를 추가한다. 지정한 identity가 없으면 빌드를 실패시킨다. 앱 identifier를 유지하고 완성된 번들을 서명한다. 개발용 임시 서명 빌드와 설치용 자체 서명 빌드를 명확히 구분한다.
+3. 서명 유효성과 designated requirement를 검사한 뒤 버전 A를 설치한다. 사용자가 접근성·마이크 권한을 등록한다. 이어 실제 코드가 달라진 버전 B를 동일 identity로 서명하여 교체하고 권한 유지/단축키/실제 입력을 검증한다. 자체 서명으로 TCC가 유지된다고 미리 보장하지 않는다. 실패하면 서명 요구조건과 TCC 동작을 조사하고 한계를 기록한다.
+4. GitHub 다운로드 환경을 재현해 ZIP/DMG 설치와 macOS의 '확인 없이 열기' 절차를 검증한다. 기존 개발 Mac에서 실행된다는 것만으로 다른 Mac 설치 검증을 대체하지 않는다. Apple Developer ID/공증이 없다는 점을 릴리스에 명시한다.
+5. 소스, 설치 파일, SHA256 체크섬, 설치/권한 안내를 Releases에 제공한다. 공증되지 않은 앱의 최초 실행 경고는 남을 수 있다. 자동 업데이트를 나중에 연결한다면 별도의 Tauri 업데이트 서명 키를 사용한다.
+
+완료 기준: 서로 다른 두 빌드 간 업데이트 검증 기록, 비밀키가 제외된 산출물, 실제 다운로드 설치 검증, 반복 권한 요청 여부와 한계가 명시된 문서. 현재는 계획만 작성했고 인증서 생성·서명 방식 변경은 수행하지 않았다.
