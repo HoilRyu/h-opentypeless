@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenTypeless",
+  "productName": "H-OpenTypeless",
   "version": "0.1.42",
-  "identifier": "com.opentypeless.app",
+  "identifier": "dev.hoilryu.hopentypeless",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "OpenTypeless",
+        "title": "H-OpenTypeless",
         "width": 900,
         "height": 700,
         "minWidth": 720,
@@ -29,7 +29,7 @@
       },
       {
         "label": "capsule",
-        "title": "OpenTypeless Capsule",
+        "title": "H-OpenTypeless Capsule",
         "width": 80,
         "height": 80,
         "resizable": false,
@@ -46,7 +46,7 @@
       },
       {
         "label": "ask",
-        "title": "OpenTypeless Ask",
+        "title": "H-OpenTypeless Ask",
         "width": 400,
         "height": 220,
         "minWidth": 360,
@@ -59,6 +59,7 @@
         "skipTaskbar": true,
         "center": true,
         "visible": false,
+        "visibleOnAllWorkspaces": true,
         "url": "index.html#ask"
       }
     ],
@@ -68,21 +69,19 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": [
-        "https://github.com/tover0314-w/opentypeless/releases/latest/download/latest.json"
-      ],
+      "endpoints": [],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdBNEFFRjEzN0ZCQTNBMEQKUldRTk9ycC9FKzlLZXVKSFZLNUYxdFZ2Ri9Ya0FRaGsvUEZ1bkJRTDZ6dHZ1emhtZWR6QkprS3kK"
     },
     "deep-link": {
       "desktop": {
-        "schemes": ["opentypeless"]
+        "schemes": ["h-opentypeless"]
       }
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

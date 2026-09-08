@@ -28,7 +28,6 @@ import { UpgradePage } from './components/UpgradePage'
 import { AccountPage } from './components/AccountPage'
 import { AskPanel } from './components/AskPanel'
 import { ToastContainer } from './components/Toast'
-import { UpdatePrompt } from './components/UpdatePrompt'
 
 function CapsuleApp() {
   useTauriEvents()
@@ -225,7 +224,6 @@ function MainApp() {
       {route === 'history' && <History />}
       {route === 'upgrade' && <UpgradePage />}
       {route === 'account' && <AccountPage />}
-      <UpdatePrompt />
       <ToastContainer />
     </MainLayout>
   )

@@ -822,6 +822,7 @@ impl crate::voice_intent::executor::VoiceExecutionBackend for PipelineVoiceExecu
             true,
             false,
         )
+        .inspect_err(|error| tracing::warn!("Could not display voice result popup: {error}"))
     }
 
     async fn copy_to_clipboard(&mut self, text: &str) -> std::result::Result<(), String> {
@@ -934,6 +935,12 @@ impl PipelineHandle {
     fn set_state(&self, new_state: PipelineState) {
         self.state.store(new_state.as_u8(), Ordering::SeqCst);
         if new_state == PipelineState::Idle {
+            if let Some(service) = self
+                .app_handle
+                .try_state::<crate::extensions::audio_ducking::Service>()
+            {
+                service.end("dictation");
+            }
             *self
                 .active_translation_operation
                 .lock()
@@ -1313,6 +1320,12 @@ impl PipelineHandle {
         // operations are then polled concurrently, so speech captured while a
         // network provider connects remains queued instead of being clipped.
         let config = AudioConfig::default();
+        if let Some(service) = self
+            .app_handle
+            .try_state::<crate::extensions::audio_ducking::Service>()
+        {
+            service.begin("dictation").await;
+        }
         let (mut handle, mut audio_rx) = match AudioCaptureHandle::start(config) {
             Ok(result) => result,
             Err(e) => {
@@ -1800,7 +1813,22 @@ impl PipelineHandle {
                 SELECTED_TEXT_CAPTURE_DELAY_MS,
             ))
             .await;
-            tokio::task::block_in_place(|| self.capture_selected_text())
+            let guard = self
+                .preloaded_app_ctx
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .as_ref()
+                .map(|ctx| ctx.target_guard.clone());
+            tokio::task::block_in_place(|| {
+                if guard
+                    .as_ref()
+                    .is_some_and(|guard| !self.context_detector.target_still_matches_now(guard))
+                {
+                    None
+                } else {
+                    self.capture_selected_text()
+                }
+            })
         } else {
             None
         };
@@ -1820,6 +1848,12 @@ impl PipelineHandle {
                 h.stop();
             }
             *handle = None;
+        }
+        if let Some(service) = self
+            .app_handle
+            .try_state::<crate::extensions::audio_ducking::Service>()
+        {
+            service.end("dictation");
         }
         let stt_control = self
             .stt_session
@@ -2698,6 +2732,22 @@ impl PipelineHandle {
         let _ = self.app_handle.emit("pipeline:target_app", app_name);
     }
 
+    fn show_copy_fallback(&self, text: &str) {
+        if self.abort_flag.load(Ordering::SeqCst) || text.trim().is_empty() {
+            return;
+        }
+        if let Err(error) = crate::commands::ask::show_answer_window_with_metadata(
+            &self.app_handle,
+            String::new(),
+            text.to_string(),
+            crate::voice_intent::VoiceIntentKind::DictateInsert,
+            true,
+            false,
+        ) {
+            tracing::warn!("Could not show dictation copy fallback: {error}");
+        }
+    }
+
     async fn copy_streaming_recovery_to_clipboard(
         &self,
         text: &str,
@@ -2712,6 +2762,7 @@ impl PipelineHandle {
             streaming_insert_user_error(Some(format!("Full result copied to clipboard: {reason}"))),
         )
         .await;
+        self.show_copy_fallback(text);
     }
 
     async fn copy_text_to_clipboard_with_warning(
@@ -2781,6 +2832,7 @@ impl PipelineHandle {
                     retry_count: 0,
                 }
             });
+        let show_copy_fallback = target_warning.is_some();
         let requested_strategy = if target_warning.is_some() {
             output::InsertionStrategy::ClipboardCopyOnly
         } else {
@@ -2839,6 +2891,10 @@ impl PipelineHandle {
             Ok(outcome) => outcome,
             Err(e) => anyhow::bail!("{}", e),
         };
+
+        if show_copy_fallback {
+            self.show_copy_fallback(text);
+        }
 
         if let Some(user_error) = target_warning.or(accessibility_warning) {
             output_outcome.insert_result = output_outcome.insert_result.with_warning(&user_error);

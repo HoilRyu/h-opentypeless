@@ -1,3 +1,4 @@
+import { AudioDuckingSetting } from '../ForkSettings/AudioDuckingSetting'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, MessageCircle } from 'lucide-react'
@@ -137,6 +138,7 @@ export function GeneralPane() {
 
   return (
     <div className="space-y-6">
+      <AudioDuckingSetting />
       <Section title={t('settings.hotkey')}>
         <div className="space-y-3">
           <ShortcutBindingList

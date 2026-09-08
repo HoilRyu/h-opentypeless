@@ -237,35 +237,15 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
   useEffect(() => {
     if (embedded) return
 
-    let cancelled = false
-    let unlistenFocus: (() => void) | null = null
+    // A late focus-loss event can arrive while a generated result is opening.
+    // Keep the result available until an explicit dismissal.
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       event.preventDefault()
       dismissStandalone(true)
     }
-
     window.addEventListener('keydown', onKeyDown)
-    const nativeWindow = currentNativeWindow()
-    nativeWindow
-      ?.onFocusChanged((event) => {
-        if (cancelled || event.payload) return
-        dismissStandalone(true)
-      })
-      .then((unlisten) => {
-        if (cancelled) {
-          unlisten()
-        } else {
-          unlistenFocus = unlisten
-        }
-      })
-      .catch(() => {})
-
-    return () => {
-      cancelled = true
-      window.removeEventListener('keydown', onKeyDown)
-      if (unlistenFocus) safeUnlisten(unlistenFocus)
-    }
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [dismissStandalone, embedded])
 
   useEffect(() => {

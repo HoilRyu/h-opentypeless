@@ -112,9 +112,7 @@ async fn execute_insert(
 
     if !backend.target_matches(request.target_guard) {
         let _ = backend.copy_to_clipboard(request.generated_output).await;
-        if request.restore_target_before_insert {
-            let _ = backend.popup_answer(request.generated_output).await;
-        }
+        let _ = backend.popup_answer(request.generated_output).await;
         return result(
             request.intent,
             None,
@@ -597,6 +595,35 @@ mod tests {
             Some(VoiceExecutionFallbackReason::EmptyOutput)
         );
         assert!(backend.actions.is_empty());
+    }
+
+    #[tokio::test]
+    async fn dictation_target_change_copies_and_shows_popup_without_restoring_or_typing() {
+        let intent = intent(VoiceIntentKind::DictateInsert);
+        let mut backend = FakeBackend {
+            target_matches: false,
+            ..Default::default()
+        };
+        let result = execute_voice_intent(
+            request(
+                &intent,
+                "dictated text",
+                false,
+                false,
+                VoiceRoutingFlags::default(),
+            ),
+            &mut backend,
+        )
+        .await;
+        assert_eq!(result.status, VoiceExecutionStatus::CopiedFallback);
+        assert_eq!(
+            result.fallback_reason,
+            Some(VoiceExecutionFallbackReason::TargetChanged)
+        );
+        assert_eq!(
+            backend.actions,
+            ["target_matches", "copy_to_clipboard", "popup_answer"]
+        );
     }
 
     #[tokio::test]

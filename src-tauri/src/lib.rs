@@ -4,6 +4,7 @@ pub mod commands;
 pub mod credentials;
 pub mod dictionary_io;
 pub mod error;
+pub mod extensions;
 pub mod hotkey;
 #[cfg(target_os = "linux")]
 mod linux_x11;
@@ -161,6 +162,7 @@ fn should_restore_main_window_on_reopen(_has_visible_windows: bool) -> bool {
 }
 
 fn restore_main_window(app: &tauri::AppHandle) {
+    extensions::mac_window::visible(app, true);
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
         let _ = window.show();
@@ -180,6 +182,7 @@ fn attach_ask_window_close_handler(handle: &tauri::AppHandle, ask_window: &tauri
                 api.prevent_close();
                 if let Some(w) = handle.get_webview_window("ask") {
                     let _ = w.hide();
+                    extensions::mac_window::visible(&handle, false);
                 }
             }
         }
@@ -203,6 +206,7 @@ fn build_ask_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWi
         tauri::WebviewUrl::App("index.html#ask".into()),
     )
     .title("OpenTypeless Ask")
+    .visible_on_all_workspaces(true)
     .inner_size(400.0, 220.0)
     .min_inner_size(360.0, 180.0)
     .resizable(false)
@@ -238,9 +242,12 @@ pub fn ensure_ask_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::Webv
 
 pub fn show_ask_popup_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     let window = ensure_ask_window(handle)?;
-    let _ = window.unminimize();
-    let _ = window.show();
-    let _ = window.set_focus();
+    window.unminimize()?;
+    window.show()?;
+    // Failure to activate must not discard an already visible copy result.
+    if let Err(error) = window.set_focus() {
+        tracing::warn!("Could not focus result window: {error}");
+    }
     Ok(window)
 }
 
@@ -302,7 +309,7 @@ mod tests {
     fn cli_action_parser_does_not_hijack_deep_links_or_ambiguous_commands() {
         let deep_link = vec![
             "opentypeless".to_string(),
-            "opentypeless://auth/callback?mode=toggle".to_string(),
+            "h-opentypeless://auth/callback?mode=toggle".to_string(),
         ];
         let ambiguous = vec![
             "opentypeless".to_string(),
@@ -855,6 +862,18 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
+            match app
+                .path()
+                .app_data_dir()
+                .map_err(|e| e.to_string())
+                .and_then(extensions::audio_ducking::Service::new)
+            {
+                Ok(service) => {
+                    app.manage(service);
+                }
+                Err(error) => tracing::warn!("Audio attenuation unavailable: {error}"),
+            }
+
             // Open devtools only when the "devtools" feature is explicitly enabled
             #[cfg(feature = "devtools")]
             {
@@ -972,7 +991,7 @@ pub fn run() {
                         .clone(),
                 )
                 .menu(&tray_menu)
-                .tooltip("OpenTypeless")
+                .tooltip("H-OpenTypeless")
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {
                         app.exit(0);
@@ -981,10 +1000,10 @@ pub fn run() {
                         if let Some(window) = app.get_webview_window("main") {
                             let visible = window.is_visible().unwrap_or(false);
                             if visible {
+                                extensions::mac_window::visible(app, false);
                                 let _ = window.hide();
                             } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                restore_main_window(app);
                             }
                             refresh_tray(app);
                         }
@@ -1028,32 +1047,28 @@ pub fn run() {
                     "settings" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.emit("tray:settings", ());
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                            restore_main_window(app);
                             refresh_tray(app);
                         }
                     }
                     "history" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.emit("tray:history", ());
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                            restore_main_window(app);
                             refresh_tray(app);
                         }
                     }
                     "account" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.emit("navigate", "#/account");
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                            restore_main_window(app);
                             refresh_tray(app);
                         }
                     }
                     "about" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.emit("tray:about", ());
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                            restore_main_window(app);
                             refresh_tray(app);
                         }
                     }
@@ -1073,9 +1088,8 @@ pub fn run() {
                     );
                     if should_show {
                         let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                        if app.get_webview_window("main").is_some() {
+                            restore_main_window(app);
                             refresh_tray(app);
                         }
                     }
@@ -1121,6 +1135,7 @@ pub fn run() {
                                     }
                                 }
                                 let _ = w.hide();
+                                extensions::mac_window::visible(&handle, false);
                             }
                             refresh_tray(&handle);
                         }
@@ -1151,6 +1166,8 @@ pub fn run() {
                 }
             }
 
+            extensions::mac_window::visible(app.handle(), !initial_config.start_minimized);
+
             // Start minimized: only show window if not configured to start minimized
             if !initial_config.start_minimized {
                 if let Some(window) = app.get_webview_window("main") {
@@ -1176,6 +1193,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            extensions::audio_ducking::get_audio_ducking,
+            extensions::audio_ducking::set_audio_ducking,
             start_recording,
             stop_recording,
             abort_recording,
@@ -1249,6 +1268,11 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app, _event| {
+            if matches!(_event, tauri::RunEvent::Exit) {
+                if let Some(service) = _app.try_state::<extensions::audio_ducking::Service>() {
+                    service.shutdown();
+                }
+            }
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Reopen {
                 has_visible_windows,

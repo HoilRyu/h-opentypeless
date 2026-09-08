@@ -30,7 +30,7 @@ export function MainLayout({ children }: Props) {
       <aside className="w-[208px] flex flex-col border-r border-border jelly-surface-flat shrink-0">
         {/* Logo */}
         <div className="px-5 pt-5 pb-4" data-tauri-drag-region>
-          <h1 className="text-[15px] font-semibold tracking-tight">{t('app.name')}</h1>
+          <h1 className="text-[15px] font-semibold tracking-tight">H-OpenTypeless</h1>
           <p className="text-[11px] text-text-tertiary mt-0.5">{t('app.tagline')}</p>
         </div>
 

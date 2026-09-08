@@ -46,7 +46,7 @@ describe('deep-link OAuth callback', () => {
     const secondModule = await import('../deep-link')
     await secondModule.initDeepLinkListener()
     await mocks.deepLinkHandler?.([
-      `opentypeless://auth/callback?code=${'c'.repeat(43)}&state=${state}`,
+      `h-opentypeless://auth/callback?code=${'c'.repeat(43)}&state=${state}`,
     ])
 
     expect(mocks.handleDeepLinkToken).not.toHaveBeenCalled()
@@ -69,7 +69,7 @@ describe('deep-link OAuth callback', () => {
     const state = module.generateOAuthState()
 
     const handled = await module.handleDeepLinkUrl(
-      `opentypeless://auth/callback?code=${'c'.repeat(43)}&state=${state}`,
+      `h-opentypeless://auth/callback?code=${'c'.repeat(43)}&state=${state}`,
     )
 
     expect(handled).toBe(true)
@@ -99,7 +99,7 @@ describe('deep-link OAuth callback', () => {
     const state = module.generateOAuthState()
 
     const handled = await module.handleDeepLinkUrl(
-      `opentypeless:/auth/callback?code=${'c'.repeat(43)}&state=${state}`,
+      `h-opentypeless:/auth/callback?code=${'c'.repeat(43)}&state=${state}`,
     )
 
     expect(handled).toBe(true)
@@ -111,7 +111,7 @@ describe('deep-link OAuth callback', () => {
     const state = module.generateOAuthState()
 
     const handled = await module.handleDeepLinkUrl(
-      `opentypeless://auth/callback?token=stolen-session-token&state=${state}`,
+      `h-opentypeless://auth/callback?token=stolen-session-token&state=${state}`,
     )
 
     expect(handled).toBe(false)
@@ -122,7 +122,7 @@ describe('deep-link OAuth callback', () => {
   it('keeps the local verifier private and sends it only to the HTTPS exchange', async () => {
     const module = await import('../deep-link')
     const state = module.generateOAuthState()
-    const url = `opentypeless://auth/callback?code=${'d'.repeat(43)}&state=${state}`
+    const url = `h-opentypeless://auth/callback?code=${'d'.repeat(43)}&state=${state}`
 
     await module.handleDeepLinkUrl(url)
 

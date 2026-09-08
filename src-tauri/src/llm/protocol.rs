@@ -194,6 +194,10 @@ pub fn build_chat_body(
                 "stream": stream
             });
             let object = body.as_object_mut().unwrap();
+            // H fork: voice correction uses final answers without Ollama thinking.
+            if provider.trim().eq_ignore_ascii_case("ollama") {
+                object.insert("reasoning_effort".to_string(), json!("none"));
+            }
             if is_direct_openai(provider, base_url) {
                 object.insert("max_completion_tokens".to_string(), json!(max_tokens));
                 if !is_reasoning_model_without_sampling_controls(model) {
@@ -296,6 +300,33 @@ mod tests {
             json!({"role": "system", "content": "Be concise."}),
             json!({"role": "user", "content": "Hello"}),
         ]
+    }
+
+    #[test]
+    fn ollama_disables_thinking_without_changing_messages_or_other_providers() {
+        for stream in [false, true] {
+            for provider in ["ollama", " Ollama ", "openai", "openrouter", "custom"] {
+                let body = build_chat_body(
+                    provider,
+                    "http://localhost:11434/v1",
+                    "gemma4:12b",
+                    messages(),
+                    4096,
+                    0.3,
+                    stream,
+                );
+                assert_eq!(body["messages"], json!(messages()));
+                assert_eq!(body["model"], "gemma4:12b");
+                assert_eq!(body["stream"], stream);
+                assert_eq!(body["max_tokens"], 4096);
+                assert_eq!(body["temperature"], 0.3);
+                if provider.trim().eq_ignore_ascii_case("ollama") {
+                    assert_eq!(body["reasoning_effort"], "none");
+                } else {
+                    assert!(body.get("reasoning_effort").is_none());
+                }
+            }
+        }
     }
 
     #[test]

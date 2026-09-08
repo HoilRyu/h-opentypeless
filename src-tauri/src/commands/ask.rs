@@ -282,6 +282,11 @@ pub enum PendingAskMessage {
 }
 
 fn emit_capsule_state(app: &tauri::AppHandle, state: PipelineState) {
+    if matches!(state, PipelineState::Idle | PipelineState::AskThinking) {
+        if let Some(service) = app.try_state::<crate::extensions::audio_ducking::Service>() {
+            service.end("ask");
+        }
+    }
     let _ = app.emit("pipeline:state", state);
 }
 
@@ -1026,6 +1031,7 @@ pub(crate) async fn start_reserved_ask_dictation(
     client: tauri::State<'_, reqwest::Client>,
     include_selected_text: bool,
 ) -> Result<AskDictationStartResult, String> {
+    let audio_cleanup_app = app.clone();
     let result = async {
         let config = config_state.load().await.map_err(|e| e.to_string())?;
         let recording_context = app
@@ -1073,6 +1079,9 @@ pub(crate) async fn start_reserved_ask_dictation(
             Some(client.inner().clone()),
         )
         .map_err(|e| e.to_string())?;
+        if let Some(service) = app.try_state::<crate::extensions::audio_ducking::Service>() {
+            service.begin("ask").await;
+        }
         let (mut handle, mut audio_rx) = AudioCaptureHandle::start(AudioConfig::default())
             .map_err(|e| map_audio_capture_error(&e.to_string()))?;
         let capture_ready_at = match crate::audio::await_recording_startup(
@@ -1146,6 +1155,9 @@ pub(crate) async fn start_reserved_ask_dictation(
         };
 
         if should_discard_started_resources {
+            if let Some(service) = app.try_state::<crate::extensions::audio_ducking::Service>() {
+                service.end("ask");
+            }
             if let Some(mut handle) = handle {
                 handle.stop();
             }
@@ -1340,6 +1352,11 @@ pub(crate) async fn start_reserved_ask_dictation(
     .await;
 
     if result.is_err() {
+        if let Some(service) =
+            audio_cleanup_app.try_state::<crate::extensions::audio_ducking::Service>()
+        {
+            service.end("ask");
+        }
         state.clear_starting();
     }
     result

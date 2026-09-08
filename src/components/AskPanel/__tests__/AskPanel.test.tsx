@@ -249,19 +249,18 @@ describe('AskPanel', () => {
     })
   })
 
-  it('hides the standalone floating note on focus loss without owning recording', async () => {
+  it('keeps a late dictation result visible across focus loss until Escape', async () => {
     render(<AskPanel />)
-
-    await waitFor(() => expect(tauriWindowMock.onFocusChanged).toHaveBeenCalledTimes(1))
-
+    await flushAsyncEffects()
     await act(async () => {
       tauriWindowMock.emitFocus(false)
+      tauriEventMock.emit('ask:result', askResult({ intent: 'dictate_insert' }))
+      tauriWindowMock.emitFocus(false)
     })
-
-    await waitFor(() => {
-      expect(tauriWindowMock.hide).toHaveBeenCalledTimes(1)
-    })
-    expect(startAskDictation).not.toHaveBeenCalled()
+    expect(screen.getByText('It turns speech into useful text.')).toBeTruthy()
+    expect(tauriWindowMock.hide).not.toHaveBeenCalled()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    await waitFor(() => expect(tauriWindowMock.hide).toHaveBeenCalledTimes(1))
     expect(abortAskDictation).not.toHaveBeenCalled()
   })
 
