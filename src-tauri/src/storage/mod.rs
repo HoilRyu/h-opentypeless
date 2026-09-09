@@ -136,6 +136,7 @@ pub struct HotkeyConfig {
     pub edit_selection: Option<ShortcutBinding>,
     pub switch_scene: Option<ShortcutBinding>,
     pub open_app: Option<ShortcutBinding>,
+    pub copy_result: Option<ShortcutBinding>,
     pub dictation_mode: String,
 }
 
@@ -174,6 +175,7 @@ impl HotkeyConfig {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
+            copy_result: None,
             dictation_mode,
         }
     }
@@ -217,6 +219,7 @@ impl HotkeyConfig {
         normalize_optional_binding(&mut self.edit_selection);
         normalize_optional_binding(&mut self.switch_scene);
         normalize_optional_binding(&mut self.open_app);
+        normalize_optional_binding(&mut self.copy_result);
         self.dictation_mode = normalize_hotkey_mode(&self.dictation_mode).to_string();
     }
 }

@@ -111,6 +111,7 @@ export function GeneralPane() {
     config.hotkeys.editSelection,
     config.hotkeys.switchScene,
     config.hotkeys.openApp,
+    config.hotkeys.copyResult,
   ].filter((binding): binding is ShortcutBinding => Boolean(binding))
   const otherBindingsFor = (role: 'dictation' | 'ask' | 'translate') => [
     ...(role === 'dictation' ? [] : dictationBindings),
@@ -181,6 +182,33 @@ export function GeneralPane() {
             specialOptions={translateSpecialOptions}
             onChange={(bindings) => updateCoreBindings('translate', bindings)}
           />
+          <ShortcutBindingList
+            role="copyResult"
+            label={t('settings.copyResultHotkey')}
+            bindings={config.hotkeys.copyResult ? [config.hotkeys.copyResult] : []}
+            otherBindings={[
+              ...dictationBindings,
+              ...askBindings,
+              ...translateBindings,
+              ...[
+                config.hotkeys.editSelection,
+                config.hotkeys.switchScene,
+                config.hotkeys.openApp,
+              ].filter((binding): binding is ShortcutBinding => Boolean(binding)),
+            ]}
+            required={false}
+            specialOptions={[]}
+            maxBindings={1}
+            onChange={(bindings) =>
+              updateConfig({
+                hotkeys: {
+                  ...config.hotkeys,
+                  copyResult: bindings[0] ?? null,
+                },
+              })
+            }
+          />
+          <p className="text-xs text-text-tertiary">{t('settings.copyResultHotkeyHint')}</p>
         </div>
         {platformCapabilities && !platformCapabilities.globalHotkeyReliable && (
           <p className="mt-2 rounded-[8px] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12px] leading-relaxed text-text-secondary">

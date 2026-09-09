@@ -251,7 +251,7 @@ export function HotkeyRecorder({
 }
 
 interface ShortcutBindingListProps {
-  role: Extract<HotkeyRole, 'dictation' | 'ask' | 'translate'>
+  role: Extract<HotkeyRole, 'dictation' | 'ask' | 'translate' | 'copyResult'>
   label: string
   bindings: ShortcutBinding[]
   otherBindings: ShortcutBinding[]
@@ -260,6 +260,7 @@ interface ShortcutBindingListProps {
   onChange: (bindings: ShortcutBinding[]) => void
   disabled?: boolean
   trailingAction?: React.ReactNode
+  maxBindings?: number
 }
 
 function bindingIdentity(binding: ShortcutBinding) {
@@ -281,12 +282,13 @@ export function ShortcutBindingList({
   onChange,
   disabled = false,
   trailingAction,
+  maxBindings = MAX_BINDINGS,
 }: ShortcutBindingListProps) {
   const { t } = useTranslation()
   const [adding, setAdding] = useState(false)
   const [menuIndex, setMenuIndex] = useState<number | null>(null)
   const menuButtonRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const atLimit = bindings.length >= MAX_BINDINGS
+  const atLimit = bindings.length >= maxBindings
 
   useEffect(() => {
     if (atLimit) setAdding(false)

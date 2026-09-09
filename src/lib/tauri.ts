@@ -227,6 +227,7 @@ export type HotkeyRole =
   | 'editSelection'
   | 'switchScene'
   | 'openApp'
+  | 'copyResult'
 
 export interface HotkeyStatusError {
   code: string

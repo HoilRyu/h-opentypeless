@@ -510,6 +510,9 @@ fn hotkey_status_for_with_capability_and_supervisor(
             hotkeys.open_app.as_ref(),
         ),
     ]);
+    role_bindings.push((
+        crate::hotkey::HotkeyRole::CopyResult.as_str(), 0, hotkeys.copy_result.as_ref(),
+    ));
     let roles = role_bindings
         .iter()
         .enumerate()
@@ -1163,7 +1166,7 @@ mod tests {
         assert!(status.capability.supports_global_hotkey);
         assert!(status.capability.supports_hold_mode);
         assert!(status.capability.supports_released_edge);
-        assert_eq!(status.roles.len(), 6);
+        assert_eq!(status.roles.len(), 7);
         assert_eq!(status.roles[0].role, "dictation");
         assert_eq!(status.roles[0].adapter, "tauriGlobalShortcut");
         assert_eq!(status.roles[0].state, "installed");
@@ -1213,6 +1216,7 @@ mod tests {
         config.hotkeys.edit_selection = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+E");
         config.hotkeys.switch_scene = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+S");
         config.hotkeys.open_app = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+O");
+        config.hotkeys.copy_result = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+C");
         config.hotkey = config.hotkeys.dictation.to_hotkey_string().unwrap();
         config.ask_hotkey = "Ctrl+.".to_string();
         let caps = platform::PlatformCapabilities {
@@ -1235,6 +1239,7 @@ mod tests {
                 "editSelection",
                 "switchScene",
                 "openApp",
+                "copyResult",
             ]
         );
         assert!(status.roles.iter().all(|role| role.state == "installed"));

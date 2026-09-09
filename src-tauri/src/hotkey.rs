@@ -245,6 +245,7 @@ pub enum HotkeyRole {
     EditSelection,
     SwitchScene,
     OpenApp,
+    CopyResult,
 }
 
 impl HotkeyRole {
@@ -256,6 +257,7 @@ impl HotkeyRole {
             Self::EditSelection => "editSelection",
             Self::SwitchScene => "switchScene",
             Self::OpenApp => "openApp",
+            Self::CopyResult => "copyResult",
         }
     }
 }
@@ -520,6 +522,10 @@ pub(crate) fn hotkey_registration_plan_from_config_for_platform(
         platform,
     )?;
 
+    push_optional_registered_hotkey(
+        &mut plan, HotkeyRole::CopyResult, config.copy_result.as_ref(), platform,
+    )?;
+
     Ok(plan)
 }
 
@@ -630,6 +636,7 @@ pub fn validate_hotkey_pair(
         edit_selection: None,
         switch_scene: None,
         open_app: None,
+        copy_result: None,
         dictation_mode: "hold".to_string(),
     };
 
@@ -901,6 +908,15 @@ pub fn handle_hotkey_role_event(
     event_state: ShortcutState,
 ) {
     match role {
+        HotkeyRole::CopyResult => {
+            if event_state == ShortcutState::Pressed {
+                if let Some(window) = handle.get_webview_window("ask") {
+                    if window.is_visible().unwrap_or(false) {
+                        let _ = handle.emit_to("ask", "h:copy-result", ());
+                    }
+                }
+            }
+        }
         HotkeyRole::Ask => {
             let ask_state = handle.state::<commands::ask::AskDictationState>();
             let action = ask_shortcut_action(
@@ -1228,6 +1244,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
+        copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1258,6 +1275,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
+        copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1298,6 +1316,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
+        copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1360,6 +1379,20 @@ mod tests {
                 .iter()
                 .any(|entry| entry.role == HotkeyRole::Dictation));
         }
+    }
+
+    #[test]
+    fn copy_result_shortcut_is_optional_and_conflicts_are_rejected() {
+        let mut config = storage::HotkeyConfig::default();
+        let plan = hotkey_registration_plan_from_config(&config).unwrap();
+        assert!(!plan.global.iter().any(|key| key.role == HotkeyRole::CopyResult));
+        config.copy_result = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+C");
+        let plan = hotkey_registration_plan_from_config(&config).unwrap();
+        assert!(plan.global.iter().any(|key| key.role == HotkeyRole::CopyResult));
+        let persisted = serde_json::to_string(&config).unwrap();
+        assert_eq!(serde_json::from_str::<storage::HotkeyConfig>(&persisted).unwrap(), config);
+        config.copy_result = Some(config.dictation.clone());
+        assert!(hotkey_registration_plan_from_config(&config).is_err());
     }
 
     #[test]
