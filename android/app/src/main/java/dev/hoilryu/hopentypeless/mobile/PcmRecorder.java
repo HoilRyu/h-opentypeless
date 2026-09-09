@@ -12,13 +12,17 @@ final class PcmRecorder {
     private final android.content.Context context;
     private AudioRecord audio;
     private Thread thread;
-    private volatile boolean running;
+    private RecordingLease lease;
+    private boolean threadOwnsAudio;
+    private volatile boolean running, discard;
     private volatile int peak;
     private volatile RuntimeException failure;
     private volatile int bytesWritten;
     PcmRecorder(android.content.Context context, File file) { this.context=context; this.file=file; }
     void start() {
         if(context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)!=android.content.pm.PackageManager.PERMISSION_GRANTED)throw new SecurityException("마이크 권한이 필요합니다.");
+        lease=RecordingLease.acquire();
+        try {
         int size=AudioRecord.getMinBufferSize(16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);
         if(size<=0)throw new IllegalStateException("16kHz 녹음을 지원하지 않습니다.");
         audio=new AudioRecord(MediaRecorder.AudioSource.MIC,16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(size,8192));
@@ -27,6 +31,7 @@ final class PcmRecorder {
         if(audio.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING){release();throw new IllegalStateException("마이크를 시작하지 못했습니다.");}
         running=true;
         final AudioRecord source=audio;
+        final RecordingLease ownedLease=lease;
         thread=new Thread(()-> {
             try(RandomAccessFile out=new RandomAccessFile(file,"rw")) {
                 out.setLength(0);out.write(Wav.header(0));
@@ -42,8 +47,15 @@ final class PcmRecorder {
                 }
                 out.seek(0);out.write(Wav.header(bytesWritten));
             }catch(Exception error){failure=new IllegalStateException("녹음 파일을 만들지 못했습니다.",error);}
+            finally {
+                running=false;
+                try {source.stop();} catch(RuntimeException ignored) {}
+                try {source.release();} finally {ownedLease.close();if(discard)file.delete();}
+            }
         },"h-pcm-recording");
-        thread.start();
+        threadOwnsAudio=true;
+        try {thread.start();} catch(RuntimeException|Error error){threadOwnsAudio=false;thread=null;throw error;}
+        } catch(RuntimeException|Error error){release();throw error;}
     }
     int getMaxAmplitude(){int value=peak;peak=0;return value;}
     void stop() {
@@ -53,21 +65,21 @@ final class PcmRecorder {
     }
     private void finish() {
         running=false;
-        if(audio!=null){try{audio.stop();}catch(IllegalStateException ignored){}}
         if(thread!=null){
             try{thread.join(2000);}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}
             if(thread.isAlive())throw new IllegalStateException("녹음 종료를 기다리는 중입니다.");
             thread=null;
         }
     }
-    void reset(){release();}
+    // The capture thread owns native cleanup. Cancellation never joins on the UI thread.
+    void requestStop(){running=false;}
+    void cancel(){discard=true;release();if(thread==null||!thread.isAlive())file.delete();}
+    void reset(){cancel();}
     void release(){
-        try{finish();}catch(RuntimeException error){failure=error;}
-        if(thread==null && audio!=null){audio.release();audio=null;}
-        else if(thread!=null && audio!=null){
-            final Thread pending=thread;final AudioRecord pendingAudio=audio;
-            Thread cleanup=new Thread(()->{try{pending.join();}catch(InterruptedException e){Thread.currentThread().interrupt();return;}pendingAudio.release();},"h-pcm-cleanup");
-            cleanup.setDaemon(true);cleanup.start();audio=null;thread=null;
+        running=false;
+        if(!threadOwnsAudio){
+            try {if(audio!=null)audio.release();} finally {if(lease!=null)lease.close();}
+            audio=null;lease=null;
         }
     }
 }

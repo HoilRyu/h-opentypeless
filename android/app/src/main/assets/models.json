@@ -1,0 +1,42 @@
+[
+  {
+    "id": "whisper-base",
+    "label": "Whisper base · 다국어",
+    "file": "ggml-base.bin",
+    "bytes": 147951465,
+    "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+    "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.bin",
+    "ramGb": 4,
+    "availableGb": 0.6
+  },
+  {
+    "id": "whisper-small",
+    "label": "Whisper small · 다국어",
+    "file": "ggml-small.bin",
+    "bytes": 487601967,
+    "sha256": "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
+    "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small.bin",
+    "ramGb": 6,
+    "availableGb": 1.0
+  },
+  {
+    "id": "gemma-e2b",
+    "label": "Gemma 4 E2B · Mobile GPU",
+    "file": "gemma-4-E2B-it-gpu.litertlm",
+    "bytes": 2008432640,
+    "sha256": "a53a59001894c58e6bdb5b9b227709f91a2e3e556baa7d85acf9c55402ba5cf5",
+    "url": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/b3ca0d2f076785a8f4b2219ddbd2bdb99954eae1/gemma-4-E2B-it-gpu.litertlm",
+    "ramGb": 6,
+    "availableGb": 1.8
+  },
+  {
+    "id": "gemma-e4b",
+    "label": "Gemma 4 E4B · Mobile GPU",
+    "file": "gemma-4-E4B-it-gpu.litertlm",
+    "bytes": 2969059328,
+    "sha256": "4912bb5a9c30993c51a7711f763212077458529312175df0573a78323a2bb7ff",
+    "url": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/2eee7ac325f20eb8c9ac1d0e972f7c84663062da/gemma-4-E4B-it-gpu.litertlm",
+    "ramGb": 8,
+    "availableGb": 2.8
+  }
+]
