@@ -233,7 +233,8 @@ pub fn apply_auth_headers(
     }
 }
 
-pub fn response_text(kind: LlmApiKind, body: &Value) -> String {
+/// Final content only for polishing; reasoning is not a transcript.
+pub fn final_response_text(kind: LlmApiKind, body: &Value) -> String {
     match kind {
         LlmApiKind::AnthropicMessages => body["content"]
             .as_array()
@@ -248,11 +249,22 @@ pub fn response_text(kind: LlmApiKind, body: &Value) -> String {
             message["content"]
                 .as_str()
                 .filter(|content| !content.is_empty())
-                .or_else(|| message["reasoning_content"].as_str())
                 .unwrap_or("")
                 .to_string()
         }
     }
+}
+
+// Preserve the separate explicit Ask flow's existing compatibility behavior.
+pub fn response_text(kind: LlmApiKind, body: &Value) -> String {
+    let text = final_response_text(kind, body);
+    if text.is_empty() && kind == LlmApiKind::OpenAiCompatible {
+        return body["choices"][0]["message"]["reasoning_content"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
+    }
+    text
 }
 
 pub fn parse_stream_event(kind: LlmApiKind, body: &Value) -> StreamEvent {
@@ -300,6 +312,22 @@ mod tests {
             json!({"role": "system", "content": "Be concise."}),
             json!({"role": "user", "content": "Hello"}),
         ]
+    }
+
+    #[test]
+    fn reasoning_only_response_is_not_final_text() {
+        for content in [json!(null), json!(""), json!(" ")] {
+            let body = json!({"choices":[{"message":{"content":content,"reasoning_content":"I should answer the question"}}]});
+            assert!(final_response_text(LlmApiKind::OpenAiCompatible, &body)
+                .trim()
+                .is_empty());
+        }
+        let body =
+            json!({"choices":[{"message":{"content":"왜 안 돼?","reasoning_content":"thinking"}}]});
+        assert_eq!(
+            final_response_text(LlmApiKind::OpenAiCompatible, &body),
+            "왜 안 돼?"
+        );
     }
 
     #[test]

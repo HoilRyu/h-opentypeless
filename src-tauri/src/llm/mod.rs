@@ -1,5 +1,6 @@
 pub mod cloud;
 pub mod context_policy;
+pub mod dictation_guard;
 pub mod model_capabilities;
 pub mod openai;
 pub mod prompt;

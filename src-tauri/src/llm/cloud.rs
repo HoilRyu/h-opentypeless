@@ -153,7 +153,7 @@ impl LlmProvider for CloudLlmProvider {
         }
         messages.push(serde_json::json!({
             "role": "user",
-            "content": format!("<transcription>\n{}\n</transcription>", req.raw_text)
+            "content": prompt::transcription_message(&req.raw_text, req.voice_intent.kind == crate::voice_intent::VoiceIntentKind::DictateInsert)
         }));
 
         let api_base_url = crate::api_base_url();
@@ -208,7 +208,7 @@ impl LlmProvider for CloudLlmProvider {
                         response = Some(resp);
                         break;
                     } else if status.as_u16() == 401 {
-                        let text = resp.text().await.unwrap_or_default();
+                        let text = crate::response_limits::text(resp).await?;
                         if let Some(error) = managed_cloud_error(status.as_u16(), &text) {
                             return Err(error);
                         }
@@ -217,10 +217,10 @@ impl LlmProvider for CloudLlmProvider {
                             body: text,
                         });
                     } else if status.as_u16() == 403 {
-                        let text = resp.text().await.unwrap_or_default();
+                        let text = crate::response_limits::text(resp).await?;
                         return Err(cloud_llm_forbidden_error(&text));
                     } else if status.as_u16() >= 500 && attempt < 2 {
-                        let body_text = resp.text().await.unwrap_or_default();
+                        let body_text = crate::response_limits::text(resp).await?;
                         tracing::warn!(
                             "Cloud LLM server error {} (attempt {}/3), retrying",
                             status,
@@ -237,7 +237,7 @@ impl LlmProvider for CloudLlmProvider {
                         .await;
                         continue;
                     } else {
-                        let text = resp.text().await.unwrap_or_default();
+                        let text = crate::response_limits::text(resp).await?;
                         let truncate_at = text
                             .char_indices()
                             .take_while(|&(i, _)| i < 200)
@@ -283,28 +283,29 @@ impl LlmProvider for CloudLlmProvider {
 
         let response = response.ok_or_else(|| last_error.unwrap())?;
 
+        let guard_dictation = super::dictation_guard::enabled(req);
         if let Some(callback) = on_chunk {
             let mut full_text = String::new();
             let mut stream = response.bytes_stream();
-            let mut buffer = String::new();
+            let mut lines = crate::response_limits::Lines::default();
 
-            while let Some(chunk) = stream.next().await {
+            'events: while let Some(chunk) = stream.next().await {
                 let chunk = chunk?;
-                buffer.push_str(&String::from_utf8_lossy(&chunk));
 
-                while let Some(line_end) = buffer.find('\n') {
-                    let line = buffer[..line_end].trim().to_string();
-                    buffer = buffer[line_end + 1..].to_string();
+                for line in lines.push(&chunk)? {
+                    let line = line.trim();
 
-                    if let Some(data) = line.strip_prefix("data: ") {
+                    if let Some(data) = line.strip_prefix("data:").map(str::trim_start) {
                         if data == "[DONE]" {
-                            break;
+                            break 'events;
                         }
                         if let Ok(v) = serde_json::from_str::<serde_json::Value>(data) {
                             if let Some(content) = v["choices"][0]["delta"]["content"].as_str() {
                                 if !content.is_empty() {
                                     full_text.push_str(content);
-                                    callback(content);
+                                    if !guard_dictation {
+                                        callback(content);
+                                    }
                                 }
                             }
                         }
@@ -312,17 +313,24 @@ impl LlmProvider for CloudLlmProvider {
                 }
             }
 
+            if guard_dictation {
+                super::dictation_guard::validate(&req.raw_text, &full_text)?;
+                callback(&full_text);
+            }
             Ok(PolishResponse {
                 polished_text: full_text,
             })
         } else {
-            let v: serde_json::Value = response.json().await?;
+            let v: serde_json::Value = crate::response_limits::json(response).await?;
             let text = v["text"]
                 .as_str()
                 .or_else(|| v["choices"][0]["message"]["content"].as_str())
                 .unwrap_or("")
                 .to_string();
 
+            if guard_dictation {
+                super::dictation_guard::validate(&req.raw_text, &text)?;
+            }
             Ok(PolishResponse {
                 polished_text: text,
             })

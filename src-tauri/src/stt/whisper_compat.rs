@@ -127,7 +127,7 @@ impl SttProvider for WhisperCompatProvider {
 
         let audio_len_secs = self.audio_buffer.len() as f64 / (config.sample_rate as f64 * 2.0);
         let wav_data = Self::build_wav(&self.audio_buffer, config.sample_rate);
-        self.audio_buffer.clear();
+        self.audio_buffer = Vec::new();
         tracing::info!(
             "{}: sending {:.1}s of audio for transcription",
             self.provider_config.provider_name,
@@ -172,7 +172,7 @@ impl SttProvider for WhisperCompatProvider {
             match resp_result {
                 Ok(resp) => {
                     let status = resp.status();
-                    let body = resp.text().await.unwrap_or_default();
+                    let body = crate::response_limits::text(resp).await?;
 
                     if status.is_success() {
                         let v: serde_json::Value = serde_json::from_str(&body)

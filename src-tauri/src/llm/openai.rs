@@ -67,7 +67,7 @@ impl LlmProvider for OpenAiProvider {
         }
         messages.push(serde_json::json!({
             "role": "user",
-            "content": format!("<transcription>\n{}\n</transcription>", req.raw_text)
+            "content": prompt::transcription_message(&req.raw_text, req.voice_intent.kind == crate::voice_intent::VoiceIntentKind::DictateInsert)
         }));
 
         let api_kind = protocol::detect_api_kind(&config.provider, &config.base_url);
@@ -130,7 +130,7 @@ impl LlmProvider for OpenAiProvider {
                         response = Some(resp);
                         break;
                     } else if status.as_u16() >= 500 && attempt < 2 {
-                        let body_text = resp.text().await.unwrap_or_default();
+                        let body_text = crate::response_limits::text(resp).await?;
                         tracing::warn!(
                             "LLM server error {} (attempt {}/3), retrying",
                             status,
@@ -148,7 +148,7 @@ impl LlmProvider for OpenAiProvider {
                         continue;
                     } else {
                         let status = resp.status();
-                        let text = resp.text().await.unwrap_or_default();
+                        let text = crate::response_limits::text(resp).await?;
                         // Truncate at a valid UTF-8 char boundary to avoid panic on multi-byte chars
                         let truncate_at = text
                             .char_indices()
@@ -195,27 +195,25 @@ impl LlmProvider for OpenAiProvider {
 
         let response = response.ok_or_else(|| last_error.unwrap())?;
 
+        let guard_dictation = super::dictation_guard::enabled(req);
         if let Some(callback) = on_chunk {
             // Streaming mode
             let mut full_text = String::new();
-            let mut reasoning_text = String::new();
             let mut stream = response.bytes_stream();
 
-            let mut buffer = String::new();
+            let mut lines = crate::response_limits::Lines::default();
             let mut stream_done = false;
             while !stream_done {
                 let Some(chunk) = stream.next().await else {
                     break;
                 };
                 let chunk = chunk?;
-                buffer.push_str(&String::from_utf8_lossy(&chunk));
 
                 // Process SSE lines
-                while let Some(line_end) = buffer.find('\n') {
-                    let line = buffer[..line_end].trim().to_string();
-                    buffer = buffer[line_end + 1..].to_string();
+                for line in lines.push(&chunk)? {
+                    let line = line.trim();
 
-                    if let Some(data) = line.strip_prefix("data: ") {
+                    if let Some(data) = line.strip_prefix("data:").map(str::trim_start) {
                         if data == "[DONE]" {
                             stream_done = true;
                             break;
@@ -228,51 +226,45 @@ impl LlmProvider for OpenAiProvider {
                             if let Some(content) = event.text {
                                 if !content.is_empty() {
                                     full_text.push_str(&content);
-                                    callback(&content);
+                                    if !guard_dictation {
+                                        callback(&content);
+                                    }
                                 }
                             }
 
-                            // Collect reasoning_content as fallback for thinking-mode models
-                            // where all output may land in this field instead of content
-                            if let Some(rc) = event.reasoning {
-                                if !rc.is_empty() {
-                                    reasoning_text.push_str(&rc);
-                                }
-                            }
                             stream_done = event.done;
+                            if stream_done {
+                                break;
+                            }
                         }
                     }
                 }
             }
 
-            // If content was empty but reasoning_content had text, use it as output.
-            // This handles GLM thinking-mode where the API puts all output in reasoning_content.
-            if full_text.is_empty() && !reasoning_text.is_empty() {
-                tracing::warn!(
-                    "LLM content empty, using reasoning_content ({} chars) as output",
-                    reasoning_text.len()
-                );
-                callback(&reasoning_text);
-                full_text = reasoning_text;
-            } else if full_text.is_empty() {
-                tracing::error!("LLM streaming returned no content and no reasoning_content");
+            // Reasoning is never a final transcript, even when content is absent.
+            if full_text.trim().is_empty() {
+                return Err(AppError::Output("LLM returned no final text".into()));
             }
 
+            if guard_dictation {
+                super::dictation_guard::validate(&req.raw_text, &full_text)?;
+                callback(&full_text);
+            }
             Ok(PolishResponse {
                 polished_text: full_text,
             })
         } else {
             // Non-streaming mode
-            let v: serde_json::Value = response.json().await?;
-            let text = protocol::response_text(api_kind, &v);
+            let v: serde_json::Value = crate::response_limits::json(response).await?;
+            let text = protocol::final_response_text(api_kind, &v);
 
             if text.is_empty() {
-                tracing::warn!(
-                    "LLM non-streaming returned empty content, full response: {}",
-                    v
-                );
+                tracing::warn!("LLM non-streaming returned no final content");
             }
 
+            if guard_dictation {
+                super::dictation_guard::validate(&req.raw_text, &text)?;
+            }
             Ok(PolishResponse {
                 polished_text: text,
             })
@@ -281,5 +273,115 @@ impl LlmProvider for OpenAiProvider {
 
     fn name(&self) -> &str {
         "OpenAI"
+    }
+}
+
+#[cfg(test)]
+mod dictation_tests {
+    use super::*;
+    use crate::{
+        app_detector::types::ContextProfile,
+        voice_intent::{VoiceIntent, VoiceIntentKind, VoiceOutputPlacement},
+    };
+    use std::sync::{Arc, Mutex};
+    use tokio::{
+        io::{AsyncReadExt, AsyncWriteExt},
+        net::TcpListener,
+    };
+
+    fn request() -> PolishRequest {
+        PolishRequest {
+            raw_text: "어 왜 안 되는 거야 알려줘".into(),
+            context: ContextProfile::general_native().summary(),
+            dictionary: vec![],
+            correction_rules: vec![],
+            polish_style: "clean".into(),
+            mapped_scene_prompt: String::new(),
+            active_scene_prompt: String::new(),
+            polish_custom_prompt: String::new(),
+            translate_enabled: false,
+            target_lang: String::new(),
+            selected_text: None,
+            operation_id: None,
+            voice_intent: VoiceIntent::from_parts(
+                VoiceIntentKind::DictateInsert,
+                VoiceOutputPlacement::InsertAtCursor,
+                1.0,
+                None,
+                None,
+                None,
+                None,
+            )
+            .unwrap(),
+        }
+    }
+
+    #[tokio::test]
+    async fn dictation_stream_is_validated_before_any_callback() {
+        for (field, content, accepted) in [
+            ("content", "왜 안 되는 거야? 알려줘".to_string(), true),
+            (
+                "content",
+                "새로운 해결 방법을 설명하겠습니다. ".repeat(30),
+                false,
+            ),
+            (
+                "reasoning_content",
+                "질문에 답해야겠습니다".to_string(),
+                false,
+            ),
+        ] {
+            let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let address = listener.local_addr().unwrap();
+            let event = serde_json::json!({"choices":[{"delta":{field:content}}]});
+            let body = format!("data: {event}\n\ndata: [DONE]\n\n");
+            let server = tokio::spawn(async move {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut received = Vec::new();
+                loop {
+                    let mut buffer = [0; 4096];
+                    let n = socket.read(&mut buffer).await.unwrap();
+                    assert!(n > 0);
+                    received.extend_from_slice(&buffer[..n]);
+                    if let Some(end) = received.windows(4).position(|v| v == b"\r\n\r\n") {
+                        let headers = String::from_utf8_lossy(&received[..end]);
+                        let length: usize = headers
+                            .lines()
+                            .find_map(|line| {
+                                line.to_ascii_lowercase()
+                                    .strip_prefix("content-length:")
+                                    .map(|v| v.trim().parse().unwrap())
+                            })
+                            .unwrap();
+                        if received.len() >= end + 4 + length {
+                            break;
+                        }
+                    }
+                }
+                assert!(String::from_utf8_lossy(&received).contains("FINAL_DICTATION_CONTRACT"));
+                let header = format!("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
+                socket.write_all(header.as_bytes()).await.unwrap();
+                socket.write_all(body.as_bytes()).await.unwrap();
+            });
+            let chunks = Arc::new(Mutex::new(Vec::new()));
+            let captured = chunks.clone();
+            let callback: ChunkCallback =
+                Box::new(move |s| captured.lock().unwrap().push(s.to_string()));
+            let config = LlmConfig {
+                provider: "ollama".into(),
+                base_url: format!("http://{address}/v1"),
+                ..Default::default()
+            };
+            let result = OpenAiProvider::new()
+                .polish(&config, &request(), Some(&callback))
+                .await;
+            server.await.unwrap();
+            assert_eq!(result.is_ok(), accepted);
+            if accepted {
+                assert_eq!(*chunks.lock().unwrap(), vec![content]);
+            } else {
+                assert!(chunks.lock().unwrap().is_empty());
+            }
+        }
     }
 }
