@@ -41,6 +41,8 @@ permissions:
 
 jobs:
   build:
+    # Upstream automation must never publish from the H fork.
+    if: github.repository == 'tover0314-w/opentypeless'
     strategy:
       fail-fast: false
       matrix:

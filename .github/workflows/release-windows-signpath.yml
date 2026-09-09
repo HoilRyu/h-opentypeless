@@ -22,6 +22,8 @@ permissions:
 
 jobs:
   build-sign-publish:
+    # Upstream automation must never publish from the H fork.
+    if: github.repository == 'tover0314-w/opentypeless'
     runs-on: windows-latest
     timeout-minutes: 45
     steps:

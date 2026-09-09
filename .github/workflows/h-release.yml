@@ -1,0 +1,91 @@
+name: H Release Preparation
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'Exact H commit SHA or release tag to validate'
+        required: true
+      build_android:
+        description: 'Build the signed Android APK (requires Android release secrets)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.repository == 'HoilRyu/h-opentypeless'
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: VITE_APP_VERSION="v$(node -p "require('./package.json').version")" npm run build
+      - run: python3 scripts/h-release-check.py
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_release*.py'
+      - name: Record validated source
+        id: source
+        run: echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: validate
+    if: inputs.build_android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.commit }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - name: Install Android build dependencies
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+      - name: Load existing release key
+        env:
+          KEY_BASE64: ${{ secrets.H_ANDROID_KEYSTORE_BASE64 }}
+          KEY_PASSWORD: ${{ secrets.H_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.H_ANDROID_KEY_ALIAS }}
+        run: |
+          python3 - <<'PY'
+          import base64, os, pathlib
+          os.umask(0o077)
+          values = {key: os.environ.get(key, '') for key in ('KEY_BASE64', 'KEY_PASSWORD', 'KEY_ALIAS')}
+          if not all(values.values()):
+              raise SystemExit('Configure all H Android signing secrets before requesting a signed build.')
+          if any(c in values['KEY_PASSWORD'] + values['KEY_ALIAS'] for c in '\n\r\\'):
+              raise SystemExit('Signing values must not contain properties escape characters.')
+          root = pathlib.Path.home() / '.local/share/h-opentypeless/signing/android'
+          root.mkdir(parents=True, mode=0o700)
+          key = root / 'release.p12'
+          key.write_bytes(base64.b64decode(values['KEY_BASE64'], validate=True))
+          (root / 'release-signing.properties').write_text(
+              f"storeFile={key}\nstorePassword={values['KEY_PASSWORD']}\nkeyAlias={values['KEY_ALIAS']}\nkeyPassword={values['KEY_PASSWORD']}\n")
+          PY
+      - run: ./scripts/h-release-android.sh
+        env:
+          H_RELEASE_DIR: ${{ runner.temp }}/h-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: h-android-release-candidate
+          path: ${{ runner.temp }}/h-release/*
+          if-no-files-found: error
+      - name: Remove signing material
+        if: always()
+        run: rm -rf "$HOME/.local/share/h-opentypeless/signing/android"
+# Mac packages use scripts/h-release-macos.sh locally with the existing persistent
+# identity/helper. This workflow never publishes a release or generates new keys.

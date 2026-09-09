@@ -56,3 +56,16 @@ docs/superpowers/
 
 # Local isolated worktrees
 .worktrees/
+
+# Release signing material (never commit)
+*.jks
+*.keystore
+*.p12
+*.pfx
+release-signing.properties
+
+__pycache__/
+*.pyc
+
+# Android Gradle project cache
+android/.gradle/

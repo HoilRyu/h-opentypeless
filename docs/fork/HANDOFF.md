@@ -137,3 +137,12 @@ hotkeys.copyResult(기본null)와 CopyResult 역할 추가. 설정→일반→�
 ## 커밋 정리 완료 — 2026-09-09
 
 b371c84 이후 누적 변경을 기능별 7개 커밋과 디자인·문서 커밋으로 정리했다. 상세 내역은 COMMIT_PLAN.md 상단을 따른다. 사용자가 복사 단축키의 실제 동작을 확인했다. 정리 과정에서 오래된 UI 테스트 기대값을 현재 동작에 맞게 수정했고 전체 467개 통과 및 프런트엔드 빌드 통과를 확인했다. Rust는 직전 629개 통과/2개 ignored 기록을 유지한다. 이번 작업에서는 앱 재설치·물리 장치 검증·푸시를 수행하지 않았다.
+
+
+## 첫 릴리즈 준비 — 2026-09-09
+
+데스크톱 0.1.43-beta.1 / Android 0.3.7(versionCode 10) 준비. 원본 release/SignPath/staple/drafter 워크플로를 원본 저장소에서만 실행하도록 제한하고 H 수동 검증/Android artifact 워크플로를 추가했다. Mac은 기존 자체 서명/helper를 유지하는 release ZIP 스크립트, Android는 저장소 밖 영구 배포 키와 정식 서명 APK 스크립트를 추가했다. 원격 공개는 별도 Draft 전용 스크립트로 분리했고 태그/SHA/소스 청결/체크섬/실기기 검증 기록을 검사한다. 빌드 중 소스 변경도 거부한다.
+
+UI 467개 통과, 배포 manifest 검사 9개 통과. Android release 빌드와 단위 40개 통과, lint 0 errors/15 warnings, 배포 서명 확인. Kotlin 2.4 메타데이터에 대한 기존 lint 엔진의 호환 진단 메시지가 있으나 lint 작업/빌드는 성공했다. 키가 없을 때 release 작업이 실패하는 것도 검사했다. 개발 APK와 release APK의 인증서가 달라 최초 전환에는 재설치가 필요하다. 실제 기기의 기존 앱은 삭제/교체하지 않았다.
+
+Mac 최종 빌드/패키지 검증 결과는 별도 releases 폴더의 PREPARATION_VALIDATION.md에 기록한다. npm audit는 high/critical 0개, 개발 도구 관련 moderate 3개다. GitHub secrets 등록·태그 생성·릴리즈 공개는 아직 수행하지 않았다. 서명 키의 별도 위치 백업과 신규 설치/업데이트 실사용 검증은 공개 전 필요하다. 실행 방법: RELEASING.md, 공개 설명 초안: RELEASE_NOTES.md.

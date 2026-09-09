@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   update-release-draft:
+    # Upstream automation must never publish from the H fork.
+    if: github.repository == 'tover0314-w/opentypeless'
     runs-on: ubuntu-latest
     permissions:
       contents: write
