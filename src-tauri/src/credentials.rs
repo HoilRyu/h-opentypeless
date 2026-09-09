@@ -33,6 +33,7 @@ where
 }
 
 pub async fn read_config_secret(config: &AppConfig, stt: bool) -> Result<String> {
+    if stt && config.stt_provider == crate::extensions::local_stt::ID { return Ok(String::new()); }
     let config = config.clone();
     bounded_secret_read(
         SECRET_GATE.clone(),
@@ -368,6 +369,7 @@ pub fn resolve_stt_config_secret<V: CredentialSecretReader>(
     config: &AppConfig,
     vault: &V,
 ) -> Result<String> {
+    if config.stt_provider == crate::extensions::local_stt::ID { return Ok(String::new()); }
     let provider = stt_credential_provider(config);
     let legacy_secret = if provider == crate::stt::config::CUSTOM_WHISPER_PROVIDER {
         &config.stt_custom_api_key

@@ -74,6 +74,7 @@ pub fn create_provider(
     client: Option<reqwest::Client>,
 ) -> Result<Box<dyn SttProvider>, AppError> {
     match provider_name {
+        crate::extensions::local_stt::ID => Ok(Box::new(crate::extensions::local_stt::Provider::new()?)),
         "cloud" => {
             let api_base_url = crate::api_base_url();
             Ok(match client {

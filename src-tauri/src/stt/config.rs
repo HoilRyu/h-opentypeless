@@ -114,7 +114,7 @@ pub fn build_known_whisper_config(provider: &str) -> Option<WhisperCompatConfig>
 pub fn stt_provider_requires_api_key(provider: &str) -> bool {
     !matches!(
         provider,
-        "cloud" | CUSTOM_WHISPER_PROVIDER | APPLE_SPEECH_PROVIDER
+        "cloud" | CUSTOM_WHISPER_PROVIDER | APPLE_SPEECH_PROVIDER | crate::extensions::local_stt::ID
     )
 }
 

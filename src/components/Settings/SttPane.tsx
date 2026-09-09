@@ -1,3 +1,4 @@
+import { LocalSttSetting } from './LocalSttSetting'
 import { H_MANAGED_CLOUD_ENABLED } from '../../lib/h-features'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -5,6 +6,7 @@ import { isMacPlatform, useAppStore } from '../../stores/appStore'
 import { hasManagedCloudAccess, useAuthStore } from '../../stores/authStore'
 import {
   STT_PROVIDERS,
+  BUILTIN_STT_PROVIDER,
   LANGUAGES,
   APPLE_SPEECH_PROVIDER,
   CUSTOM_WHISPER_PROVIDER,
@@ -54,6 +56,7 @@ export function SttPane() {
   const [recordingLimit, setRecordingLimit] = useState<ResolvedSttRecordingLimit | null>(null)
   const [customDurationEntryRequested, setCustomDurationEntryRequested] = useState(false)
 
+  const isBuiltin = config.stt_provider === BUILTIN_STT_PROVIDER
   const isCloud = config.stt_provider === 'cloud'
   const isAppleSpeech = config.stt_provider === APPLE_SPEECH_PROVIDER
   const isCustomWhisper = config.stt_provider === CUSTOM_WHISPER_PROVIDER
@@ -86,7 +89,7 @@ export function SttPane() {
   }
 
   useEffect(() => {
-    if (isCloud || isAppleSpeech) {
+    if (isCloud || isAppleSpeech || isBuiltin) {
       setApiKeyDraft('')
       setCredentialErrorMessage(null)
       return
@@ -104,7 +107,7 @@ export function SttPane() {
     return () => {
       cancelled = true
     }
-  }, [credentialProvider, isAppleSpeech, isCloud, legacyApiKey])
+  }, [credentialProvider, isAppleSpeech, isCloud, isBuiltin, legacyApiKey])
 
   useEffect(() => {
     if (!isCustomWhisper && !isAppleSpeech) {
@@ -356,7 +359,9 @@ export function SttPane() {
         </select>
       </FormField>
 
-      {isCloud ? (
+      {isBuiltin ? (
+        <LocalSttSetting />
+      ) : isCloud ? (
         !H_MANAGED_CLOUD_ENABLED ? (
           <p role="status">
             {t(

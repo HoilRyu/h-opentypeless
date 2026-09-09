@@ -150,6 +150,7 @@ impl AskDictationState {
 }
 
 pub struct AskDictationSession {
+    finalize_timeout_secs: u64,
     handle: AudioCaptureHandle,
     recording_session_id: u64,
     operation_id: String,
@@ -1171,6 +1172,7 @@ pub(crate) async fn start_reserved_ask_dictation(
             } else {
                 guard.starting = false;
                 guard.session = Some(AskDictationSession {
+                    finalize_timeout_secs: if config.stt_provider == crate::extensions::local_stt::ID { crate::extensions::local_stt::FINALIZE_SECONDS + 5 } else { ASK_STT_FINALIZE_TIMEOUT_SECS },
                     handle: handle.take().expect("Ask audio handle was already consumed"),
                     recording_session_id,
                     operation_id,
@@ -1442,7 +1444,7 @@ pub async fn stop_ask_dictation(
 
         let finalize_timed_out = tokio::select! {
             _ = session.done.notified() => false,
-            _ = tokio::time::sleep(std::time::Duration::from_secs(ASK_STT_FINALIZE_TIMEOUT_SECS)) => {
+            _ = tokio::time::sleep(std::time::Duration::from_secs(session.finalize_timeout_secs)) => {
                 true
             }
         };

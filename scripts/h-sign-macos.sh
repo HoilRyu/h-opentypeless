@@ -25,6 +25,13 @@ identifier="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$bundle/Con
 requirement="designated => identifier \"$identifier\" and certificate leaf = H\"$identity\""
 echo 'Signing with the existing local certificate. macOS may ask codesign to access its private key.'
 echo 'This is a build-time signing prompt, separate from application API-key or Accessibility access.'
+# Native STT resources are signed before sealing the app. The stable credential
+# helper keeps its separate identity and is deliberately not re-signed here.
+for engine in "$bundle/Contents/Resources/local-stt/whisper-cli" "$bundle/Contents/Resources/local-stt/qwen_asr"; do
+  if [[ -f "$engine" ]]; then
+    codesign --force --sign "$identity" --timestamp=none "$engine"
+  fi
+done
 codesign --force --sign "$identity" --timestamp=none \
   --identifier "$identifier" --requirements "=$requirement" \
   --entitlements "$source_root/src-tauri/Entitlements.plist" "$bundle"

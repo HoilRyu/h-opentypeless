@@ -22,7 +22,7 @@ pub struct ResultText {
     pub warning: Option<String>,
 }
 pub fn supported(provider: &str) -> bool {
-    provider == stt::config::CUSTOM_WHISPER_PROVIDER
+    provider == crate::extensions::local_stt::ID || provider == stt::config::CUSTOM_WHISPER_PROVIDER
         || stt::config::get_whisper_config(provider).is_some()
 }
 pub async fn process(app: &tauri::AppHandle, audio: &[u8]) -> Result<ResultText, String> {
@@ -32,7 +32,7 @@ pub async fn process(app: &tauri::AppHandle, audio: &[u8]) -> Result<ResultText,
         .await
         .map_err(|_| "앱 설정을 읽지 못했습니다.")?;
     if !supported(&config.stt_provider) {
-        return Err("모바일 입력은 현재 Local / Custom Whisper 및 Whisper 호환 STT를 지원합니다. H 앱의 음성 인식 설정을 확인하세요.".into());
+        return Err("모바일 입력은 현재 내장 STT, Local / Custom Whisper 및 Whisper 호환 STT를 지원합니다. H 앱의 음성 인식 설정을 확인하세요.".into());
     }
     let custom = if config.stt_provider == stt::config::CUSTOM_WHISPER_PROVIDER {
         Some(

@@ -23,6 +23,7 @@ export type SttProvider =
   | 'groq-whisper'
   | 'siliconflow'
   | 'apple-speech'
+  | 'builtin-stt'
   | 'custom-whisper'
   | 'cloud'
 

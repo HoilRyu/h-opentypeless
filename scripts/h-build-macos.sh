@@ -32,7 +32,8 @@ export VITE_APP_VERSION="v$(node -p "require('./package.json').version")"
 helper="$("$source_root/scripts/h-prepare-credential-helper.sh")"
 export H_CREDENTIAL_HELPER_SHA256="$(shasum -a 256 "$helper" | cut -d' ' -f1)"
 export CARGO_HTTP_MULTIPLEXING=false
-npm run tauri build -- "${profile_args[@]}"
+python3 "$source_root/scripts/h-prepare-local-stt.py" --config "$build_root/local-stt-bundle.json"
+npm run tauri build -- "${profile_args[@]}" --config "$build_root/local-stt-bundle.json"
 
 bundle="$build_root/src-tauri/target/$profile/bundle/macos/H-OpenTypeless.app"
 mkdir -p "$bundle/Contents/Helpers"

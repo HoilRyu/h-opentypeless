@@ -8,6 +8,7 @@ export function MobileConnection() {
   const ko = i18n.language.startsWith('ko')
   const config = useAppStore((s) => s.config)
   const supported = [
+    'builtin-stt',
     'custom-whisper',
     'glm-asr',
     'openai-whisper',
@@ -59,8 +60,8 @@ export function MobileConnection() {
         {!supported && (
           <p role="status" className="text-sm text-amber-500">
             {ko
-              ? '현재 STT 제공자는 모바일 음성을 지원하지 않습니다. Local / Custom Whisper 또는 Whisper 호환 제공자로 변경하세요.'
-              : 'This STT provider does not support mobile audio. Choose Local / Custom Whisper or a Whisper-compatible provider.'}
+              ? '현재 STT 제공자는 모바일 음성을 지원하지 않습니다. 내장 STT, Local / Custom Whisper 또는 Whisper 호환 제공자로 변경하세요.'
+              : 'This STT provider does not support mobile audio. Choose built-in STT, Local / Custom Whisper or a Whisper-compatible provider.'}
           </p>
         )}
         <div className="flex flex-wrap gap-4 text-sm">

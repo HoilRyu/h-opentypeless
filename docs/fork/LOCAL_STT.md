@@ -1,0 +1,52 @@
+# 내장 STT
+
+설정 → 음성 인식 → **내장 STT · Whisper / Qwen**에서 모델을 다운로드한 뒤 **이 모델 사용**을 누른다. 기존 외부 STT 주소·모델·API 키와 LLM API/Ollama 설정은 유지된다. 내장 STT로 바꿔도 LLM 다듬기에 필요한 네트워크/모델 엔진은 별도다.
+
+| 모델 | 다운로드 | 권장 시스템 메모리 |
+|---|---:|---:|
+| Whisper Tiny | 약 74 MiB | 4 GB |
+| Whisper Base | 약 141 MiB | 4 GB |
+| Whisper Small | 약 465 MiB | 8 GB |
+| Qwen3-ASR 0.6B | 약 1.75 GiB | 8 GB |
+| Qwen3-ASR 1.7B | 약 4.38 GiB | 16 GB |
+
+권장 메모리는 H의 보수적인 선택 가이드이며 속도·정확도 보장이 아니다. Whisper는 모두 다국어 모델이다. 한국어 정확도는 모델 크기와 발음/환경에 따라 다르다. 저사양 PC는 Base부터 검토한다. 현재 Mac에서 사용하던 MLX Qwen 서버와 달리 내장 Qwen은 CPU 네이티브 엔진이다.
+
+## 구조와 제한
+
+- H 소유 구현: `src-tauri/src/extensions/local_stt`; 기존 STT trait/factory에 하나의 제공자만 추가한다.
+- 엔진은 앱의 `local-stt` 리소스에 포함한다. 사용자가 Python·추가 서버를 설치하거나 실행할 필요가 없다.
+- 모델은 app data의 `local-stt/<model-id>`에 저장한다. 앱 업데이트 시 보존한다.
+- 모델별 고정 revision, 크기, SHA-256은 `catalog.json`에 있다. 임의 URL/경로를 IPC로 받지 않는다.
+- `.part` 이어받기, Range 응답 검증, 완료 체크섬 검증 후 이름 변경. 중단된 다운로드는 사용자가 재개한다. 자동 대용량 다운로드는 없다.
+- 실행 전 다시 체크섬을 검사한다. 모델 삭제/선택/다운로드와 녹음/전사는 단일 lease로 충돌을 막는다.
+- 최대 녹음 120초, PCM16 mono 16kHz, 버퍼 3.84 MB, CPU 최대 4개 스레드, Qwen 세그먼트 20초. 전사 timeout 90초.
+- 엔진은 전사할 때만 실행하며 stdin으로 WAV를 전달한다. 음성 임시 파일을 쓰지 않는다. 출력은 각각 64 KiB로 제한한다.
+- 취소/timeout/future drop 시 kill_on_drop으로 종료하며 앱 종료 시 종료 신호와 짧은 대기 시간을 둔다. 모델 상주 프로세스를 남기지 않는다.
+- 일반 입력·Ask·모바일 서버가 같은 제공자를 쓴다. Ask의 내장 모델 최종 전사 대기만 95초로 조정한다. 외부 제공자의 대기 설정은 유지한다.
+- Windows에서는 Qwen을 비활성화한다. POSIX 기반 Qwen 엔진의 Windows 포팅/검증 전까지 지원한다고 표시하지 않는다.
+- macOS Qwen은 Accelerate ABI 때문에 13.3 이상, 번들 Whisper는 11 이상을 기준으로 빌드한다. Windows/Linux 실기기 검증은 추후 수행한다.
+
+## 빌드
+
+macOS는 기존 `scripts/h-build-macos.sh`를 사용한다. 이 스크립트가 `h-prepare-local-stt.py`를 호출해 고정된 엔진 소스를 외부 캐시에 빌드하고 Tauri resource mapping을 생성한다. 모델 가중치는 패키지에 넣지 않는다. credential helper는 기존 서명을 보존하고 STT 실행 파일만 별도로 서명한 뒤 앱을 서명한다.
+
+Windows/Linux 개발 빌드 준비:
+
+```sh
+python3 scripts/h-prepare-local-stt.py --config /absolute/external/build/local-stt-bundle.json
+npm run tauri build -- --config /absolute/external/build/local-stt-bundle.json
+```
+
+개발 의존성: Git, CMake, C/C++ compiler, Python(빌드 전용). Linux Qwen은 OpenBLAS 개발 패키지가 필요하다. Linux 배포 전 AppImage 내부에서 OpenBLAS 포함 여부/동적 라이브러리 경로를 확인해야 한다. Windows는 MSVC/Windows SDK로 Whisper를 빌드한다. 검증되지 않은 OS 패키지를 배포하지 않는다.
+
+## 검증과 다음 작업
+
+네트워크 다운로드와 실제 모델 전사 테스트는 평소 테스트에서 제외한다. 명시적으로 외부 테스트 디렉터리와 모델/음성 경로를 지정할 때만 실행한다. 사용자 설정과 기존 MLX 모델을 덮어쓰지 않는다.
+
+- 모델 크기/체크섬, Range 이어받기와 무시된 Range, 손상 파일 거부
+- 출력/PCM 제한, 녹음 루프 대기, 취소 후 프로세스 종료
+- 다운로드 전 사용자 동작 필요, 다운로드 중 일시 정지, 엔진 미지원 표시
+- 한국어 합성 음성으로 Whisper Base, Qwen 0.6B/1.7B 실제 엔진 검증
+
+**이 작업 완료 후 사용자에게 튜토리얼/첫 실행 안내를 다음 작업으로 제안한다. 이번 작업에서는 튜토리얼을 구현하지 않는다.**

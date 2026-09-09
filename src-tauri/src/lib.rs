@@ -914,6 +914,9 @@ pub fn run() {
                 .map_err(|e| anyhow::anyhow!("Failed to init dictionary store: {}", e))?;
 
             let shared_client = build_shared_http_client();
+            if let Err(error) = extensions::local_stt::Service::install(data_dir.join("local-stt"), app.path().resource_dir()?.join("local-stt")) {
+                tracing::warn!("Built-in STT unavailable: {error}");
+            }
 
             let app_registry = app_detector::registry::AppRegistry::builtin()
                 .map_err(|error| anyhow::anyhow!("Failed to init app registry: {error}"))?;
@@ -1216,6 +1219,11 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            extensions::local_stt::get_local_stt_status,
+            extensions::local_stt::download_local_stt_model,
+            extensions::local_stt::cancel_local_stt_download,
+            extensions::local_stt::select_local_stt_model,
+            extensions::local_stt::delete_local_stt_model,
             extensions::mobile::get_mobile_status,
             extensions::mobile::set_mobile_config,
             extensions::audio_ducking::get_audio_ducking,
@@ -1299,6 +1307,10 @@ pub fn run() {
         .run(|_app, _event| {
             if matches!(_event, tauri::RunEvent::Exit) {
                 extensions::voice_feedback::shutdown(_app);
+                if let Ok(service) = extensions::local_stt::service() {
+                    service.shutdown();
+                    tauri::async_runtime::block_on(service.wait_idle());
+                }
                 if let Some(service) = _app.try_state::<extensions::audio_ducking::Service>() {
                     service.shutdown();
                 }

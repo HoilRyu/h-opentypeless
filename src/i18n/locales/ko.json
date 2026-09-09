@@ -894,5 +894,26 @@
       "openrouter": "OpenRouter",
       "cloud": "OpenTypeless Cloud"
     }
+  },
+  "h": {
+    "localStt": {
+      "provider": "내장 STT · Whisper / Qwen",
+      "title": "이 컴퓨터에서 음성 인식",
+      "description": "모델을 한 번 다운로드하면 STT 서버나 인터넷 연결 없이 전사합니다. 문장 다듬기는 기존 LLM 설정을 사용합니다.",
+      "resources": "메모리는 보수적인 권장값이며 성능 보장은 아닙니다. 저사양 PC는 Whisper Base부터 시작하세요. 녹음은 최대 2분, 한 번에 한 작업만 CPU 최대 4개 스레드로 처리하며 작업 후 엔진을 종료합니다.",
+      "loading": "모델을 불러오는 중…",
+      "selected": "사용 중",
+      "ram": "메모리 {{count}} GB 권장",
+      "unavailable": "이 빌드에는 해당 플랫폼용 실행 엔진이 포함되지 않았습니다.",
+      "use": "이 모델 사용",
+      "pause": "일시 정지",
+      "resume": "이어받기",
+      "download": "다운로드",
+      "delete": "파일 삭제",
+      "verifying": "다운로드 파일 확인 중…",
+      "choose": "모델 다운로드 후 ‘이 모델 사용’을 선택하면 녹음할 수 있습니다.",
+      "memory": "이 컴퓨터의 메모리: {{count}} GB.",
+      "limitReason": "안정적인 로컬 처리를 위해 녹음은 2분으로 제한합니다."
+    }
   }
 }

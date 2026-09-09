@@ -1,5 +1,21 @@
 # H-OpenTypeless 인계
 
+## 2026-09-10 외부 Qwen STT 서버 제거
+
+사용자 요청으로 `local.opentypeless.qwen3-asr` launchd 작업을 bootout하고 외부 서버 Python 환경·모델·키·전용 로그·plist를 제거했다. 8765 포트 종료 확인. `~/.local/share/opentypeless-local`에는 Ollama plist와 Ollama 관련 로그만 유지했다. Ollama 11434 정상 응답 확인.
+내장 Qwen 1.7B 다운로드는 app data의 별도 디렉터리에 보존했다. 외부 서버 제거 후 사용자가 정상 작동을 확인했다. 아래의 외부 서버 유지/복원 기록은 제거 전 이력이다.
+
+## 2026-09-10 내장 STT 추가
+
+- `extensions/local_stt` + `LocalSttSetting.tsx`: Whisper Tiny/Base/Small, Qwen3-ASR 0.6B/1.7B 선택 다운로드·이어받기·검증·삭제·선택. 엔진은 앱 리소스에 포함하고 모델은 app data에 보존한다.
+- 네이티브 전사 후 프로세스 종료, 취소/timeout 종료, 120초 PCM 제한, 4 스레드, 단일 작업 lease. STT에 키체인/API 키를 사용하지 않는다. 기존 LLM/API/Ollama 기능은 유지한다.
+- macOS 앱 설치 및 실제 `mobile /api/dictate → builtin Qwen 0.6B → Ollama` 합성 한국어 전사/다듬기 성공, warning 없음. 이후 STT 제공자는 기존 custom-whisper로 복원했다. 내장 선택 모델은 qwen-0.6b로 준비했다.
+- Base와 Qwen 0.6B는 검증한 파일을 `~/Library/Application Support/dev.hoilryu.hopentypeless/local-stt`에 준비했다. 기존 MLX 1.7B 원본 모델/서버/주소는 유지했다.
+- frontend 471, Rust 639 통과(명시적 다운로드/실제 모델 테스트 등 4 ignored); 실제 모델 다운로드와 한국어 전사(Base/Qwen 0.6B/1.7B) 별도 통과. Clippy -D warnings 통과. 릴리즈 스크립트 테스트 10 통과.
+- 자세한 사용법/구조/플랫폼 제한: [LOCAL_STT.md](LOCAL_STT.md). Windows Qwen은 비활성화. Windows/Linux 실기기 검증은 아직 미실시.
+- 현재 수정은 미커밋. 기존 f59e7f1 릴리즈 후보 DMG에는 이번 STT 기능이 포함되지 않는다. 릴리즈할 때 새 커밋 기준으로 패키지를 다시 생성해야 한다.
+- **사용자 요청: STT 작업이 끝나면 첫 실행 튜토리얼을 다음 작업으로 안내할 것. 튜토리얼은 아직 구현하지 않았음.**
+
 2026-09-08. 작업 소스: /Users/ryuhoil/syncthing/workspace/h-opentypeless.
 기능 브랜치: feat/h-foundation-direct-providers. origin HoilRyu/h-opentypeless, upstream tover0314-w/opentypeless. 기반 v1.1.57(68cf6f11). 아직 커밋·푸시하지 않음.
 

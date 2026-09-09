@@ -894,5 +894,26 @@
       "openrouter": "OpenRouter",
       "cloud": "OpenTypeless Cloud"
     }
+  },
+  "h": {
+    "localStt": {
+      "provider": "Built-in STT · Whisper / Qwen",
+      "title": "Speech recognition on this computer",
+      "description": "Download a model once, then transcribe without an STT server or internet connection. Your existing LLM provider is still used for polishing.",
+      "resources": "RAM values are conservative recommendations, not guarantees. Start with Whisper Base on a modest PC. Recording is limited to 2 minutes; one job runs at a time, with up to 4 CPU threads. The engine exits after each job.",
+      "loading": "Loading models…",
+      "selected": "Selected",
+      "ram": "{{count}} GB RAM recommended",
+      "unavailable": "This build does not include a supported engine for this platform.",
+      "use": "Use model",
+      "pause": "Pause",
+      "resume": "Resume download",
+      "download": "Download",
+      "delete": "Delete files",
+      "verifying": "Verifying downloaded files…",
+      "choose": "Download a model and choose “Use model” before recording.",
+      "memory": "This computer has {{count}} GB RAM.",
+      "limitReason": "Recording is limited to 2 minutes for bounded local processing."
+    }
   }
 }

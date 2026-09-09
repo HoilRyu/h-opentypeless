@@ -161,6 +161,7 @@ fn capability(
 
 fn static_provider_capability(provider_id: &str) -> SttRecordingCapability {
     match provider_id {
+        crate::extensions::local_stt::ID => capability(provider_id, SttTransport::LocalBuffered, 120, 120, Some(crate::extensions::local_stt::MAX_AUDIO as u64), RecordingLimitSource::ProductSafety, "h.localStt.limitReason"),
         "glm-asr" => capability(
             provider_id,
             SttTransport::FileUpload,
