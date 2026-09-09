@@ -1,3 +1,4 @@
+import { H_MANAGED_CLOUD_ENABLED } from '../../lib/h-features'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isMacPlatform, useAppStore } from '../../stores/appStore'
@@ -69,7 +70,9 @@ export function SttPane() {
     ? platformCapabilities.os === 'macos'
     : isMacPlatform()
   const visibleSttProviders = STT_PROVIDERS.filter(
-    (provider) => provider.value !== APPLE_SPEECH_PROVIDER || supportsAppleSpeech,
+    (provider) =>
+      (H_MANAGED_CLOUD_ENABLED || provider.value !== 'cloud') &&
+      (provider.value !== APPLE_SPEECH_PROVIDER || supportsAppleSpeech),
   )
   const appleSpeechReady = sttDiagnostics?.ready === true
   const appleSpeechUnavailable = sttDiagnostics?.ready === false
@@ -354,28 +357,37 @@ export function SttPane() {
       </FormField>
 
       {isCloud ? (
-        <div className="border border-border rounded-[10px] px-3 py-3 space-y-2">
-          <div className="flex items-center gap-2 text-[13px]">
-            <Crown size={14} className="text-accent" />
-            <span className="text-text-primary font-medium">{t('settings.cloudSttPro')}</span>
-          </div>
-          {!user ? (
-            <p className="text-[12px] text-text-secondary">{t('settings.sttSignInHint')}</p>
-          ) : !hasCloudAccess ? (
-            <div className="space-y-2">
-              <p className="text-[12px] text-text-secondary">{t('settings.sttUpgradeHint')}</p>
-              <button
-                type="button"
-                onClick={goUpgrade}
-                className="rounded-[8px] border border-accent bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:bg-accent-hover"
-              >
-                {t('nav.upgrade')}
-              </button>
+        !H_MANAGED_CLOUD_ENABLED ? (
+          <p role="status">
+            {t(
+              'h.directProviderRequired',
+              'Choose a direct provider. OpenTypeless Cloud accounts are not used in H.',
+            )}
+          </p>
+        ) : (
+          <div className="border border-border rounded-[10px] px-3 py-3 space-y-2">
+            <div className="flex items-center gap-2 text-[13px]">
+              <Crown size={14} className="text-accent" />
+              <span className="text-text-primary font-medium">{t('settings.cloudSttPro')}</span>
             </div>
-          ) : (
-            <p className="text-[12px] text-green-500">{t('settings.sttProActive')}</p>
-          )}
-        </div>
+            {!user ? (
+              <p className="text-[12px] text-text-secondary">{t('settings.sttSignInHint')}</p>
+            ) : !hasCloudAccess ? (
+              <div className="space-y-2">
+                <p className="text-[12px] text-text-secondary">{t('settings.sttUpgradeHint')}</p>
+                <button
+                  type="button"
+                  onClick={goUpgrade}
+                  className="rounded-[8px] border border-accent bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:bg-accent-hover"
+                >
+                  {t('nav.upgrade')}
+                </button>
+              </div>
+            ) : (
+              <p className="text-[12px] text-green-500">{t('settings.sttProActive')}</p>
+            )}
+          </div>
+        )
       ) : isAppleSpeech ? (
         <FormField label={t('providers.stt.appleSpeech')}>
           <div className="flex gap-2">

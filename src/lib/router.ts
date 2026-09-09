@@ -1,10 +1,12 @@
+import { H_MANAGED_CLOUD_ENABLED } from './h-features'
 import { useState, useEffect, useCallback } from 'react'
 
-export type Route = 'home' | 'settings' | 'history' | 'upgrade' | 'account'
+export type Route = 'home' | 'mobile' | 'settings' | 'history' | 'upgrade' | 'account'
 
 export function parseHash(): Route {
   const hash = window.location.hash.replace('#/', '')
-  if (hash === 'history' || hash === 'upgrade' || hash === 'account') return hash
+  if (hash === 'history' || hash === 'mobile') return hash
+  if (H_MANAGED_CLOUD_ENABLED && (hash === 'upgrade' || hash === 'account')) return hash
   if (hash === 'settings' || hash.startsWith('settings?')) return 'settings'
   return 'home'
 }

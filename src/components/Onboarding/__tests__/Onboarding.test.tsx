@@ -3,6 +3,13 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Onboarding } from '../index'
 
+const feature = vi.hoisted(() => ({ enabled: true }))
+vi.mock('../../../lib/h-features', () => ({
+  get H_MANAGED_CLOUD_ENABLED() {
+    return feature.enabled
+  },
+}))
+
 const mockStore = {
   onboardingStep: 5,
   setOnboardingStep: vi.fn(),
@@ -61,6 +68,7 @@ vi.mock('../../../lib/tauri', () => ({
 }))
 
 beforeEach(() => {
+  feature.enabled = true
   mockStore.onboardingStep = 5
   mockStore.onboardingMode = 'cloud'
   mockStore.setOnboardingStep.mockReset()
@@ -69,6 +77,15 @@ beforeEach(() => {
 afterEach(() => cleanup())
 
 describe('Onboarding cloud navigation', () => {
+  it('returns to Welcome from STT in H, skipping account and cloud mode', () => {
+    feature.enabled = false
+    mockStore.onboardingStep = 3
+    render(<Onboarding />)
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(mockStore.setOnboardingStep).toHaveBeenCalledWith(0)
+    expect(screen.queryByText('Account')).not.toBeInTheDocument()
+  })
+
   it('returns from Permissions to Mode Select because cloud skips provider setup', async () => {
     render(<Onboarding />)
 

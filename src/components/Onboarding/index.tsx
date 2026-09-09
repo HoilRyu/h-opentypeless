@@ -1,3 +1,4 @@
+import { H_MANAGED_CLOUD_ENABLED } from '../../lib/h-features'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../stores/appStore'
@@ -68,6 +69,11 @@ export function Onboarding() {
   const config = useAppStore((s) => s.config)
 
   const handleNext = async () => {
+    if (!H_MANAGED_CLOUD_ENABLED && step === 0) {
+      setOnboardingMode('byok')
+      setStep(3)
+      return
+    }
     if (step < TOTAL_STEPS - 1) {
       // Cloud mode: set providers BEFORE saving, then skip STT/LLM setup
       if (step === 2 && onboardingMode === 'cloud') {
@@ -96,6 +102,10 @@ export function Onboarding() {
   }
 
   const handleBack = async () => {
+    if (!H_MANAGED_CLOUD_ENABLED && step === 3) {
+      setStep(0)
+      return
+    }
     if (step > 0) {
       try {
         await saveConfig(config)
@@ -104,7 +114,7 @@ export function Onboarding() {
       }
 
       // Cloud mode skips provider setup, so Permissions returns to Mode Select.
-      if (step === 5 && onboardingMode === 'cloud') {
+      if (H_MANAGED_CLOUD_ENABLED && step === 5 && onboardingMode === 'cloud') {
         setStep(2)
         return
       }
@@ -143,8 +153,8 @@ export function Onboarding() {
 
   return (
     <OnboardingLayout
-      step={step}
-      totalSteps={TOTAL_STEPS}
+      step={H_MANAGED_CLOUD_ENABLED ? step : Math.max(0, step - 2)}
+      totalSteps={H_MANAGED_CLOUD_ENABLED ? TOTAL_STEPS : TOTAL_STEPS - 2}
       title={titles[step].title}
       subtitle={titles[step].subtitle}
       canNext={canNext}

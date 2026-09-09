@@ -2,6 +2,7 @@ import React from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MainLayout } from '../index'
+import { parseHash } from '../../../lib/router'
 import { useCloudServiceStore } from '../../../stores/cloudServiceStore'
 
 const MOTION_PROPS = new Set([
@@ -66,6 +67,26 @@ afterEach(() => {
 })
 
 describe('MainLayout', () => {
+  it('redirects old account and upgrade routes to home', () => {
+    for (const hash of ['#/account', '#/upgrade']) {
+      window.location.hash = hash
+      expect(parseHash()).toBe('home')
+    }
+    window.location.hash = '#/settings?pane=llm'
+    expect(parseHash()).toBe('settings')
+  })
+
+  it('hides upstream account and subscription navigation in H', () => {
+    render(
+      <MainLayout>
+        <div>content</div>
+      </MainLayout>,
+    )
+    expect(screen.queryByRole('button', { name: 'Account' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Upgrade' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()
+  })
+
   it('does not show Ask as a first-class navigation item', () => {
     render(
       <MainLayout>

@@ -616,32 +616,14 @@ describe('SttPane', () => {
   })
 
   describe('Cloud provider UI', () => {
-    it('shows cloud info when provider is cloud and user not signed in', () => {
+    it.each(['signed-out', 'free', 'pro'])('requires a direct provider instead of managed cloud for %s users', (plan) => {
       mockAppStore.config.stt_provider = 'cloud'
+      mockAuthStore.user = plan === 'signed-out' ? null : { id: '1', email: 'test@example.com' }
+      mockAuthStore.plan = plan === 'pro' ? 'pro' : 'free'
       render(<SttPane />)
-      expect(screen.getByText('Sign in to use cloud STT')).toBeInTheDocument()
+      expect(screen.getByRole('status')).toHaveTextContent('h.directProviderRequired')
+      expect(screen.queryByRole('button', { name: 'Upgrade' })).not.toBeInTheDocument()
     })
-
-    it('shows upgrade hint when user is signed in but not pro', () => {
-      mockAppStore.config.stt_provider = 'cloud'
-      mockAuthStore.user = { id: '1', email: 'test@example.com' }
-      mockAuthStore.plan = 'free'
-
-      render(<SttPane />)
-      expect(screen.getByText('Upgrade to Pro to use cloud STT')).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: 'Upgrade' }))
-      expect(window.location.hash).toBe('#/upgrade')
-    })
-
-    it('shows active status when user is pro', () => {
-      mockAppStore.config.stt_provider = 'cloud'
-      mockAuthStore.user = { id: '1', email: 'test@example.com' }
-      mockAuthStore.plan = 'pro'
-
-      render(<SttPane />)
-      expect(screen.getByText('Cloud STT active')).toBeInTheDocument()
-    })
-
     it('hides API key input when provider is cloud', () => {
       mockAppStore.config.stt_provider = 'cloud'
 

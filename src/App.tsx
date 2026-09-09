@@ -1,3 +1,4 @@
+import { H_MANAGED_CLOUD_ENABLED } from './lib/h-features'
 import { useEffect, useState } from 'react'
 import i18n from './i18n'
 import { useTauriEvents } from './hooks/useTauriEvents'
@@ -23,6 +24,7 @@ import { Settings } from './components/Settings'
 import { History } from './components/History'
 import { Onboarding } from './components/Onboarding'
 import { MainLayout } from './components/MainLayout'
+import { MobileConnection } from './components/MobileConnection'
 import { HomePage } from './components/HomePage'
 import { UpgradePage } from './components/UpgradePage'
 import { AccountPage } from './components/AccountPage'
@@ -62,7 +64,8 @@ function AskApp() {
   const setConfig = useAppStore((s) => s.setConfig)
 
   useEffect(() => {
-    useAuthStore.getState().initialize()
+    if (H_MANAGED_CLOUD_ENABLED) useAuthStore.getState().initialize()
+    else useAuthStore.setState({ loading: false })
     getConfig()
       .then((config) => {
         setConfig(config)
@@ -149,10 +152,11 @@ function MainApp() {
     })
 
     // Initialize auth session (non-blocking)
-    useAuthStore.getState().initialize()
+    if (H_MANAGED_CLOUD_ENABLED) useAuthStore.getState().initialize()
+    else useAuthStore.setState({ loading: false })
 
     // Initialize deep-link listener
-    initDeepLinkListener()
+    if (H_MANAGED_CLOUD_ENABLED) initDeepLinkListener()
   }, [
     setOnboardingCompleted,
     setConfig,
@@ -169,13 +173,13 @@ function MainApp() {
   const authLoading = useAuthStore((s) => s.loading)
 
   useEffect(() => {
-    if (!loaded || authLoading || !user || route !== 'account') return
+    if (!H_MANAGED_CLOUD_ENABLED || !loaded || authLoading || !user || route !== 'account') return
     if (readPendingDesktopCheckout(localStorage)) navigate('upgrade')
   }, [authLoading, loaded, navigate, route, user])
 
   // Subscription changes are event-driven. Focus refresh is reserved for a pending checkout.
   useEffect(() => {
-    if (!loaded || !user) return
+    if (!H_MANAGED_CLOUD_ENABLED || !loaded || !user) return
 
     let refreshInFlight = false
     const refreshPendingCheckout = () => {
@@ -220,10 +224,11 @@ function MainApp() {
   return (
     <MainLayout>
       {route === 'home' && <HomePage />}
+      {route === 'mobile' && <MobileConnection />}
       {route === 'settings' && <Settings />}
       {route === 'history' && <History />}
-      {route === 'upgrade' && <UpgradePage />}
-      {route === 'account' && <AccountPage />}
+      {H_MANAGED_CLOUD_ENABLED && route === 'upgrade' && <UpgradePage />}
+      {H_MANAGED_CLOUD_ENABLED && route === 'account' && <AccountPage />}
       <ToastContainer />
     </MainLayout>
   )
