@@ -60,6 +60,9 @@ def verify(directory, commit):
         name = data['file']
         if pathlib.Path(name).name != name:
             raise ValueError('Unsafe package filename.')
+        extension = {'macos-arm64': '.dmg', 'android-arm64': '.apk'}.get(data['platform'])
+        if not extension or pathlib.Path(name).suffix != extension:
+            raise ValueError(f'{name}: unexpected package format for this platform.')
         if data['source_dirty'] is not False or data['source_commit'] != commit:
             raise ValueError(f'{name}: rebuild from the clean release commit before publishing.')
         if digest(directory / name) != data['sha256']:

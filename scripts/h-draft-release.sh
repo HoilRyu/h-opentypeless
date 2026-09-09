@@ -19,5 +19,5 @@ python3 scripts/h-release-manifest.py verify "$packages" --commit "$commit"
 [[ -f "$packages/VALIDATION.md" ]] || { echo 'Add the completed installation/update validation record as VALIDATION.md.' >&2; exit 1; }
 gh release create "$tag" --repo HoilRyu/h-opentypeless --verify-tag --draft --prerelease \
   --title "H-OpenTypeless $tag" --notes-file docs/fork/RELEASE_NOTES.md \
-  "$packages"/*.zip "$packages"/*.apk "$packages"/*.json "$packages/SHA256SUMS" "$packages/VALIDATION.md" \
+  "$packages"/*.dmg "$packages"/*.apk "$packages"/*.json "$packages/SHA256SUMS" "$packages/VALIDATION.md" \
   LICENSE android/app/src/main/assets/THIRD_PARTY_NOTICES.txt

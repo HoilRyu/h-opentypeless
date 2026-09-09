@@ -146,3 +146,8 @@ b371c84 이후 누적 변경을 기능별 7개 커밋과 디자인·문서 커�
 UI 467개 통과, 배포 manifest 검사 9개 통과. Android release 빌드와 단위 40개 통과, lint 0 errors/15 warnings, 배포 서명 확인. Kotlin 2.4 메타데이터에 대한 기존 lint 엔진의 호환 진단 메시지가 있으나 lint 작업/빌드는 성공했다. 키가 없을 때 release 작업이 실패하는 것도 검사했다. 개발 APK와 release APK의 인증서가 달라 최초 전환에는 재설치가 필요하다. 실제 기기의 기존 앱은 삭제/교체하지 않았다.
 
 Mac 최종 빌드/패키지 검증 결과는 별도 releases 폴더의 PREPARATION_VALIDATION.md에 기록한다. npm audit는 high/critical 0개, 개발 도구 관련 moderate 3개다. GitHub secrets 등록·태그 생성·릴리즈 공개는 아직 수행하지 않았다. 서명 키의 별도 위치 백업과 신규 설치/업데이트 실사용 검증은 공개 전 필요하다. 실행 방법: RELEASING.md, 공개 설명 초안: RELEASE_NOTES.md.
+
+
+## DMG 설치 방식 — 2026-09-09
+
+사용자 요청으로 macOS 공개 산출물을 ZIP에서 DMG로 전환했다. scripts/h-package-dmg.sh는 기존 자체 서명 앱을 변경하지 않고 dmgbuild 1.6.7의 고정 Finder 배치로 포장한다. 앱 → Applications 바로가기 드래그 방식이며 기본 배경 화살표를 사용한다. 도구는 저장소 밖 가상 환경에 설치한다. release/초안 등록/형식 검증/배포 안내도 DMG로 맞췄다. 미리보기 DMG의 hdiutil verify 통과. 최종 산출물의 마운트·서명·Finder 확인은 해당 releases 폴더의 검증 기록에 남긴다. 실제 /Applications 설치본은 변경하지 않는다.

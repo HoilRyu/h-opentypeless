@@ -1,6 +1,6 @@
 # H 릴리즈 실행 가이드
 
-첫 범위: macOS arm64 자체 서명 ZIP + Android arm64 release APK. 공개는 별도의 단계이며 기본 스크립트는 설치된 앱을 교체하지 않는다.
+첫 범위: macOS arm64 자체 서명 DMG + Android arm64 release APK. 공개는 별도의 단계이며 기본 스크립트는 설치된 앱을 교체하지 않는다.
 
 ## 서명과 빌드 환경
 
@@ -28,6 +28,8 @@ export GRADLE_USER_HOME="$HOME/.local/share/h-opentypeless/android-tools/gradle-
 ./scripts/h-release-android.sh
 ```
 
+Mac 설치 이미지는 `scripts/h-package-dmg.sh`와 고정 버전 dmgbuild로 만든다. Finder 설치 창에 앱과 Applications 바로가기를 배치하고, 서명된 앱 내부는 변경하지 않는다. 도구는 저장소 밖 가상 환경에 설치한다.
+
 기본 산출물 폴더는 `~/.local/share/h-opentypeless/releases/<desktop-version>/`이다. 반복 검증 시 `H_RELEASE_DIR`에 별도 폴더를 지정한다. 같은 이름의 패키지를 덮어쓰지 않는다. Mac release 빌드는 기본 2개 Cargo 작업, Android는 2개 Gradle worker로 실행한다.
 
 빌드 전후 소스 상태가 달라지면 패키징을 중단한다. 각 패키지 옆 JSON에는 소스 커밋·미커밋 여부·SHA256을 기록한다. `SHA256SUMS`는 패키지의 체크섬이다. 미커밋 빌드는 준비/검사용이며 공개용으로 등록할 수 없다. 공개 전 소스를 커밋한 뒤 동일 커밋에서 두 패키지를 다시 빌드한다.
@@ -44,7 +46,7 @@ Android CI 서명에는 기존 키의 `H_ANDROID_KEYSTORE_BASE64`, `H_ANDROID_KE
 
 다음 항목을 실제 배포 패키지로 검사하고 결과를 패키지 폴더의 `VALIDATION.md`에 작성한다. 자동 검사로 대체하지 않는다.
 
-- Mac: ZIP 재다운로드/압축 해제/서명 검증, 신규 설치와 첫 권한 설정, 기존 버전 교체 후 설정·권한·키체인 유지
+- Mac: DMG 재다운로드/마운트/서명 검증, 신규 설치와 첫 권한 설정, 기존 버전 교체 후 설정·권한·키체인 유지
 - 녹음 시작/중지/취소, 포커스 유지 입력 및 이탈 복사, 복사 단축키, 음량 복원
 - Android: 정식 서명 설치/업데이트, 키보드 입력, 원격 통신, 네트워크 단절/로컬 추론/취소
 - 기록: OS/기기/버전/소스 SHA, 실제 통과한 항목과 아직 미검증인 항목

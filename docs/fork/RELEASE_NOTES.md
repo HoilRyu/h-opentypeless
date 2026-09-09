@@ -2,7 +2,7 @@ H-OpenTypeless의 첫 GitHub 시험판입니다. OpenTypeless를 기반으로 �
 
 ## 다운로드
 
-- macOS Apple Silicon: `H-OpenTypeless_0.1.43-beta.1_macos-arm64.zip`
+- macOS Apple Silicon: `H-OpenTypeless_0.1.43-beta.1_macos-arm64.dmg`
 - Android arm64: `H-OpenTypeless_0.3.7_android-arm64.apk` (Android 9 이상)
 - Windows, Linux, Intel Mac 바이너리는 실제 검증 후 추가합니다.
 
@@ -17,7 +17,7 @@ H-OpenTypeless의 첫 GitHub 시험판입니다. OpenTypeless를 기반으로 �
 
 ## 설치 및 업데이트
 
-Mac ZIP을 풀어 H-OpenTypeless.app을 응용 프로그램 폴더에 넣습니다. 자체 서명된 시험판으로 Apple 공증은 받지 않았습니다. 처음 실행 시 차단되면 신뢰하는 다운로드인지 확인한 뒤 시스템 설정 → 개인정보 보호 및 보안에서 해당 앱의 실행을 허용합니다. 시스템 보안 기능 전체를 끌 필요는 없습니다. 마이크와 손쉬운 사용 권한, 최초 키체인 접근 허용이 필요할 수 있습니다.
+Mac DMG를 열고 H-OpenTypeless 아이콘을 오른쪽 Applications 폴더로 드래그합니다. 복사가 끝나면 응용 프로그램 폴더에서 앱을 실행하고 연결된 디스크 이미지를 추출합니다. 자체 서명된 시험판으로 Apple 공증은 받지 않았습니다. 처음 실행 시 차단되면 신뢰하는 다운로드인지 확인한 뒤 시스템 설정 → 개인정보 보호 및 보안에서 해당 앱의 실행을 허용합니다. 시스템 보안 기능 전체를 끌 필요는 없습니다. 마이크와 손쉬운 사용 권한, 최초 키체인 접근 허용이 필요할 수 있습니다.
 
 Android는 APK를 직접 설치하고 음성 키보드 및 마이크 권한을 설정합니다. 기존 개발용 APK와 배포 APK의 서명이 다르면 업데이트 설치가 거부됩니다. 이 경우 기존 설정을 기록한 뒤 개발용 앱을 삭제하고 배포 APK를 설치해야 하며 앱 내부 설정/모델은 삭제될 수 있습니다. 이후 배포 APK끼리는 같은 배포 키로 업데이트합니다.
 

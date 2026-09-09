@@ -16,7 +16,7 @@ class ReleaseManifestTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = pathlib.Path(self.temp.name)
-        for platform, extension in [('macos-arm64', 'zip'), ('android-arm64', 'apk')]:
+        for platform, extension in [('macos-arm64', 'dmg'), ('android-arm64', 'apk')]:
             package = self.root / ('H_' + platform + '.' + extension)
             package.write_bytes(b'package fixture')
             data = dict(file=package.name, sha256=manifest.digest(package), platform=platform,
@@ -59,6 +59,16 @@ class ReleaseManifestTests(unittest.TestCase):
     def test_modified_checksum_list_rejected(self):
         (self.root / 'SHA256SUMS').write_text('invalid')
         with self.assertRaisesRegex(ValueError, 'SHA256SUMS'): manifest.verify(self.root, 'abc')
+
+    def test_zip_is_not_accepted_for_dmg_release(self):
+        package = next(self.root.glob('*.dmg'))
+        renamed = package.with_suffix('.zip')
+        package.rename(renamed)
+        record = package.with_name(package.name + '.json')
+        data = json.loads(record.read_text()); data['file'] = renamed.name
+        record.write_text(json.dumps(data)); self.update_checksums()
+        with self.assertRaisesRegex(ValueError, 'unexpected package format'):
+            manifest.verify(self.root, 'abc')
 
 class SourceSnapshotTests(unittest.TestCase):
     def test_source_change_during_build_is_rejected(self):
