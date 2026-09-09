@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-env-changed=H_CREDENTIAL_HELPER_SHA256");
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=framework=Speech");
 

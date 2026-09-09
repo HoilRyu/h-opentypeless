@@ -22,9 +22,14 @@ rsync -a --delete --exclude=.git --exclude=node_modules --exclude=target --exclu
   "$source_root/" "$build_root/"
 cd "$build_root"
 npm ci
+helper="$("$source_root/scripts/h-prepare-credential-helper.sh")"
+export H_CREDENTIAL_HELPER_SHA256="$(shasum -a 256 "$helper" | cut -d' ' -f1)"
 export CARGO_HTTP_MULTIPLEXING=false
 npm run tauri build -- --debug --bundles app --no-sign
 
+bundle="$build_root/src-tauri/target/debug/bundle/macos/H-OpenTypeless.app"
+mkdir -p "$bundle/Contents/Helpers"
+cp "$helper" "$bundle/Contents/Helpers/h-credential-helper"
 if [[ "$sign_mode" == self-signed ]]; then
   "$source_root/scripts/h-sign-macos.sh" "$build_root/src-tauri/target/debug/bundle/macos/H-OpenTypeless.app"
 fi

@@ -23,6 +23,8 @@ identifier="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$bundle/Con
   echo 'Refusing to sign a bundle with an unexpected identifier.' >&2; exit 1;
 }
 requirement="designated => identifier \"$identifier\" and certificate leaf = H\"$identity\""
+echo 'Signing with the existing local certificate. macOS may ask codesign to access its private key.'
+echo 'This is a build-time signing prompt, separate from application API-key or Accessibility access.'
 codesign --force --sign "$identity" --timestamp=none \
   --identifier "$identifier" --requirements "=$requirement" \
   --entitlements "$source_root/src-tauri/Entitlements.plist" "$bundle"

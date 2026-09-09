@@ -4,6 +4,68 @@ use serde::{Deserialize, Serialize};
 
 use crate::storage::AppConfig;
 
+// One native vault operation may outlive its caller (for example an OS prompt).
+// Keep the permit on that worker so retries cannot accumulate blocked threads.
+static SECRET_GATE: std::sync::LazyLock<std::sync::Arc<tokio::sync::Semaphore>> =
+    std::sync::LazyLock::new(|| std::sync::Arc::new(tokio::sync::Semaphore::new(1)));
+
+async fn bounded_secret_read<F>(
+    gate: std::sync::Arc<tokio::sync::Semaphore>,
+    timeout: std::time::Duration,
+    read: F,
+) -> Result<String>
+where
+    F: FnOnce() -> Result<String> + Send + 'static,
+{
+    let permit = gate.try_acquire_owned().map_err(|_| anyhow!(
+        "A previous keychain request is still pending. Allow H-OpenTypeless access in macOS and try again."
+    ))?;
+    let task = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        read()
+    });
+    tokio::time::timeout(timeout, task)
+        .await
+        .map_err(|_| {
+            anyhow!("Keychain access timed out. Allow H-OpenTypeless access and try again.")
+        })?
+        .context("credential worker stopped")?
+}
+
+pub async fn read_config_secret(config: &AppConfig, stt: bool) -> Result<String> {
+    let config = config.clone();
+    bounded_secret_read(
+        SECRET_GATE.clone(),
+        std::time::Duration::from_secs(20),
+        move || {
+            if stt {
+                resolve_stt_config_secret(&config, &SystemCredentialVault)
+            } else {
+                resolve_llm_config_secret(&config, &SystemCredentialVault)
+            }
+        },
+    )
+    .await
+}
+
+/// Dropping the caller discards the result; the native worker still owns its permit.
+pub async fn read_config_secret_until_cancelled(
+    config: &AppConfig,
+    stt: bool,
+    cancelled: impl Fn() -> bool,
+) -> Result<String> {
+    tokio::select! {
+        biased;
+        _ = async {
+            while !cancelled() {
+                tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+            }
+        } => Err(anyhow!("Credential request cancelled")),
+        result = read_config_secret(config, stt) => result,
+    }
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 const SERVICE_NAME: &str = "H-OpenTypeless";
 const API_KEY_ACCOUNT_SUFFIX: &str = "api_key";
 const STORED_CREDENTIAL_VERSION: u8 = 1;
@@ -127,12 +189,12 @@ pub fn remove_cloud_session_token<V: CredentialSecretRemover>(vault: &V) -> Resu
     vault.remove_secret(CLOUD_SESSION_NAMESPACE, CLOUD_SESSION_PROVIDER)
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 fn system_entry(account: &str) -> Result<keyring::Entry> {
     keyring::Entry::new(SERVICE_NAME, account).context("open system credential vault")
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 fn write_system_secret(account: &str, secret: &str) -> Result<()> {
     system_entry(account)?
         .set_password(secret)
@@ -146,7 +208,7 @@ fn write_system_secret(_account: &str, _secret: &str) -> Result<()> {
     ))
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 fn read_system_secret(account: &str) -> Result<Option<String>> {
     match system_entry(account)?.get_password() {
         Ok(secret) => Ok(Some(secret)),
@@ -162,7 +224,7 @@ fn read_system_secret(_account: &str) -> Result<Option<String>> {
     ))
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 fn delete_system_secret(account: &str) -> Result<()> {
     match system_entry(account)?.delete_credential() {
         Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
@@ -175,6 +237,19 @@ fn delete_system_secret(_account: &str) -> Result<()> {
     Err(anyhow!(
         "system credential vault is not supported on this platform"
     ))
+}
+
+#[cfg(target_os = "macos")]
+fn read_system_secret(account: &str) -> Result<Option<String>> {
+    crate::credential_helper::request("read", account, None)
+}
+#[cfg(target_os = "macos")]
+fn write_system_secret(account: &str, secret: &str) -> Result<()> {
+    crate::credential_helper::request("write", account, Some(secret)).map(|_| ())
+}
+#[cfg(target_os = "macos")]
+fn delete_system_secret(account: &str) -> Result<()> {
+    crate::credential_helper::request("delete", account, None).map(|_| ())
 }
 
 fn current_credential_timestamp() -> String {
@@ -568,5 +643,70 @@ mod tests {
         let secret = resolve_llm_config_secret(&config, &vault).unwrap();
 
         assert_eq!(secret, "llm-secret");
+    }
+}
+
+#[cfg(test)]
+mod async_vault_tests {
+    use super::*;
+    use std::{sync::Arc, time::Duration};
+    use tokio::sync::Semaphore;
+
+    #[tokio::test]
+    async fn timeout_keeps_worker_permit_until_native_call_finishes() {
+        let gate = Arc::new(Semaphore::new(1));
+        let (release, wait) = std::sync::mpsc::channel();
+        let result = bounded_secret_read(gate.clone(), Duration::from_millis(20), move || {
+            wait.recv_timeout(Duration::from_secs(2)).unwrap();
+            Ok("late secret".into())
+        })
+        .await;
+        assert!(result.unwrap_err().to_string().contains("timed out"));
+        for _ in 0..100 {
+            assert!(
+                bounded_secret_read(gate.clone(), Duration::from_secs(1), || {
+                    panic!("must not start another native request")
+                })
+                .await
+                .is_err()
+            );
+        }
+        release.send(()).unwrap();
+        let permit = tokio::time::timeout(Duration::from_secs(1), gate.clone().acquire_owned())
+            .await
+            .unwrap()
+            .unwrap();
+        drop(permit);
+        assert_eq!(
+            bounded_secret_read(gate, Duration::from_secs(1), || Ok("new secret".into()))
+                .await
+                .unwrap(),
+            "new secret"
+        );
+    }
+
+    #[tokio::test]
+    async fn cancelled_caller_does_not_release_running_worker() {
+        let gate = Arc::new(Semaphore::new(1));
+        let (started, ready) = tokio::sync::oneshot::channel();
+        let (release, wait) = std::sync::mpsc::channel();
+        let request_gate = gate.clone();
+        let caller = tokio::spawn(async move {
+            bounded_secret_read(request_gate, Duration::from_secs(20), move || {
+                let _ = started.send(());
+                wait.recv_timeout(Duration::from_secs(2)).unwrap();
+                Ok("discarded".into())
+            })
+            .await
+        });
+        ready.await.unwrap();
+        caller.abort();
+        let _ = caller.await;
+        assert_eq!(gate.available_permits(), 0);
+        release.send(()).unwrap();
+        let _permit = tokio::time::timeout(Duration::from_secs(1), gate.acquire())
+            .await
+            .unwrap()
+            .unwrap();
     }
 }

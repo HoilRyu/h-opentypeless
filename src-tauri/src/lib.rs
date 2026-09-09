@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+mod credential_helper;
 pub mod app_detector;
 pub mod audio;
 pub mod commands;

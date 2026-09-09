@@ -35,6 +35,8 @@
 
 ## 실행 현황
 
+2026-09-09 보완: 사용자가 매번 재설치할 때 키체인 암호 창이 나타난다고 보고했다. 아래 A→B 검증은 손쉬운 사용(TCC) 권한 유지에 대한 결과이며, 키체인 개인키 접근 승인 유지까지 검증한 것이 아니다. 이전의 ‘별도 키체인 승인 요청은 더 필요하지 않다’는 설명은 충분한 근거가 없었다. 현재 서명 인증서 지문과 designated requirement는 유지된다. codesign의 서명용 개인키 접근인지 앱의 API 키 접근인지 창의 요청자·항목을 구분해 조사해야 한다. 이 보고만으로 개인키 ACL이나 키체인 보호 설정을 자동 변경하지 않는다.
+
 2026-09-08: 사용자 승인에 따라 H-OpenTypeless Local Code Signing 자체 인증서(RSA3072, SHA256, Code Signing 전용, 2036-09-05 만료)와 개인키를 로그인 키체인에 생성/등록했다. 임시 개인키/PKCS12 파일은 import 후 삭제했다. 공개 인증서와 identity 선택 파일만 저장소 밖 signing 디렉터리에 남긴다. 시스템 신뢰 설정은 변경하지 않았다. 인증서가 trusted identity로 표시되지 않아도 실제 codesign과 designated requirement 검증은 가능함을 실행 파일 사본으로 확인했다.
 
 빌드 기본값을 self-signed로 변경했고 H_SIGN_MODE=adhoc일 때만 명시적으로 임시 서명을 허용한다. h-sign-macos.sh는 고정 인증서 지문과 앱 identifier를 designated requirement로 기록한다. 최초 자체 서명 설치/권한 등록 및 두 빌드 간 TCC 유지 검증은 진행 중이며 아직 성공으로 간주하지 않는다. 개인키의 암호화 백업은 아직 만들지 않았다.
