@@ -30,3 +30,9 @@ origin: HoilRyu/h-opentypeless. upstream: tover0314-w/opentypeless.
 
 ## Android 연결
 별도 extensions/mobile, ForkSettings/MobileConnectionSetting, android/에 구현. 원본 연결은 lib.rs의 서비스 초기화·명령 등록과 GeneralPane 설정 카드에 한정하며 Cargo에 Axum/if-addrs 및 Tokio 네트워크 기능을 추가했다. 기존 STT/LLM 제공자와 프롬프트 빌더를 호출하고 원본 프롬프트 로직은 수정하지 않는다. 별도 Python 서버는 사용하지 않는다. 지원 제공자와 API 제약은 MOBILE_API.md 참조.
+
+## USB 오디오 안정화
+audio/capture.rs에 종료 완료 대기와 장치 전환 직렬화를 추가했다. audio/lifecycle.rs는 H의 장치 제어 중단/진단 보조 모듈이다. audio_ducking의 비동기 완료·복구·오류 중단 처리를 강화했다. 원본 오디오 갱신 시 이 경계를 검토할 것. 상세 USB_AUDIO_PANIC_REVIEW.md.
+
+## Mac 음성 입력 표시
+`extensions/voice_feedback`, `VoiceFeedback`, `ForkSettings/VoiceFeedbackSetting`에 Mac 전용 표시/커서 배치/설정을 구현한다. 원본 연결은 lib 서비스 수명·명령 등록, 데스크톱 pipeline/Ask 상태, App 캡슐 상태 재조회, 캡슐 크기·파형·스타일과 일반 설정 카드이다. Android/모바일 요청 경로는 변경하지 않는다. 상세 및 검증 한계는 VOICE_FEEDBACK.md.
