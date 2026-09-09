@@ -3,14 +3,25 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use tauri::Manager;
-use tokio::sync::{mpsc, Notify};
+use tokio::sync::{mpsc, watch, Notify};
+
+// Each subscriber remembers its generation: a new recording cannot clear an old
+// operation's cancellation, unlike the shared abort boolean used by output code.
+async fn until_operation_cancelled<T>(
+    mut cancellation: watch::Receiver<u64>,
+    work: impl std::future::Future<Output = T>,
+) -> Option<T> {
+    tokio::select! {
+        biased;
+        _ = cancellation.changed() => None,
+        result = work => Some(result),
+    }
+}
 
 use crate::app_detector;
 use crate::app_detector::types::{RecordingContext, TargetAppGuard};
 use crate::audio::{AudioCaptureHandle, AudioConfig};
-use crate::credentials::{
-    resolve_llm_config_secret, resolve_stt_config_secret, SystemCredentialVault,
-};
+use crate::credentials::read_config_secret_until_cancelled;
 use crate::llm::{self, LlmConfig, PolishRequest};
 use crate::output;
 use crate::storage;
@@ -489,12 +500,21 @@ fn streaming_recovery_action(
 struct StreamingInsertWorker {
     sender: mpsc::UnboundedSender<String>,
     handle: tokio::task::JoinHandle<StreamingInsertReport>,
+    cancel_on_drop: CancelTaskOnDrop,
+}
+
+struct CancelTaskOnDrop(tokio::task::AbortHandle);
+impl Drop for CancelTaskOnDrop {
+    fn drop(&mut self) { self.0.abort(); }
 }
 
 impl StreamingInsertWorker {
     async fn finish(self) -> Option<StreamingInsertReport> {
-        drop(self.sender);
-        match self.handle.await {
+        let Self { sender, handle, cancel_on_drop } = self;
+        drop(sender);
+        let result = handle.await;
+        drop(cancel_on_drop);
+        match result {
             Ok(report) => Some(report),
             Err(error) => {
                 tracing::warn!("Streaming insert worker failed to join: {error}");
@@ -526,7 +546,8 @@ fn spawn_streaming_insert_worker(
         },
         receiver,
     ));
-    StreamingInsertWorker { sender, handle }
+    let cancel_on_drop = CancelTaskOnDrop(handle.abort_handle());
+    StreamingInsertWorker { sender, handle, cancel_on_drop }
 }
 
 struct StreamingInsertWorkerContext {
@@ -707,6 +728,7 @@ pub struct PipelineHandle {
     active_stt_session_id: Arc<AtomicU64>,
     active_deadline_session_id: Arc<AtomicU64>,
     abort_flag: Arc<AtomicBool>,
+    operation_cancellation: watch::Sender<u64>,
     preloaded_config: Arc<Mutex<Option<storage::AppConfig>>>,
     preloaded_app_ctx: Arc<Mutex<Option<RecordingContext>>>,
     preloaded_dictionary: Arc<Mutex<Option<Vec<String>>>>,
@@ -918,6 +940,7 @@ impl PipelineHandle {
             active_stt_session_id: Arc::new(AtomicU64::new(0)),
             active_deadline_session_id: Arc::new(AtomicU64::new(0)),
             abort_flag: Arc::new(AtomicBool::new(false)),
+            operation_cancellation: watch::channel(0).0,
             preloaded_config: Arc::new(Mutex::new(None)),
             preloaded_app_ctx: Arc::new(Mutex::new(None)),
             preloaded_dictionary: Arc::new(Mutex::new(None)),
@@ -933,6 +956,15 @@ impl PipelineHandle {
     }
 
     fn set_state(&self, new_state: PipelineState) {
+        crate::audio::lifecycle::event(match new_state {
+            PipelineState::Idle => "dictation_state_idle",
+            PipelineState::Preparing => "dictation_state_preparing",
+            PipelineState::Recording => "dictation_state_recording",
+            PipelineState::Transcribing => "dictation_state_transcribing",
+            PipelineState::Polishing => "dictation_state_polishing",
+            PipelineState::Outputting => "dictation_state_outputting",
+            _ => "dictation_state_other",
+        });
         self.state.store(new_state.as_u8(), Ordering::SeqCst);
         if new_state == PipelineState::Idle {
             if let Some(service) = self
@@ -950,6 +982,7 @@ impl PipelineHandle {
                 Option::<crate::voice_intent::VoiceMode>::None,
             );
         }
+        crate::extensions::voice_feedback::transition(&self.app_handle, new_state);
         let _ = self.app_handle.emit("pipeline:state", new_state);
 
         // Update tray tooltip + menu to reflect pipeline state
@@ -997,6 +1030,7 @@ impl PipelineHandle {
     /// Stops audio capture, forces state to Idle, and signals any
     /// ongoing stop() to exit early via abort_flag.
     pub fn abort(&self) {
+        crate::audio::lifecycle::event("dictation_abort_requested");
         tracing::info!(
             "Pipeline abort requested (current state: {:?})",
             self.current_state()
@@ -1004,6 +1038,7 @@ impl PipelineHandle {
 
         // Set abort flag so any running stop() exits early
         self.abort_flag.store(true, Ordering::SeqCst);
+        self.operation_cancellation.send_modify(|epoch| *epoch = epoch.wrapping_add(1));
         self.active_stt_session_id.fetch_add(1, Ordering::SeqCst);
         self.active_deadline_session_id.store(0, Ordering::SeqCst);
 
@@ -1068,12 +1103,16 @@ impl PipelineHandle {
     }
 
     pub async fn start_with_options(&self, options: PipelineStartOptions) -> Result<()> {
+        until_operation_cancelled(
+            self.operation_cancellation.subscribe(),
+            self.start_inner(options),
+        ).await.unwrap_or(Ok(()))
+    }
+
+    async fn start_inner(&self, options: PipelineStartOptions) -> Result<()> {
         // Hold pipeline_lock for the entire setup so stop() cannot read
         // partially-initialised state (preloaded_config, audio_handle, etc.).
         let _guard = self.pipeline_lock.lock().await;
-
-        // Reset abort flag for new recording
-        self.abort_flag.store(false, Ordering::SeqCst);
 
         // Atomic CAS: only one caller can transition Idle → Preparing. Recording is emitted only
         // after audio capture is ready, so the capsule does not tell users to speak too early.
@@ -1088,6 +1127,16 @@ impl PipelineHandle {
             .is_err()
         {
             return Ok(());
+        }
+        // Only an accepted start may reset the flag. A duplicate key event must
+        // not revive output that was cancelled during another operation.
+        self.abort_flag.store(false, Ordering::SeqCst);
+        {
+            let mut audio = self.audio_handle.lock().unwrap_or_else(|e| e.into_inner());
+            if let Some(mut stale) = audio.take() {
+                crate::audio::lifecycle::event("capture_recover_stale_idle_handle");
+                stale.stop();
+            }
         }
         self.set_state(PipelineState::Preparing);
 
@@ -1150,14 +1199,17 @@ impl PipelineHandle {
                 .unwrap_or_else(|e| e.into_inner())
                 .clone()
         } else {
-            match resolve_stt_config_secret(&config_data, &SystemCredentialVault) {
+            match read_config_secret_until_cancelled(&config_data, true, || {
+                self.abort_flag.load(Ordering::SeqCst)
+            })
+            .await
+            {
                 Ok(secret) => secret,
                 Err(error) => {
                     tracing::warn!("Failed to read STT credential: {error}");
-                    let _ = self.app_handle.emit(
-                        "pipeline:error",
-                        "Failed to read STT credential from the system vault.",
-                    );
+                    if !self.abort_flag.load(Ordering::SeqCst) {
+                        let _ = self.app_handle.emit("pipeline:error", error.to_string());
+                    }
                     *self
                         .preloaded_config
                         .lock()
@@ -1179,6 +1231,11 @@ impl PipelineHandle {
                 }
             }
         };
+
+        if self.abort_flag.load(Ordering::SeqCst) {
+            self.set_state(PipelineState::Idle);
+            return Ok(());
+        }
 
         tracing::debug!(
             "Pipeline using config: stt_provider={}, stt_key_len={}, stt_lang={}",
@@ -1422,6 +1479,7 @@ impl PipelineHandle {
             self.set_state(PipelineState::Idle);
             return Ok(());
         }
+        let capture_fault = handle.fault();
         let audio_vol = handle.get_volume();
         *self.audio_volume.lock().unwrap_or_else(|e| e.into_inner()) = audio_vol;
         *self.audio_handle.lock().unwrap_or_else(|e| e.into_inner()) = Some(handle);
@@ -1557,8 +1615,10 @@ impl PipelineHandle {
         let active_session_id_ref = self.active_stt_session_id.clone();
         let stt_error_ref = self.stt_error.clone();
 
+        let failure_pipeline = self.clone();
         tokio::spawn(async move {
             // Forward audio to STT and receive transcripts
+            let capture_error = capture_fault.guard(async {
             loop {
                 if !should_finalize_stt_task(
                     abort_flag_ref.as_ref(),
@@ -1708,6 +1768,17 @@ impl PipelineHandle {
                 }
             }
 
+            }).await;
+            if let Some(message) = capture_error {
+                if should_finalize_stt_task(
+                    abort_flag_ref.as_ref(),
+                    active_session_id_ref.as_ref(),
+                    stt_control.id,
+                ) {
+                    failure_pipeline.abort();
+                    let _ = app_handle.emit("pipeline:error", message);
+                }
+            }
             // Signal that STT processing is complete
             stt_control.done.notify_one();
         });
@@ -1762,10 +1833,22 @@ impl PipelineHandle {
     }
 
     pub async fn stop(&self) -> Result<()> {
+        until_operation_cancelled(
+            self.operation_cancellation.subscribe(),
+            self.stop_inner(),
+        ).await.unwrap_or(Ok(()))
+    }
+
+    async fn stop_inner(&self) -> Result<()> {
+        if self.current_state() == PipelineState::Preparing {
+            self.abort();
+            return Ok(());
+        }
         // Acquire pipeline_lock so we wait for start() to finish its setup
         // (load config, initialize audio and connect STT) before reading shared state.
-        // Released before the long stt_done wait so start() isn't blocked 120s.
-        let guard = self.pipeline_lock.lock().await;
+        // Keep ownership through final output/history. abort() cancels this future,
+        // releasing the lock immediately instead of letting stale cleanup reset a new recording.
+        let _guard = self.pipeline_lock.lock().await;
 
         // Atomic CAS: only one caller can transition Recording → Transcribing
         if self
@@ -1781,6 +1864,10 @@ impl PipelineHandle {
             return Ok(());
         }
         self.active_deadline_session_id.store(0, Ordering::SeqCst);
+        crate::extensions::voice_feedback::transition(
+            &self.app_handle,
+            PipelineState::Transcribing,
+        );
         let _ = self
             .app_handle
             .emit("pipeline:state", PipelineState::Transcribing);
@@ -1799,6 +1886,21 @@ impl PipelineHandle {
         crate::refresh_tray(&self.app_handle);
 
         let stop_start = std::time::Instant::now();
+
+        // Stop audio capture (this drops the channel, signaling STT task to stop)
+        {
+            let mut handle = self.audio_handle.lock().unwrap_or_else(|e| e.into_inner());
+            if let Some(ref mut h) = *handle {
+                h.stop();
+            }
+            *handle = None;
+        }
+        if let Some(service) = self
+            .app_handle
+            .try_state::<crate::extensions::audio_ducking::Service>()
+        {
+            service.end("dictation");
+        }
 
         // Capture selected text now — hotkey is released so Ctrl+C won't conflict.
         // Small delay to ensure hotkey modifiers are fully released (especially in toggle mode).
@@ -1841,20 +1943,6 @@ impl PipelineHandle {
             .lock()
             .unwrap_or_else(|e| e.into_inner()) = selected_text;
 
-        // Stop audio capture (this drops the channel, signaling STT task to stop)
-        {
-            let mut handle = self.audio_handle.lock().unwrap_or_else(|e| e.into_inner());
-            if let Some(ref mut h) = *handle {
-                h.stop();
-            }
-            *handle = None;
-        }
-        if let Some(service) = self
-            .app_handle
-            .try_state::<crate::extensions::audio_ducking::Service>()
-        {
-            service.end("dictation");
-        }
         let stt_control = self
             .stt_session
             .lock()
@@ -1924,10 +2012,6 @@ impl PipelineHandle {
         } else {
             String::new()
         };
-
-        // All shared state has been taken — release the lock so a new start()
-        // isn't blocked by the long stt_done wait that follows.
-        drop(guard);
 
         // ── Phase 1: Wait for STT ──────────────────────────────────────
         let raw_text = match self.wait_for_stt(stt_control.clone()).await? {
@@ -2119,7 +2203,11 @@ impl PipelineHandle {
         let llm_api_key = if config.llm_provider == "cloud" {
             session_token
         } else {
-            match resolve_llm_config_secret(config, &SystemCredentialVault) {
+            match read_config_secret_until_cancelled(config, false, || {
+                self.abort_flag.load(Ordering::SeqCst)
+            })
+            .await
+            {
                 Ok(secret) => secret,
                 Err(error) => {
                     tracing::warn!("Failed to read LLM credential: {error}");
@@ -2127,6 +2215,15 @@ impl PipelineHandle {
                 }
             }
         };
+
+        if self.abort_flag.load(Ordering::SeqCst) {
+            return PolishTextOutcome::with_history_status(
+                String::new(),
+                std::time::Duration::ZERO,
+                "fallback",
+                "Cancelled",
+            );
+        }
 
         // Check if polish is enabled and API key / token is available
         if !config.polish_enabled
@@ -2741,7 +2838,7 @@ impl PipelineHandle {
             String::new(),
             text.to_string(),
             crate::voice_intent::VoiceIntentKind::DictateInsert,
-            true,
+            false,
             false,
         ) {
             tracing::warn!("Could not show dictation copy fallback: {error}");
@@ -3019,6 +3116,45 @@ impl PipelineHandle {
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, AtomicU64};
+
+    #[tokio::test]
+    async fn cancelled_operation_cannot_resume_after_new_generation_starts() {
+        let (cancel, old) = watch::channel(0_u64);
+        cancel.send_modify(|epoch| *epoch += 1);
+        let new = cancel.subscribe();
+        let mutated = AtomicBool::new(false);
+        assert!(until_operation_cancelled(old, async {
+            mutated.store(true, Ordering::SeqCst);
+        }).await.is_none());
+        assert!(!mutated.load(Ordering::SeqCst));
+        assert_eq!(until_operation_cancelled(new, async { 42 }).await, Some(42));
+    }
+
+    #[tokio::test]
+    async fn cancelling_pending_finalize_releases_lock_before_next_recording() {
+        let lock = Arc::new(tokio::sync::Mutex::new(()));
+        let (cancel, subscription) = watch::channel(0_u64);
+        let (ready, started) = tokio::sync::oneshot::channel();
+        let held = lock.clone();
+        let old = tokio::spawn(until_operation_cancelled(subscription, async move {
+            let _guard = held.lock().await;
+            ready.send(()).unwrap();
+            std::future::pending::<()>().await;
+        }));
+        started.await.unwrap();
+        assert!(lock.try_lock().is_err());
+        cancel.send_modify(|epoch| *epoch += 1);
+        assert!(old.await.unwrap().is_none());
+        assert!(lock.try_lock().is_ok());
+    }
+
+    #[tokio::test]
+    async fn dropping_stream_owner_cancels_its_background_worker() {
+        let task = tokio::spawn(std::future::pending::<()>());
+        let guard = CancelTaskOnDrop(task.abort_handle());
+        drop(guard);
+        assert!(task.await.unwrap_err().is_cancelled());
+    }
 
     #[test]
     fn preparing_state_serializes_for_frontend() {

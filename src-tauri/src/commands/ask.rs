@@ -1,8 +1,6 @@
 use crate::app_detector::types::RecordingContext;
 use crate::audio::{AudioCaptureHandle, AudioConfig};
-use crate::credentials::{
-    resolve_llm_config_secret, resolve_stt_config_secret, SystemCredentialVault,
-};
+use crate::credentials::{read_config_secret, read_config_secret_until_cancelled};
 use crate::error::{emit_cloud_session_invalid, managed_cloud_error, AppError};
 use crate::pipeline::PipelineState;
 use crate::storage;
@@ -40,6 +38,7 @@ pub struct AskDictationState(Arc<Mutex<AskDictationStateInner>>);
 #[derive(Default)]
 struct AskDictationStateInner {
     starting: bool,
+    start_generation: u64,
     stop_after_start: bool,
     session: Option<AskDictationSession>,
     processing: bool,
@@ -69,15 +68,27 @@ impl AskDictationState {
         if guard.starting || guard.session.is_some() || guard.processing {
             return false;
         }
+        guard.start_generation = guard.start_generation.wrapping_add(1);
         guard.starting = true;
         guard.stop_after_start = false;
         true
     }
 
+    #[cfg(test)]
     fn clear_starting(&self) {
         let mut guard = self.0.lock().unwrap_or_else(|e| e.into_inner());
         guard.starting = false;
         guard.stop_after_start = false;
+    }
+
+    fn clear_starting_if_current(&self, generation: u64) -> bool {
+        let mut guard = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if !guard.starting || guard.start_generation != generation {
+            return false;
+        }
+        guard.starting = false;
+        guard.stop_after_start = false;
+        true
     }
 
     fn set_processing(&self, processing: bool) {
@@ -287,6 +298,7 @@ fn emit_capsule_state(app: &tauri::AppHandle, state: PipelineState) {
             service.end("ask");
         }
     }
+    crate::extensions::voice_feedback::transition(app, state);
     let _ = app.emit("pipeline:state", state);
 }
 
@@ -686,9 +698,10 @@ fn build_ask_stt_config(
     }
 }
 
-fn ask_stt_api_key(
+async fn ask_stt_api_key(
     config: &storage::AppConfig,
     token_store: &SessionTokenStore,
+    cancelled: impl Fn() -> bool,
 ) -> Result<String, String> {
     if config.stt_provider == "cloud" {
         return Ok(token_store
@@ -697,7 +710,9 @@ fn ask_stt_api_key(
             .unwrap_or_else(|e| e.into_inner())
             .clone());
     }
-    resolve_stt_config_secret(config, &SystemCredentialVault).map_err(|e| e.to_string())
+    read_config_secret_until_cancelled(config, true, cancelled)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 fn cloud_auth_required_message() -> String {
@@ -706,6 +721,9 @@ fn cloud_auth_required_message() -> String {
 
 fn map_audio_capture_error(message: &str) -> String {
     let normalized = message.to_ascii_lowercase();
+    if normalized.contains("another h recording") {
+        return "Another recording is active. Stop it before starting Ask.".to_string();
+    }
     if normalized.contains("permission")
         || normalized.contains("access denied")
         || normalized.contains("not authorized")
@@ -749,7 +767,8 @@ async fn answer_question(
     let llm_api_key = if config.llm_provider == "cloud" {
         String::new()
     } else {
-        resolve_llm_config_secret(config, &SystemCredentialVault)
+        read_config_secret(config, false)
+            .await
             .map_err(|e| AppError::Config(e.to_string()))?
     };
 
@@ -1031,6 +1050,15 @@ pub(crate) async fn start_reserved_ask_dictation(
     client: tauri::State<'_, reqwest::Client>,
     include_selected_text: bool,
 ) -> Result<AskDictationStartResult, String> {
+    let start_generation = state
+        .0
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .start_generation;
+    let start_cancelled = || {
+        let guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
+        !guard.starting || guard.start_generation != start_generation
+    };
     let audio_cleanup_app = app.clone();
     let result = async {
         let config = config_state.load().await.map_err(|e| e.to_string())?;
@@ -1047,7 +1075,10 @@ pub(crate) async fn start_reserved_ask_dictation(
             tracing::info!("Ask shortcut captured selected text context");
         }
 
-        let stt_api_key = ask_stt_api_key(&config, &token_store)?;
+        let stt_api_key = match ask_stt_api_key(&config, &token_store, start_cancelled).await {
+            _ if start_cancelled() => return Ok(start_result),
+            result => result?,
+        };
         if stt::config::stt_provider_requires_api_key(&config.stt_provider)
             && stt_api_key.is_empty()
         {
@@ -1126,6 +1157,7 @@ pub(crate) async fn start_reserved_ask_dictation(
             capture_ready_at,
             effective_max_seconds,
         );
+        let capture_fault = handle.fault();
         let mut handle = Some(handle);
         let transcript = Arc::new(Mutex::new(String::new()));
         let error = Arc::new(Mutex::new(None::<String>));
@@ -1134,9 +1166,7 @@ pub(crate) async fn start_reserved_ask_dictation(
 
         let should_discard_started_resources = {
             let mut guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
-            if !guard.starting || guard.session.is_some() || guard.processing {
-                guard.starting = false;
-                guard.stop_after_start = false;
+            if !guard.starting || guard.start_generation != start_generation || guard.session.is_some() || guard.processing {
                 true
             } else {
                 guard.starting = false;
@@ -1166,6 +1196,22 @@ pub(crate) async fn start_reserved_ask_dictation(
         }
 
         emit_capsule_state(&app, PipelineState::AskRecording);
+        #[cfg(target_os = "macos")]
+        {
+            let level_state = state.0.clone();
+            let level_app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_millis(33)).await;
+                    let volume = {
+                        let guard = level_state.lock().unwrap_or_else(|e| e.into_inner());
+                        guard.session.as_ref().filter(|s| s.recording_session_id == recording_session_id).map(|s| s.handle.get_volume())
+                    };
+                    let Some(volume) = volume else { break; };
+                    let _ = level_app.emit("audio:volume", volume);
+                }
+            });
+        }
         let _ = app.emit("recording:deadline", recording_deadline.event);
         let state_inner = state.0.clone();
         let deadline_state_inner = state.0.clone();
@@ -1203,6 +1249,7 @@ pub(crate) async fn start_reserved_ask_dictation(
         }
 
         tauri::async_runtime::spawn(async move {
+            let capture_error = capture_fault.guard(async {
             loop {
                 tokio::select! {
                     chunk = audio_rx.recv() => {
@@ -1281,7 +1328,13 @@ pub(crate) async fn start_reserved_ask_dictation(
                 }
             }
 
-            done.notify_waiters();
+            }).await;
+            if let Some(message) = capture_error {
+                *error.lock().unwrap_or_else(|e| e.into_inner()) = Some(message.clone());
+                surface_async_recording_error(&app, &state_inner, &task_operation_id, message);
+            }
+            // Store a completion permit even if stop has not started waiting yet.
+            done.notify_one();
         });
 
         tauri::async_runtime::spawn(async move {
@@ -1351,13 +1404,12 @@ pub(crate) async fn start_reserved_ask_dictation(
     }
     .await;
 
-    if result.is_err() {
+    if result.is_err() && state.clear_starting_if_current(start_generation) {
         if let Some(service) =
             audio_cleanup_app.try_state::<crate::extensions::audio_ducking::Service>()
         {
             service.end("ask");
         }
-        state.clear_starting();
     }
     result
 }
@@ -1963,6 +2015,10 @@ mod tests {
     #[test]
     fn audio_capture_errors_are_user_readable() {
         assert_eq!(
+            map_audio_capture_error("Microphone is already in use by another H recording"),
+            "Another recording is active. Stop it before starting Ask."
+        );
+        assert_eq!(
             map_audio_capture_error("No input device available"),
             "Microphone unavailable. Check your input device."
         );
@@ -2051,6 +2107,20 @@ mod tests {
         state.clear_starting();
 
         assert!(!state.is_starting());
+        assert!(!state.is_busy());
+    }
+
+    #[test]
+    fn late_start_failure_cannot_clear_a_newer_ask_start() {
+        let state = AskDictationState::default();
+        assert!(state.try_begin_starting());
+        let old = state.0.lock().unwrap().start_generation;
+        state.abort_starting_or_recording();
+        assert!(state.try_begin_starting());
+        assert!(!state.clear_starting_if_current(old));
+        assert!(state.is_starting());
+        let current = state.0.lock().unwrap().start_generation;
+        assert!(state.clear_starting_if_current(current));
         assert!(!state.is_busy());
     }
 

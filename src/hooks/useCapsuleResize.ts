@@ -1,5 +1,7 @@
+import { getCapsuleShellSize } from '../lib/capsule-layout'
 import { useEffect, useRef } from 'react'
-import { useAppStore, type PipelineState } from '../stores/appStore'
+import { invoke } from '@tauri-apps/api/core'
+import { isMacPlatform, useAppStore, type PipelineState } from '../stores/appStore'
 
 interface CapsuleSize {
   width: number
@@ -46,25 +48,9 @@ function getSizeForState(
 ): CapsuleSize {
   if (translationTargetMenuOpen) return { width: 360, height: 180 }
   if (contextMenuOpen) return { width: 220, height: 220 }
-  if (hasError) return { width: 200, height: 36 }
+  if (hasError) return getCapsuleShellSize('error')
   if (expanded) return { width: 220, height: 90 }
-  switch (state) {
-    case 'idle':
-      return { width: 36, height: 36 }
-    case 'preparing':
-      return { width: 180, height: 36 }
-    case 'recording':
-    case 'transcribing':
-    case 'polishing':
-      return { width: 200, height: 36 }
-    case 'outputting':
-      return { width: 144, height: 36 }
-    case 'ask_recording':
-    case 'ask_thinking':
-      return { width: 168, height: 36 }
-    default:
-      return { width: 36, height: 36 }
-  }
+  return getCapsuleShellSize(state)
 }
 
 export function useCapsuleResize() {
@@ -98,6 +84,20 @@ export function useCapsuleResize() {
       hasError,
       pipelineState,
     })
+
+    if (isMacPlatform()) {
+      invoke('layout_voice_capsule', {
+        width: windowWidth,
+        height: windowHeight,
+        visible: shouldShow,
+        phase: pipelineState,
+      })
+        .then(() => {
+          if (contextMenuOpen) setContextMenuReady(true)
+        })
+        .catch(console.error)
+      return
+    }
 
     import('@tauri-apps/api/window')
       .then(async ({ getCurrentWindow, LogicalSize, LogicalPosition, currentMonitor }) => {

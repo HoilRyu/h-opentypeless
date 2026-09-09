@@ -1,3 +1,4 @@
+import { getCapsuleShellSize } from '../../lib/capsule-layout'
 import { useRef, useCallback, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
@@ -21,27 +22,6 @@ const DRAG_THRESHOLD = 5
 function getCapsuleState(pipelineState: string, hasError: boolean) {
   if (hasError) return 'error'
   return pipelineState
-}
-
-function getCapsuleShellSize(capsuleState: string) {
-  switch (capsuleState) {
-    case 'idle':
-      return { width: 36, height: 36 }
-    case 'preparing':
-      return { width: 180, height: 36 }
-    case 'outputting':
-      return { width: 144, height: 36 }
-    case 'ask_recording':
-    case 'ask_thinking':
-      return { width: 168, height: 36 }
-    case 'recording':
-    case 'transcribing':
-    case 'polishing':
-    case 'error':
-      return { width: 200, height: 36 }
-    default:
-      return { width: 36, height: 36 }
-  }
 }
 
 export function Capsule() {

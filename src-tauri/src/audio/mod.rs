@@ -1,4 +1,5 @@
 pub mod capture;
+pub(crate) mod lifecycle;
 
 pub use capture::{AudioCaptureHandle, AudioConfig, CaptureState};
 

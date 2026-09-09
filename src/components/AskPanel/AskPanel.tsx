@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Loader2, Mic, Square, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import {
   abortAskDictation,
   startAskDictation,
@@ -40,6 +41,8 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState('')
+  const copyReadyRef = useRef(false)
   const [recordingContext, setRecordingContext] = useState<AskDictationStartResult | null>(null)
   const [dictationState, setDictationState] = useState<'idle' | 'recording' | 'processing'>('idle')
   const loadingRef = useRef(loading)
@@ -165,6 +168,7 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
   const dismissStandalone = useCallback(
     (ignorePendingResult = true) => {
       if (embedded) return
+      copyReadyRef.current = false
       if (
         ignorePendingResult &&
         (loadingRef.current || dictationStateRef.current === 'processing')
@@ -215,6 +219,16 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
               applyError(event.payload)
               void takePendingAskMessage().catch(() => {})
             }
+          }),
+          listen('h:copy-result', () => {
+            const window = currentNativeWindow()
+            if (cancelled || !window || !copyReadyRef.current) return
+            void window
+              .isVisible()
+              .then((visible) => {
+                if (!cancelled && visible && copyReadyRef.current) copyActionRef.current()
+              })
+              .catch(() => {})
           }),
         ]),
       )
@@ -270,15 +284,20 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
 
   const copyAnswer = useCallback(() => {
     if (!answer) return
-    navigator.clipboard
-      .writeText(answer)
+    setCopyError('')
+    const copying = currentNativeWindow()
+      ? writeText(answer)
+      : navigator.clipboard.writeText(answer)
+    copying
       .then(() => {
         setCopied(true)
         if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
         copiedTimerRef.current = setTimeout(() => setCopied(false), 1500)
       })
-      .catch(() => {})
-  }, [answer])
+      .catch(() => setCopyError(t('ask.copyFailed')))
+  }, [answer, t])
+  const copyActionRef = useRef(copyAnswer)
+  copyActionRef.current = copyAnswer
 
   useEffect(() => {
     return () => {
@@ -293,7 +312,22 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
         ? t('ask.thinking')
         : t('ask.ready')
   const capsuleActive = dictationState === 'recording' || dictationState === 'processing'
-  const displayTitle = title === 'Ask' ? t('ask.title') : title
+  const copyResult = result?.intent === 'dictate_insert' && Boolean(answer)
+  copyReadyRef.current = !embedded && copyResult && !error
+  useEffect(() => {
+    setCopyError('')
+  }, [answer])
+  const displayTitle = copyResult
+    ? t('ask.copyResultTitle')
+    : title === 'Ask'
+      ? t('ask.title')
+      : title
+  useEffect(() => {
+    if (!embedded)
+      void currentNativeWindow()
+        ?.setTitle(displayTitle)
+        .catch(() => {})
+  }, [displayTitle, embedded])
   const resultText = error || answer
   const canCopyAnswer = Boolean(answer && !error && result?.output !== 'openedSearch')
   const recordingContextLabel = recordingContext?.usedSelectedText
@@ -301,8 +335,9 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
       ? t('ask.usingSelectedTextTruncated')
       : t('ask.usingSelectedText')
     : null
-  const contextLabel =
-    result?.fallbackReason === 'feature_disabled'
+  const contextLabel = copyResult
+    ? t('ask.copyResultHint')
+    : result?.fallbackReason === 'feature_disabled'
       ? t('ask.routeDisabled')
       : result?.output === 'copiedFallback'
         ? result.fallbackReason === 'target_changed' ||
@@ -319,10 +354,15 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
   const copyAction = canCopyAnswer ? (
     <div className="flex shrink-0 items-center gap-2">
       {copied && <span className="text-[11px] text-success">{t('ask.copied')}</span>}
+      {copyError && (
+        <span role="alert" className="text-[11px] text-error">
+          {copyError}
+        </span>
+      )}
       <button
         type="button"
-        aria-label={t('ask.copyAnswer')}
-        title={t('ask.copyAnswer')}
+        aria-label={copyResult ? t('ask.copyResultTitle') : t('ask.copyAnswer')}
+        title={copyResult ? t('ask.copyResultTitle') : t('ask.copyAnswer')}
         onClick={copyAnswer}
         className="flex h-7 w-7 items-center justify-center rounded-[6px] border border-border bg-bg-secondary text-text-tertiary transition-colors hover:border-border-focus hover:text-accent cursor-pointer"
       >
@@ -393,14 +433,14 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
         <section
           data-testid="ask-floating-note"
           onMouseDown={startStandaloneDrag}
-          className="flex max-h-[calc(100vh-24px)] w-full flex-col overflow-hidden rounded-[18px] border border-border/80 bg-bg-primary/95 shadow-[0_4px_14px_rgba(15,23,42,0.08)] backdrop-blur"
+          className="jelly-capsule h-copy-note flex max-h-[calc(100vh-24px)] w-full flex-col overflow-hidden"
         >
-          <div className="flex min-h-0 flex-col gap-2.5 p-3">
+          <div className="relative z-[2] flex min-h-0 flex-col gap-2.5 p-3">
             {!resultText && (
               <div className="flex items-center justify-between gap-2 px-1">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-text-tertiary/50" />
-                  <span className="truncate text-[12px] font-medium text-text-primary">
+                  <span className="shrink-0 whitespace-nowrap text-[12px] font-medium text-text-primary">
                     {displayTitle}
                   </span>
                 </div>
@@ -411,15 +451,11 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
               <>
                 <div className="flex items-center justify-between gap-2 px-1">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        error ? 'bg-error' : 'bg-text-tertiary/50'
-                      }`}
-                    />
-                    <span className="truncate text-[12px] font-medium text-text-primary">
+                    <span className={`h-2 w-2 rounded-full ${error ? 'bg-error' : 'bg-accent'}`} />
+                    <span className="shrink-0 whitespace-nowrap text-[12px] font-medium text-text-primary">
                       {displayTitle}
                     </span>
-                    {result && (
+                    {result && !copyResult && (
                       <span className="truncate text-[11px] text-text-tertiary">
                         {contextLabel}
                       </span>
@@ -430,12 +466,19 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
                     {standaloneCloseButton}
                   </div>
                 </div>
-                <div className="min-h-0 overflow-y-auto rounded-[12px] border border-border bg-bg-secondary/65 px-3 py-2">
-                  {result && !error && result.output !== 'openedSearch' && (
-                    <p className="mb-2 text-[12px] leading-5 text-text-secondary">
-                      {result.question}
-                    </p>
-                  )}
+                {copyResult && (
+                  <p className="px-1 text-[11px] leading-4 text-text-secondary">{contextLabel}</p>
+                )}
+                <div className="min-h-0 overflow-y-auto rounded-[12px] border border-border/60 bg-bg-primary/35 px-3 py-2">
+                  {result &&
+                    !copyResult &&
+                    result.question.trim() &&
+                    !error &&
+                    result.output !== 'openedSearch' && (
+                      <p className="mb-2 text-[12px] leading-5 text-text-secondary">
+                        {result.question}
+                      </p>
+                    )}
                   <p
                     className={`whitespace-pre-wrap text-[13px] leading-5 ${
                       error ? 'text-error' : 'text-text-primary'
@@ -479,9 +522,13 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
                 {copyAction}
               </div>
             )}
-            {result && !error && result.output !== 'openedSearch' && (
-              <p className="mb-2 text-[12px] leading-5 text-text-secondary">{result.question}</p>
-            )}
+            {result &&
+              !copyResult &&
+              result.question.trim() &&
+              !error &&
+              result.output !== 'openedSearch' && (
+                <p className="mb-2 text-[12px] leading-5 text-text-secondary">{result.question}</p>
+              )}
             <p
               className={`text-[13px] leading-5 whitespace-pre-wrap ${
                 error ? 'text-error' : 'text-text-primary'

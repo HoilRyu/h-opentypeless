@@ -160,8 +160,8 @@ fn sync_auto_start_preference(
 }
 
 #[cfg(any(target_os = "macos", test))]
-fn should_restore_main_window_on_reopen(_has_visible_windows: bool) -> bool {
-    true
+fn should_restore_main_window_on_reopen(has_result_window: bool) -> bool {
+    !has_result_window
 }
 
 fn restore_main_window(app: &tauri::AppHandle) {
@@ -185,7 +185,9 @@ fn attach_ask_window_close_handler(handle: &tauri::AppHandle, ask_window: &tauri
                 api.prevent_close();
                 if let Some(w) = handle.get_webview_window("ask") {
                     let _ = w.hide();
-                    extensions::mac_window::visible(&handle, false);
+                    let main_visible = handle.get_webview_window("main")
+                        .and_then(|main| main.is_visible().ok()).unwrap_or(false);
+                    extensions::mac_window::visible(&handle, main_visible);
                 }
             }
         }
@@ -209,6 +211,8 @@ fn build_ask_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWi
         tauri::WebviewUrl::App("index.html#ask".into()),
     )
     .title("OpenTypeless Ask")
+    // The result is shown without activating the app; its controls must accept the first click.
+    .accept_first_mouse(true)
     .visible_on_all_workspaces(true)
     .inner_size(400.0, 220.0)
     .min_inner_size(360.0, 180.0)
@@ -245,12 +249,10 @@ pub fn ensure_ask_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::Webv
 
 pub fn show_ask_popup_window(handle: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     let window = ensure_ask_window(handle)?;
-    window.unminimize()?;
-    window.show()?;
-    // Failure to activate must not discard an already visible copy result.
-    if let Err(error) = window.set_focus() {
-        tracing::warn!("Could not focus result window: {error}");
+    if let Err(error) = extensions::result_window::position(handle, &window) {
+        tracing::warn!("Could not position result near capsule: {error}");
     }
+    extensions::result_window::show(&window)?;
     Ok(window)
 }
 
@@ -280,8 +282,8 @@ mod tests {
     }
 
     #[test]
-    fn dock_reopen_restores_main_window_even_when_capsule_is_visible() {
-        assert!(should_restore_main_window_on_reopen(true));
+    fn dock_reopen_does_not_restore_main_over_result() {
+        assert!(!should_restore_main_window_on_reopen(true));
     }
 
     #[test]
@@ -843,7 +845,11 @@ pub fn run() {
         }
     }
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_nspanel::init());
+
+    builder
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::init(
@@ -865,6 +871,7 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
+            extensions::voice_feedback::setup(app.handle());
             match app
                 .path()
                 .app_data_dir()
@@ -895,6 +902,7 @@ pub fn run() {
 
             // Initialize data directory and database
             let data_dir = app.path().app_data_dir()?;
+            app_detector::cache::install_target_audit(data_dir.join("h-focus-events.log"));
             std::fs::create_dir_all(&data_dir)?;
             let db_path = data_dir.join("opentypeless.db");
 
@@ -933,7 +941,10 @@ pub fn run() {
             app.manage(extensions::mobile::Service::new(app.path().app_data_dir()?));
             let mobile_app = app_handle.clone();
             tauri::async_runtime::spawn(async move {
-                mobile_app.state::<extensions::mobile::Service>().resume(mobile_app.clone()).await;
+                mobile_app
+                    .state::<extensions::mobile::Service>()
+                    .resume(mobile_app.clone())
+                    .await;
             });
             app.manage(context_detector);
             app.manage(pipeline_handle);
@@ -1276,6 +1287,10 @@ pub fn run() {
             commands::misc::get_system_diagnostics,
             commands::config::set_auto_start,
             commands::config::set_capsule_auto_hide,
+            extensions::voice_feedback::get_voice_feedback,
+            extensions::voice_feedback::set_voice_feedback,
+            extensions::voice_feedback::layout_voice_capsule,
+            extensions::voice_feedback::preview_voice_feedback,
             commands::config::get_session_token,
             commands::config::set_session_token,
         ])
@@ -1283,6 +1298,7 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|_app, _event| {
             if matches!(_event, tauri::RunEvent::Exit) {
+                extensions::voice_feedback::shutdown(_app);
                 if let Some(service) = _app.try_state::<extensions::audio_ducking::Service>() {
                     service.shutdown();
                 }
@@ -1293,7 +1309,10 @@ pub fn run() {
                 ..
             } = _event
             {
-                if should_restore_main_window_on_reopen(has_visible_windows) {
+                let has_result_window = _app.get_webview_window("ask")
+                    .and_then(|w| w.is_visible().ok()).unwrap_or(false);
+                let _ = has_visible_windows;
+                if should_restore_main_window_on_reopen(has_result_window) {
                     restore_main_window(_app);
                     refresh_tray(_app);
                 }

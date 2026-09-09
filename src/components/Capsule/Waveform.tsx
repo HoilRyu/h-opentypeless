@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { useAppStore } from '../../stores/appStore'
+import { isMacPlatform, useAppStore } from '../../stores/appStore'
 
 const BAR_COUNT = 7
 const MIN_HEIGHT = 3
@@ -22,12 +22,23 @@ export function Waveform() {
       return
     }
 
-    const animate = () => {
+    const mac = isMacPlatform()
+    let last = 0
+    const history = Array<number>(BAR_COUNT).fill(0)
+    const animate = (now: number) => {
+      if (mac && now - last < 33) {
+        rafRef.current = requestAnimationFrame(animate)
+        return
+      }
+      last = now
       const volume = useAppStore.getState().audioVolume
+      history.push(Math.max(0, Math.min(1, volume)))
+      history.shift()
       barsRef.current.forEach((bar, i) => {
         if (!bar) return
-        const offset = Math.sin(Date.now() / 200 + i * 0.9) * 0.15
-        const normalized = Math.max(0, Math.min(1, volume + offset))
+        const normalized = mac
+          ? history[i]
+          : Math.max(0, Math.min(1, volume + Math.sin(Date.now() / 200 + i * 0.9) * 0.15))
         const height = MIN_HEIGHT + (MAX_HEIGHT - MIN_HEIGHT) * normalized
         const opacity = Math.max(0.5, normalized)
         bar.style.height = `${height}px`

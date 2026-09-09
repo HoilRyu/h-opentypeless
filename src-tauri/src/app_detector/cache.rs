@@ -177,7 +177,7 @@ impl ContextDetectorHandle {
         } else {
             fallback_for_profile(&cached.snapshot.profile)
         };
-        let target_guard = cached.target_guard.clone();
+
         let mapped_scene_id = if enabled && !stale {
             cached.mapped_scene_id.clone()
         } else {
@@ -199,6 +199,11 @@ impl ContextDetectorHandle {
             None
         };
         drop(cached);
+        // Never use the previous polling result as the identity of a new recording.
+        let target_guard = self.source.target_guard().unwrap_or(TargetAppGuard {
+            process_id: Some(0), native_identity: None,
+        });
+        audit_target("capture", &target_guard, None);
 
         let generation = self.candidate_generation.fetch_add(1, Ordering::SeqCst) + 1;
         let next_candidate = candidate_template.map(|mut candidate| {
@@ -265,6 +270,9 @@ impl ContextDetectorHandle {
     }
 
     pub fn target_still_matches(&self, expected: &TargetAppGuard) -> bool {
+        if cfg!(target_os = "macos") {
+            return self.target_still_matches_now(expected);
+        }
         if expected.is_empty() {
             return true;
         }
@@ -280,10 +288,15 @@ impl ContextDetectorHandle {
         if expected.is_empty() {
             return true;
         }
-        self.source
-            .collect()
-            .map(|signals| expected.matches(&TargetAppGuard::from(&signals)))
-            .unwrap_or(false)
+        let mut current = self.source.target_guard();
+        // Retry missing information briefly, but never retry away an observed app change.
+        if current.is_none() {
+            std::thread::sleep(Duration::from_millis(15));
+            current = self.source.target_guard();
+        }
+        let matches = current.as_ref().is_some_and(|guard| expected.matches(guard));
+        if !matches { audit_target(if current.is_some() { "mismatch" } else { "unavailable" }, expected, current.as_ref()); }
+        matches
     }
 
     pub fn restore_target_application(&self, expected: &TargetAppGuard) -> bool {
@@ -475,6 +488,33 @@ mod tests {
         }
     }
 
+    struct FreshGuardSource {
+        foreground: Mutex<Option<TargetAppGuard>>,
+    }
+    impl ContextSignalSource for FreshGuardSource {
+        fn collect(&self) -> Option<ContextSignals> { Some(gmail_signals()) }
+        fn target_guard(&self) -> Option<TargetAppGuard> { self.foreground.lock().unwrap().clone() }
+    }
+    #[test]
+    fn recording_uses_live_identity_even_when_profile_cache_is_another_app() {
+        let source = Arc::new(FreshGuardSource { foreground: Mutex::new(Some(TargetAppGuard { process_id: Some(77), native_identity: Some("chat.app".into()) })) });
+        let handle = ContextDetectorHandle::start_with_source(source.clone(), AppRegistry::builtin().unwrap(), Duration::from_secs(60), Duration::from_secs(60));
+        wait_for_profile(&handle, "email.gmail");
+        let captured = handle.snapshot_for_recording();
+        assert_eq!(captured.target_guard.process_id, Some(77));
+        assert!(handle.target_still_matches_now(&captured.target_guard));
+        *source.foreground.lock().unwrap() = Some(TargetAppGuard { process_id: Some(88), native_identity: Some("other.app".into()) });
+        assert!(!handle.target_still_matches_now(&captured.target_guard));
+    }
+    #[test]
+    fn missing_live_identity_does_not_allow_output_into_an_unverified_app() {
+        let source = Arc::new(FreshGuardSource { foreground: Mutex::new(None) });
+        let handle = ContextDetectorHandle::start_with_source(source, AppRegistry::builtin().unwrap(), Duration::from_secs(60), Duration::from_secs(60));
+        let captured = handle.snapshot_for_recording();
+        assert!(!captured.target_guard.is_empty());
+        assert!(!handle.target_still_matches_now(&captured.target_guard));
+    }
+
     fn gmail_signals() -> ContextSignals {
         ContextSignals {
             process_id: Some(42),
@@ -656,5 +696,26 @@ mod tests {
         let p95 = samples[9_499];
         println!("recording_start_context_budget p95={p95:?}");
         assert!(p95 < Duration::from_millis(5));
+    }
+}
+
+
+static TARGET_AUDIT_PATH: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+static TARGET_AUDIT_LOCK: Mutex<()> = Mutex::new(());
+pub(crate) fn install_target_audit(path: std::path::PathBuf) {
+    let _ = TARGET_AUDIT_PATH.set(path);
+}
+fn audit_target(reason: &str, expected: &TargetAppGuard, current: Option<&TargetAppGuard>) {
+    use std::io::Write;
+    let Some(path) = TARGET_AUDIT_PATH.get() else { return; };
+    let Ok(_guard) = TARGET_AUDIT_LOCK.lock() else { return; };
+    if std::fs::metadata(path).is_ok_and(|m| m.len() > 128 * 1024) {
+        let _ = std::fs::rename(path, path.with_extension("previous.log"));
+    }
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        // No app titles, URLs, input text, clipboard content, or credentials.
+        let _ = writeln!(file, "{} reason={} expected_pid={:?} current_pid={:?} identity_match={}",
+            chrono::Utc::now().to_rfc3339(), reason, expected.process_id,
+            current.and_then(|g| g.process_id), current.is_some_and(|g| expected.native_identity == g.native_identity));
     }
 }

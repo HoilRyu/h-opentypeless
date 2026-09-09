@@ -1,0 +1,114 @@
+.voice-edge {
+  --voice-level: 0;
+  --voice-a: #56edc5;
+  --voice-b: #69b8ff;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.voice-edge.active {
+  opacity: min(1, calc(var(--voice-brightness) * 1.35));
+}
+.voice-edge.processing {
+  --voice-a: #9f8cff;
+  --voice-b: #68b3ff;
+}
+.voice-edge i {
+  position: absolute;
+  display: block;
+  opacity: 0.85;
+  transition: opacity 120ms linear;
+}
+.voice-edge.recording.reactive i {
+  opacity: calc(0.7 + var(--voice-level) * 0.3);
+}
+.voice-edge .top,
+.voice-edge .bottom {
+  left: 0;
+  right: 0;
+  height: 38px;
+  background: linear-gradient(90deg, var(--voice-a), var(--voice-b), var(--voice-a));
+  mask-image: linear-gradient(to bottom, #000 0 3px, #000c 28%, #0005 65%, transparent);
+}
+.voice-edge .top {
+  top: 0;
+}
+.voice-edge .bottom {
+  bottom: 0;
+  transform: rotate(180deg);
+}
+.voice-edge .left,
+.voice-edge .right {
+  top: 0;
+  bottom: 0;
+  width: 38px;
+  background: linear-gradient(var(--voice-a), var(--voice-b), var(--voice-a));
+  mask-image: linear-gradient(to right, #000 0 3px, #000c 28%, #0005 65%, transparent);
+}
+.voice-edge .left {
+  left: 0;
+}
+.voice-edge .right {
+  right: 0;
+  transform: rotate(180deg);
+}
+.voice-edge.processing.active i {
+  animation: voice-process 3s ease-in-out infinite alternate;
+}
+@keyframes voice-process {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-edge i {
+    animation: none !important;
+    transition: none;
+  }
+  .voice-edge.recording.reactive i {
+    opacity: 0.85;
+  }
+}
+html.mac-voice .jelly-capsule-active {
+  background: linear-gradient(140deg, #344b4c, #243239 65%, #252f42);
+  border: 1px solid #83e6d2;
+  box-shadow:
+    inset 0 1px 0 #ffffff35,
+    0 0 8px #56edc545,
+    0 3px 7px #0006;
+}
+html.mac-voice .jelly-capsule {
+  box-shadow:
+    inset 0 0 0 1px #63bda9,
+    0 2px 8px #0003;
+}
+html.mac-voice .jelly-capsule-active .h-9,
+html.mac-voice .jelly-capsule-error .h-9 {
+  height: 44px;
+}
+html.mac-voice .jelly-capsule-active button,
+html.mac-voice .jelly-capsule-error button {
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.voice-edge.complete.active {
+  animation: voice-finish 0.45s ease-out forwards;
+}
+@keyframes voice-finish {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-edge.complete.active {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -12,3 +12,7 @@ pub fn enabled(app: &tauri::AppHandle, key: &str) -> bool {
         .and_then(|value| value.as_bool())
         .unwrap_or(true)
 }
+
+pub mod voice_feedback;
+
+pub mod result_window;

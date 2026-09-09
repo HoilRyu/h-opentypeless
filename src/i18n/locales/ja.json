@@ -4,6 +4,7 @@
     "tagline": "AI音声入力"
   },
   "nav": {
+    "mobile": "Mobile connection",
     "home": "ホーム",
     "ask": "質問",
     "settings": "設定",
@@ -14,6 +15,8 @@
     "mainNavigation": "メインナビゲーション"
   },
   "ask": {
+    "copyResultTitle": "Copy text",
+    "copyResultHint": "Could not insert into the original field. Copy the text below to use it.",
     "title": "質問",
     "voiceQuestion": "音声で質問",
     "voiceQuestionDesc": "質問を話してください。停止すると回答します。",
@@ -36,7 +39,8 @@
     "copiedInstead": "挿入せずにコピーしました",
     "routeDisabled": "この機能は無効です",
     "searchOpened": "{{provider}} 検索を開きました",
-    "send": "質問"
+    "send": "質問",
+    "copyFailed": "Copy failed"
   },
   "errors": {
     "stt_timeout": "音声認識がタイムアウトしました。もう一度お試しください。",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "Delete all device-only app mappings?",
     "mappingResetConfirmAction": "Reset mappings",
     "mappingNoMappings": "No custom app mappings",
-    "dictationMode": "ディクテーションモード"
+    "dictationMode": "ディクテーションモード",
+    "copyResultHotkey": "Copy result window text",
+    "copyResultHotkeyHint": "Copies text while the copy window is visible. The key is registered globally; choose a combination different from your normal Copy shortcut."
   },
   "contextFamilies": {
     "email": "Email",

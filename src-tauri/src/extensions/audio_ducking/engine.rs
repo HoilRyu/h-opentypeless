@@ -37,15 +37,28 @@ pub struct Device {
     pub can_mute: bool,
 }
 pub trait Backend: Send {
+    // Some backends avoid the hardware mute switch even when it is writable.
+    fn prefer_volume_for_mute(&self) -> bool {
+        false
+    }
     fn default_device(&mut self) -> Result<String>;
     fn read(&mut self, id: &str) -> Result<Device>;
     fn write(&mut self, id: &str, from: &Levels, to: &Levels) -> Result<()>;
+    fn write_observed(&mut self, id: &str, from: &Levels, to: &Levels) -> Result<Levels> {
+        self.write(id, from, to)?;
+        Ok(to.clone())
+    }
 }
 #[derive(Clone, Serialize, Deserialize)]
 struct Journal {
     id: String,
     before: Levels,
     applied: Levels,
+    #[serde(default = "confirmed_default")]
+    confirmed: bool,
+}
+fn confirmed_default() -> bool {
+    true
 }
 // Write the recovery record before touching the device. A failed disk write
 // disables ducking; it must never leave an unrecorded volume change behind.
@@ -73,6 +86,7 @@ pub struct Engine<B> {
     mode: Mode,
     volume_percent: u8,
     seen: HashSet<String>,
+    restore_retries: u8,
 }
 impl<B: Backend> Engine<B> {
     pub fn new(backend: B, journal: PathBuf) -> Self {
@@ -83,6 +97,7 @@ impl<B: Backend> Engine<B> {
             mode: Mode::Off,
             volume_percent: 20,
             seen: HashSet::new(),
+            restore_retries: 0,
         }
     }
     pub fn recover(&mut self) -> Result<()> {
@@ -92,6 +107,7 @@ impl<B: Backend> Engine<B> {
                     .map_err(|e| e.to_string())?,
             );
         }
+        self.restore_retries = 4;
         self.restore()
     }
     fn restore(&mut self) -> Result<()> {
@@ -100,6 +116,12 @@ impl<B: Backend> Engine<B> {
                 return Err("Invalid audio recovery record".into());
             }
             let current = self.backend.read(&j.id)?.levels;
+            if !current.valid() {
+                return Err("Invalid device levels during recovery".into());
+            }
+            if !j.confirmed && !current.matches(&j.applied) {
+                return Err("Unconfirmed audio change; recovery record retained".into());
+            }
             if current.volume.len() != j.before.volume.len()
                 || current.volume.len() != j.applied.volume.len()
             {
@@ -120,12 +142,15 @@ impl<B: Backend> Engine<B> {
                 restored.muted = j.before.muted;
             }
             if !current.matches(&restored) {
+                crate::audio::lifecycle::event("volume_restore_requested");
                 self.backend.write(&j.id, &current, &restored)?;
             }
             if self.journal.exists() {
                 fs::remove_file(&self.journal).map_err(|e| e.to_string())?;
             }
             self.pending = None;
+            self.restore_retries = 0;
+            crate::audio::lifecycle::event("volume_restore_completed");
         }
         Ok(())
     }
@@ -136,6 +161,9 @@ impl<B: Backend> Engine<B> {
         if self.mode != Mode::Off {
             return Ok(());
         }
+        if mode == Mode::Off {
+            return Ok(());
+        }
         self.recover()?;
         self.seen.clear();
         self.mode = mode;
@@ -144,10 +172,23 @@ impl<B: Backend> Engine<B> {
     }
     pub fn end(&mut self) -> Result<()> {
         self.mode = Mode::Off;
+        self.restore_retries = 4;
         self.restore()
     }
     pub fn tick(&mut self) -> Result<()> {
+        let result = self.tick_inner();
+        if result.is_err() {
+            self.mode = Mode::Off;
+        }
+        result
+    }
+    fn tick_inner(&mut self) -> Result<()> {
         if self.mode == Mode::Off {
+            if self.pending.is_some() && self.restore_retries > 0 {
+                self.restore_retries -= 1;
+                crate::audio::lifecycle::event("volume_restore_retry");
+                return self.restore();
+            }
             return Ok(());
         }
         let id = self.backend.default_device()?;
@@ -170,7 +211,9 @@ impl<B: Backend> Engine<B> {
                 .volume
                 .iter_mut()
                 .for_each(|v| *v *= self.volume_percent as f32 / 100.0),
-            Mode::Mute if device.can_mute => applied.muted = true,
+            Mode::Mute if device.can_mute && !self.backend.prefer_volume_for_mute() => {
+                applied.muted = true
+            }
             Mode::Mute => applied.volume.fill(0.0),
         }
         if applied.matches(&device.levels) {
@@ -180,10 +223,20 @@ impl<B: Backend> Engine<B> {
             id,
             before: device.levels,
             applied,
+            confirmed: false,
         };
         save_json(&self.journal, &j)?;
         self.pending = Some(j.clone());
-        self.backend.write(&j.id, &j.before, &j.applied)
+        let applied = self.backend.write_observed(&j.id, &j.before, &j.applied)?;
+        if !applied.valid() || applied.volume.len() != j.applied.volume.len() {
+            return Err("Invalid confirmed output levels".into());
+        }
+        let mut confirmed = j;
+        confirmed.applied = applied;
+        confirmed.confirmed = true;
+        save_json(&self.journal, &confirmed)?;
+        self.pending = Some(confirmed);
+        Ok(())
     }
 }
 #[cfg(test)]
@@ -193,8 +246,12 @@ mod tests {
         id: String,
         values: std::collections::HashMap<String, Levels>,
         fail: bool,
+        volume_mute: bool,
     }
     impl Backend for Fake {
+        fn prefer_volume_for_mute(&self) -> bool {
+            self.volume_mute
+        }
         fn default_device(&mut self) -> Result<String> {
             Ok(self.id.clone())
         }
@@ -216,6 +273,7 @@ mod tests {
         Engine::new(
             Fake {
                 id: "a".into(),
+                volume_mute: false,
                 values: [
                     (
                         "a".into(),
@@ -239,6 +297,91 @@ mod tests {
         )
     }
     #[test]
+    fn recovery_uses_confirmed_hardware_step_and_respects_manual_change() {
+        struct Quantized(Fake);
+        impl Backend for Quantized {
+            fn default_device(&mut self) -> Result<String> {
+                self.0.default_device()
+            }
+            fn read(&mut self, id: &str) -> Result<Device> {
+                self.0.read(id)
+            }
+            fn write(&mut self, id: &str, from: &Levels, to: &Levels) -> Result<()> {
+                self.0.write(id, from, to)
+            }
+            fn write_observed(&mut self, id: &str, from: &Levels, to: &Levels) -> Result<Levels> {
+                let mut actual = to.clone();
+                for value in &mut actual.volume {
+                    *value = (*value * 20.0).round() / 20.0;
+                }
+                self.0.write(id, from, &actual)?;
+                Ok(actual)
+            }
+        }
+        let fake = engine();
+        let mut e = Engine::new(Quantized(fake.backend), fake.journal);
+        e.begin(Mode::Reduce, 35).unwrap();
+        assert_eq!(e.pending.as_ref().unwrap().applied.volume, vec![0.3, 0.15]);
+        e.end().unwrap();
+        assert_eq!(e.backend.0.values["a"].volume, vec![0.8, 0.4]);
+        e.begin(Mode::Reduce, 35).unwrap();
+        e.backend.0.values.get_mut("a").unwrap().volume = vec![0.6, 0.2];
+        e.end().unwrap();
+        assert_eq!(e.backend.0.values["a"].volume, vec![0.6, 0.2]);
+    }
+    #[test]
+    fn failed_device_transition_stops_polling_until_explicit_retry() {
+        let mut e = engine();
+        e.begin(Mode::Reduce, 20).unwrap();
+        let old = e.backend.values.remove("a").unwrap();
+        e.backend.id = "b".into();
+        assert!(e.tick().is_err());
+        e.backend.values.insert("a".into(), old);
+        e.tick().unwrap();
+        assert_eq!(e.backend.values["b"].volume, vec![0.6]);
+        e.end().unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
+    }
+    #[test]
+    fn uncertain_delayed_write_preserves_journal_until_observed() {
+        let mut e = engine();
+        let j = Journal {
+            id: "a".into(),
+            before: e.backend.values["a"].clone(),
+            applied: Levels {
+                volume: vec![0.16, 0.08],
+                muted: false,
+            },
+            confirmed: false,
+        };
+        save_json(&e.journal, &j).unwrap();
+        assert!(e.recover().is_err());
+        assert!(e.journal.exists());
+        e.backend.values.insert("a".into(), j.applied);
+        e.end().unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
+        assert!(!e.journal.exists());
+    }
+    #[test]
+    fn disabled_begin_does_not_recover_or_write_device() {
+        let mut e = engine();
+        let j = Journal {
+            id: "a".into(),
+            before: e.backend.values["a"].clone(),
+            applied: Levels {
+                volume: vec![0.16, 0.08],
+                muted: false,
+            },
+            confirmed: true,
+        };
+        save_json(&e.journal, &j).unwrap();
+        e.backend.values.insert("a".into(), j.applied.clone());
+        e.begin(Mode::Off, 20).unwrap();
+        assert_eq!(e.backend.values["a"], j.applied);
+        assert!(e.journal.exists());
+        e.recover().unwrap();
+    }
+    #[test]
     fn reduce_restores_balance_and_duplicate_start_does_not_compound() {
         let mut e = engine();
         e.begin(Mode::Reduce, 20).unwrap();
@@ -250,6 +393,45 @@ mod tests {
         e.end().unwrap();
         assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
         assert!(!e.journal.exists());
+    }
+    #[test]
+    fn volume_mute_restores_channels_without_toggling_existing_mute() {
+        for muted in [false, true] {
+            let mut e = engine();
+            e.backend.volume_mute = true;
+            e.backend.values.get_mut("a").unwrap().muted = muted;
+            let original = e.backend.values["a"].clone();
+            e.begin(Mode::Mute, 20).unwrap();
+            assert_eq!(e.backend.values["a"].volume, vec![0.0, 0.0]);
+            assert_eq!(e.backend.values["a"].muted, muted);
+            let journal = e.pending.as_ref().unwrap();
+            assert_eq!(journal.before.muted, journal.applied.muted);
+            e.end().unwrap();
+            assert_eq!(e.backend.values["a"], original);
+            assert!(!e.journal.exists());
+        }
+    }
+    #[test]
+    fn volume_mute_preserves_user_volume_and_mute_changes() {
+        let mut e = engine();
+        e.backend.volume_mute = true;
+        e.begin(Mode::Mute, 20).unwrap();
+        e.backend.values.get_mut("a").unwrap().volume[0] = 0.3;
+        e.backend.values.get_mut("a").unwrap().muted = true;
+        e.end().unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.3, 0.4]);
+        assert!(e.backend.values["a"].muted);
+    }
+    #[test]
+    fn volume_mute_policy_still_recovers_legacy_hardware_mute() {
+        let mut e = engine();
+        e.begin(Mode::Mute, 20).unwrap();
+        assert!(e.backend.values["a"].muted);
+        let mut restarted = Engine::new(e.backend, e.journal);
+        restarted.backend.volume_mute = true;
+        restarted.recover().unwrap();
+        assert!(!restarted.backend.values["a"].muted);
+        assert_eq!(restarted.backend.values["a"].volume, vec![0.8, 0.4]);
     }
     #[test]
     fn mute_and_cancel_restore_original_mute_state() {
@@ -289,6 +471,33 @@ mod tests {
         let mut restarted = Engine::new(e.backend, e.journal);
         restarted.recover().unwrap();
         assert_eq!(restarted.backend.values["a"].volume, vec![0.8, 0.4]);
+    }
+    #[test]
+    fn failed_restore_is_retried_without_another_recording() {
+        let mut e = engine();
+        e.begin(Mode::Mute, 20).unwrap();
+        e.backend.fail = true;
+        assert!(e.end().is_err());
+        e.backend.fail = false;
+        e.tick().unwrap();
+        assert!(!e.backend.values["a"].muted);
+        assert!(!e.journal.exists());
+    }
+    #[test]
+    fn recovery_retries_are_bounded_and_preserve_manual_adjustment() {
+        let mut e = engine();
+        e.begin(Mode::Reduce, 20).unwrap();
+        e.backend.fail = true;
+        assert!(e.end().is_err());
+        for _ in 0..4 {
+            assert!(e.tick().is_err());
+        }
+        assert!(e.tick().is_ok());
+        assert!(e.journal.exists());
+        e.backend.fail = false;
+        e.backend.values.get_mut("a").unwrap().volume = vec![0.3, 0.2];
+        e.end().unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.3, 0.2]);
     }
     #[test]
     fn failure_keeps_recovery_and_does_not_block_end_retry() {

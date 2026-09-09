@@ -31,6 +31,24 @@ pub(crate) fn restore_target_application(target: &TargetAppGuard) -> bool {
 }
 
 impl ContextSignalSource for MacOsContextSource {
+    fn target_guard(&self) -> Option<TargetAppGuard> {
+        // App identity does not require AppleScript, browser automation, or AX field access.
+        use objc2::{class, msg_send, runtime::AnyObject};
+        objc2::rc::autoreleasepool(|_| unsafe {
+            let workspace: *mut AnyObject = msg_send![class!(NSWorkspace), sharedWorkspace];
+            let app: *mut AnyObject = msg_send![workspace, frontmostApplication];
+            if app.is_null() { return None; }
+            let pid: i32 = msg_send![app, processIdentifier];
+            if pid <= 0 { return None; }
+            let bundle: *mut AnyObject = msg_send![app, bundleIdentifier];
+            let native_identity = if bundle.is_null() { None } else {
+                let chars: *const std::ffi::c_char = msg_send![bundle, UTF8String];
+                if chars.is_null() { None } else { Some(std::ffi::CStr::from_ptr(chars).to_string_lossy().into_owned()) }
+            };
+            Some(TargetAppGuard { process_id: Some(pid as u32), native_identity })
+        })
+    }
+
     fn collect(&self) -> Option<ContextSignals> {
         let output = Command::new("/usr/bin/osascript")
             .args(["-e", FRONT_APP_SCRIPT])

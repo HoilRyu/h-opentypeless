@@ -147,14 +147,14 @@ export function AudioDuckingSetting() {
       )}
       <p className="text-xs text-text-tertiary leading-relaxed">
         {ko
-          ? '자동 저장 · 다음 녹음부터 적용됩니다. 녹음 종료 시 원래 음량으로 돌아가며, 직접 바꾼 음량은 유지합니다.'
-          : 'Saved automatically for the next recording. Volume is restored when recording ends; manual adjustments are respected.'}
+          ? '자동 저장 · 비율 변경은 다음 녹음부터, 끄기는 현재 녹음에도 적용됩니다. 종료 시 원래 음량으로 돌아가며 직접 바꾼 음량은 유지합니다.'
+          : 'Saved automatically. Percentage changes apply next time; Off also ends current attenuation. Volume is restored when recording ends; manual adjustments are respected.'}
       </p>
       {(error || status?.warning) && (
         <p role="status" className="text-xs text-amber-500">
           {ko
-            ? '음량 조절을 사용할 수 없거나 설정을 저장하지 못했습니다. 출력 장치와 설정을 확인해 주세요. 음성 입력은 계속 사용할 수 있습니다.'
-            : 'Audio control or saving settings was unavailable. Check your device and settings. Dictation remains available.'}
+            ? '음량 조절 또는 설정 저장에 실패했습니다. 오디오 장치를 확인한 뒤 앱을 다시 실행해 주세요.'
+            : 'Audio control or saving settings failed. Check your audio device and restart the app.'}
         </p>
       )}
     </section>

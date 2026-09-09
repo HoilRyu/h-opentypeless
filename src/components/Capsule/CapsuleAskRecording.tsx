@@ -1,3 +1,5 @@
+import { isMacPlatform } from '../../stores/appStore'
+import { Waveform } from './Waveform'
 import { useTranslation } from 'react-i18next'
 import { MessageCircle, X } from 'lucide-react'
 import { abortAskDictation } from '../../lib/tauri'
@@ -24,7 +26,7 @@ export function CapsuleAskRecording() {
     <div className="relative z-10 flex h-9 items-center gap-2 px-3">
       <MessageCircle size={13} className="shrink-0 text-white/90" />
       <span className="whitespace-nowrap text-[11px] font-medium text-white">{t('ask.title')}</span>
-      <CapsuleWorkIndicator tone="steady" />
+      {isMacPlatform() ? <Waveform /> : <CapsuleWorkIndicator tone="steady" />}
       <div className="flex-1" />
       <DurationTimer recordingKind="ask" />
       <button

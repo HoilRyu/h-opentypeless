@@ -4,6 +4,7 @@
     "tagline": "Saisie vocale IA"
   },
   "nav": {
+    "mobile": "Mobile connection",
     "home": "Accueil",
     "ask": "Demander",
     "settings": "Paramètres",
@@ -14,6 +15,8 @@
     "mainNavigation": "Navigation principale"
   },
   "ask": {
+    "copyResultTitle": "Copy text",
+    "copyResultHint": "Could not insert into the original field. Copy the text below to use it.",
     "title": "Demander",
     "voiceQuestion": "Question vocale",
     "voiceQuestionDesc": "Dictez votre question. Arrêtez l'enregistrement pour obtenir la réponse.",
@@ -36,7 +39,8 @@
     "copiedInstead": "Copié au lieu d’être inséré",
     "routeDisabled": "Cette fonction est désactivée",
     "searchOpened": "Recherche {{provider}} ouverte",
-    "send": "Demander"
+    "send": "Demander",
+    "copyFailed": "Copy failed"
   },
   "errors": {
     "stt_timeout": "La reconnaissance vocale a expiré. Veuillez réessayer.",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "Delete all device-only app mappings?",
     "mappingResetConfirmAction": "Reset mappings",
     "mappingNoMappings": "No custom app mappings",
-    "dictationMode": "Mode de dictee"
+    "dictationMode": "Mode de dictee",
+    "copyResultHotkey": "Copy result window text",
+    "copyResultHotkeyHint": "Copies text while the copy window is visible. The key is registered globally; choose a combination different from your normal Copy shortcut."
   },
   "contextFamilies": {
     "email": "Email",

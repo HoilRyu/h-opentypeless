@@ -70,6 +70,23 @@ describe('useTauriEvents', () => {
     vi.clearAllMocks()
   })
 
+  it('updates audio state without rerendering its host screen', async () => {
+    let renders = 0
+    function Probe() {
+      useTauriEvents()
+      renders++
+      return null
+    }
+    render(<Probe />)
+    await waitFor(() => expect(eventListeners.has('audio:volume')).toBe(true))
+    const baseline = renders
+    for (let i = 1; i <= 100; i++) {
+      act(() => eventListeners.get('audio:volume')?.({ payload: i / 100 }))
+    }
+    expect(useAppStore.getState().audioVolume).toBe(1)
+    expect(renders).toBe(baseline)
+  })
+
   it('clears hotkey registration errors when the backend reports recovery', async () => {
     render(<HookHarness />)
 

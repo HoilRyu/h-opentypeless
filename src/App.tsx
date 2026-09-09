@@ -1,4 +1,10 @@
 import { H_MANAGED_CLOUD_ENABLED } from './lib/h-features'
+import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
+import type { FeedbackSnapshot } from './components/VoiceFeedback'
+import type { PipelineState } from './stores/appStore'
+import { VoiceEdge } from './components/VoiceFeedback'
+import { isMacPlatform } from './stores/appStore'
 import { useEffect, useState } from 'react'
 import i18n from './i18n'
 import { useTauriEvents } from './hooks/useTauriEvents'
@@ -34,6 +40,33 @@ import { ToastContainer } from './components/Toast'
 function CapsuleApp() {
   useTauriEvents()
   useTheme()
+
+  useEffect(() => {
+    if (!isMacPlatform()) return
+    let live = true
+    let revision = -1
+    let off: (() => void) | undefined
+    const apply = (state: FeedbackSnapshot) => {
+      if (!live || state.preview || state.revision < revision) return
+      revision = state.revision
+      useAppStore.getState().setPipelineState(state.phase as PipelineState)
+    }
+    // Replay after subscribing: a hidden WKWebView may load after the initial pipeline event.
+    listen<FeedbackSnapshot>('voice-feedback:state', (event) => apply(event.payload))
+      .then(async (unlisten) => {
+        if (!live) {
+          unlisten()
+          return
+        }
+        off = unlisten
+        apply(await invoke<FeedbackSnapshot>('get_voice_feedback'))
+      })
+      .catch(console.error)
+    return () => {
+      live = false
+      off?.()
+    }
+  }, [])
 
   const setConfig = useAppStore((s) => s.setConfig)
 
@@ -235,6 +268,8 @@ function MainApp() {
 }
 
 function App() {
+  if (isMacPlatform()) document.documentElement.classList.add('mac-voice')
+  if (window.location.hash === '#voice-edge') return <VoiceEdge />
   // Capsule window loads with #capsule hash — detect synchronously, no race condition
   if (window.location.hash === '#capsule') return <CapsuleApp />
   if (window.location.hash === '#ask') return <AskApp />

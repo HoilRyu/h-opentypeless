@@ -4,6 +4,7 @@
     "tagline": "AI 语音输入"
   },
   "nav": {
+    "mobile": "Mobile connection",
     "home": "首页",
     "ask": "问答",
     "settings": "设置",
@@ -14,6 +15,8 @@
     "mainNavigation": "主导航"
   },
   "ask": {
+    "copyResultTitle": "Copy text",
+    "copyResultHint": "Could not insert into the original field. Copy the text below to use it.",
     "title": "问答",
     "voiceQuestion": "语音提问",
     "voiceQuestionDesc": "说出问题，停止后自动回答",
@@ -36,7 +39,8 @@
     "copiedInstead": "未插入，结果已复制",
     "routeDisabled": "此功能路径已停用",
     "searchOpened": "已打开 {{provider}} 搜索",
-    "send": "提问"
+    "send": "提问",
+    "copyFailed": "Copy failed"
   },
   "errors": {
     "stt_timeout": "语音识别超时，请重试。",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "删除所有仅保存在本机的应用映射？",
     "mappingResetConfirmAction": "重置映射",
     "mappingNoMappings": "暂无自定义应用映射",
-    "dictationMode": "听写触发方式"
+    "dictationMode": "听写触发方式",
+    "copyResultHotkey": "Copy result window text",
+    "copyResultHotkeyHint": "Copies text while the copy window is visible. The key is registered globally; choose a combination different from your normal Copy shortcut."
   },
   "contextFamilies": {
     "email": "邮件",

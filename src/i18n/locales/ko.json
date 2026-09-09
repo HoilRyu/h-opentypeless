@@ -4,6 +4,7 @@
     "tagline": "AI 음성 입력"
   },
   "nav": {
+    "mobile": "모바일 연결",
     "home": "홈",
     "ask": "질문",
     "settings": "설정",
@@ -14,6 +15,8 @@
     "mainNavigation": "메인 내비게이션"
   },
   "ask": {
+    "copyResultTitle": "텍스트 복사",
+    "copyResultHint": "원래 입력칸에 넣지 못했습니다. 아래 내용을 복사해 사용하세요.",
     "title": "질문",
     "voiceQuestion": "음성 질문",
     "voiceQuestionDesc": "질문을 말하세요. 녹음을 멈추면 답변합니다.",
@@ -36,7 +39,8 @@
     "copiedInstead": "삽입하지 않고 복사했습니다",
     "routeDisabled": "이 기능은 비활성화되었습니다",
     "searchOpened": "{{provider}} 검색을 열었습니다",
-    "send": "질문"
+    "send": "질문",
+    "copyFailed": "복사 실패"
   },
   "errors": {
     "stt_timeout": "음성 인식 시간이 초과되었습니다. 다시 시도해 주세요.",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "Delete all device-only app mappings?",
     "mappingResetConfirmAction": "Reset mappings",
     "mappingNoMappings": "No custom app mappings",
-    "dictationMode": "받아쓰기 모드"
+    "dictationMode": "받아쓰기 모드",
+    "copyResultHotkey": "복사 창 텍스트 복사",
+    "copyResultHotkeyHint": "복사 창이 보일 때 텍스트를 복사합니다. 등록한 키는 전역 단축키로 사용되므로 평소 복사 키와 다른 조합을 지정하세요."
   },
   "contextFamilies": {
     "email": "Email",

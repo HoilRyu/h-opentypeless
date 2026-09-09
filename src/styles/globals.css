@@ -655,3 +655,25 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-secondary);
 }
+
+/* Result card: the capsule's gel surface, with room for readable text. */
+.jelly-capsule.h-copy-note {
+  border-radius: 20px;
+  border: 1px solid #63bda9;
+  box-shadow:
+    inset 0 1px 2px #ffffff40,
+    0 3px 10px #0003;
+}
+.h-copy-note button {
+  border-color: #63bda950;
+  background: #2abba710;
+}
+.h-copy-note button:hover {
+  background: #2abba728;
+}
+.dark .jelly-capsule.h-copy-note {
+  background: linear-gradient(140deg, #2e3b3c, #242d32 65%, #252c38);
+  box-shadow:
+    inset 0 1px 0 #ffffff18,
+    0 3px 10px #0005;
+}

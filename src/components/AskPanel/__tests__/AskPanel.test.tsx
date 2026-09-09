@@ -40,6 +40,8 @@ const tauriWindowMock = vi.hoisted(() => {
   return {
     focusListeners,
     hide: vi.fn().mockResolvedValue(undefined),
+    setTitle: vi.fn().mockResolvedValue(undefined),
+    isVisible: vi.fn().mockResolvedValue(true),
     onFocusChanged: vi.fn((callback: FocusListener) => {
       focusListeners.push(callback)
       return Promise.resolve(() => {
@@ -55,6 +57,10 @@ const tauriWindowMock = vi.hoisted(() => {
   }
 })
 
+vi.mock('@tauri-apps/plugin-clipboard-manager', () => ({
+  writeText: (text: string) => navigator.clipboard.writeText(text),
+}))
+
 vi.mock('../../../lib/tauri', () => ({
   startAskDictation: vi.fn(),
   stopAskDictation: vi.fn(),
@@ -69,6 +75,8 @@ vi.mock('@tauri-apps/api/event', () => ({
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({
     hide: tauriWindowMock.hide,
+    setTitle: tauriWindowMock.setTitle,
+    isVisible: tauriWindowMock.isVisible,
     onFocusChanged: tauriWindowMock.onFocusChanged,
   }),
 }))
@@ -114,11 +122,28 @@ afterEach(() => {
 
 describe('AskPanel', () => {
   beforeEach(async () => {
+    tauriWindowMock.isVisible.mockResolvedValue(true)
     await i18n.changeLanguage('en')
     vi.mocked(startAskDictation).mockResolvedValue(recordingStarted())
     vi.mocked(stopAskDictation).mockResolvedValue(askResult())
     vi.mocked(abortAskDictation).mockResolvedValue(undefined)
     vi.mocked(takePendingAskMessage).mockResolvedValue(null)
+  })
+
+  it('labels dictation recovery as Copy text, including the native window title', async () => {
+    vi.mocked(takePendingAskMessage).mockResolvedValue({
+      kind: 'result',
+      payload: askResult({
+        question: 'Recovered dictation',
+        answer: 'Recovered dictation',
+        intent: 'dictate_insert',
+      }),
+    })
+    render(<AskPanel />)
+    expect(await screen.findByText('Copy text')).toBeDefined()
+    expect(screen.queryByText('Ask')).toBeNull()
+    expect(screen.getAllByText('Recovered dictation')).toHaveLength(1)
+    await waitFor(() => expect(tauriWindowMock.setTitle).toHaveBeenCalledWith('Copy text'))
   })
 
   it('renders standalone Ask as a compact floating note', async () => {
@@ -298,6 +323,49 @@ describe('AskPanel', () => {
     await waitFor(() => {
       expect(screen.getByText('Copied')).toBeDefined()
     })
+  })
+
+  it('copies the visible recovery result by shortcut without focusing or closing the window', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(window.navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    vi.mocked(takePendingAskMessage).mockResolvedValue({
+      kind: 'result',
+      payload: askResult({ answer: 'Recovery text', intent: 'dictate_insert' }),
+    })
+    render(<AskPanel />)
+    await screen.findByText('Recovery text')
+    await waitFor(() =>
+      expect(tauriEventMock.listen).toHaveBeenCalledWith('h:copy-result', expect.any(Function)),
+    )
+    act(() => tauriEventMock.emit('h:copy-result'))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('Recovery text'))
+    expect(tauriWindowMock.hide).not.toHaveBeenCalled()
+    expect(await screen.findByText('Copied')).toBeDefined()
+    writeText.mockClear()
+    tauriWindowMock.isVisible.mockResolvedValue(false)
+    act(() => tauriEventMock.emit('h:copy-result'))
+    await act(flushAsyncEffects)
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  it('does not copy an Ask answer through the recovery shortcut', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(window.navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    vi.mocked(takePendingAskMessage).mockResolvedValue({ kind: 'result', payload: askResult() })
+    render(<AskPanel />)
+    await screen.findByText('It turns speech into useful text.')
+    await waitFor(() =>
+      expect(tauriEventMock.listen).toHaveBeenCalledWith('h:copy-result', expect.any(Function)),
+    )
+    act(() => tauriEventMock.emit('h:copy-result'))
+    await act(flushAsyncEffects)
+    expect(writeText).not.toHaveBeenCalled()
   })
 
   it('renders a pending hotkey result when the native event was missed', async () => {

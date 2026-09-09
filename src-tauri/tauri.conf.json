@@ -46,6 +46,7 @@
       },
       {
         "label": "ask",
+        "acceptFirstMouse": true,
         "title": "H-OpenTypeless Ask",
         "width": 400,
         "height": 220,

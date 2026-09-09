@@ -66,7 +66,7 @@ export function useTauriEvents() {
     setHistory,
     applyPersistedConfigPatch,
     setHotkeyRegistrationError,
-  } = useAppStore()
+  } = useAppStore.getState()
 
   useEffect(() => {
     let cancelled = false

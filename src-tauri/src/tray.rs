@@ -237,7 +237,8 @@ pub fn build_tray_menu(
     let sep2 = PredefinedMenuItem::separator(app)?;
     let settings = MenuItem::with_id(app, "settings", labels.settings, true, None::<&str>)?;
     let history = MenuItem::with_id(app, "history", labels.history, true, None::<&str>)?;
-    let account = MenuItem::with_id(app, "account", labels.account, true, None::<&str>)?;
+    // H does not expose upstream cloud accounts. Keep labels for upstream merges.
+    let _ = labels.account;
     let sep3 = PredefinedMenuItem::separator(app)?;
     let about = MenuItem::with_id(app, "about", labels.about, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", labels.quit, true, None::<&str>)?;
@@ -252,7 +253,6 @@ pub fn build_tray_menu(
             &sep2,
             &settings,
             &history,
-            &account,
             &sep3,
             &about,
             &quit,

@@ -1,0 +1,1 @@
+{"identifier":"voice-edge","description":"Noninteractive Mac recording edge: event subscription only","windows":["voice-edge"],"permissions":["core:event:allow-listen","core:event:allow-unlisten"]}

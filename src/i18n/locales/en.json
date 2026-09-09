@@ -4,6 +4,7 @@
     "tagline": "AI Voice Input"
   },
   "nav": {
+    "mobile": "Mobile connection",
     "home": "Home",
     "ask": "Ask",
     "settings": "Settings",
@@ -14,6 +15,8 @@
     "mainNavigation": "Main navigation"
   },
   "ask": {
+    "copyResultTitle": "Copy text",
+    "copyResultHint": "Could not insert into the original field. Copy the text below to use it.",
     "title": "Ask",
     "voiceQuestion": "Voice question",
     "voiceQuestionDesc": "Speak your question. Stop recording to answer.",
@@ -36,7 +39,8 @@
     "copiedInstead": "Copied instead of inserting",
     "routeDisabled": "This route is disabled",
     "searchOpened": "Opened {{provider}} search",
-    "send": "Ask"
+    "send": "Ask",
+    "copyFailed": "Copy failed"
   },
   "errors": {
     "stt_timeout": "Speech recognition timed out. Please try again.",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "Delete all device-only app mappings?",
     "mappingResetConfirmAction": "Reset mappings",
     "mappingNoMappings": "No custom app mappings",
-    "dictationMode": "Dictation mode"
+    "dictationMode": "Dictation mode",
+    "copyResultHotkey": "Copy result window text",
+    "copyResultHotkeyHint": "Copies text while the copy window is visible. The key is registered globally; choose a combination different from your normal Copy shortcut."
   },
   "contextFamilies": {
     "email": "Email",

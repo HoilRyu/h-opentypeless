@@ -1,39 +1,17 @@
 use crate::{
     app_detector::types::ContextProfile,
-    credentials::{resolve_llm_config_secret, resolve_stt_config_secret, SystemCredentialVault},
     llm::{self, LlmConfig, PolishRequest},
     storage,
     stt::{self, SttConfig},
     voice_intent::{VoiceIntent, VoiceIntentKind, VoiceOutputPlacement},
 };
 use serde::Serialize;
-use std::{
-    sync::{Arc, LazyLock},
-    time::Duration,
-};
-use tokio::sync::Semaphore;
-static SECRET_GATE: LazyLock<Arc<Semaphore>> = LazyLock::new(|| Arc::new(Semaphore::new(1)));
+use std::time::Duration;
 
 async fn read_secret(config: &storage::AppConfig, stt: bool) -> Result<String, String> {
-    let permit = SECRET_GATE
-        .clone()
-        .try_acquire_owned()
-        .map_err(|_| "컴퓨터에서 이전 키체인 접근 승인을 기다리고 있습니다.")?;
-    let config = config.clone();
-    let task = tokio::task::spawn_blocking(move || {
-        // Retain this permit if a native keychain dialog outlives the HTTP request.
-        let _permit = permit;
-        if stt {
-            resolve_stt_config_secret(&config, &SystemCredentialVault)
-        } else {
-            resolve_llm_config_secret(&config, &SystemCredentialVault)
-        }
-    });
-    tokio::time::timeout(Duration::from_secs(20), task)
+    crate::credentials::read_config_secret(config, stt)
         .await
-        .map_err(|_| "컴퓨터에서 H 앱의 키체인 접근을 허용한 뒤 다시 시도하세요.")?
-        .map_err(|_| "인증 정보를 읽는 작업이 중단되었습니다.")?
-        .map_err(|_| "컴퓨터에서 H 앱의 인증 정보와 키체인 접근 권한을 확인하세요.".into())
+        .map_err(|e| e.to_string())
 }
 
 use tauri::Manager;

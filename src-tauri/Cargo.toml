@@ -67,6 +67,7 @@ windows-sys = { version = "0.59", features = [
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", rev = "c9ec2130422200f0863b23dfdad02b133a529b07" }
 sha2 = "0.10"
 keyring = { version = "3.6.3", default-features = false, features = ["apple-native"] }
 block2 = "0.5"

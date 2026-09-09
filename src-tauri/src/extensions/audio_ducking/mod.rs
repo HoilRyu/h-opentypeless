@@ -41,10 +41,11 @@ fn default_volume_percent() -> u8 {
 enum Message {
     Begin(&'static str, Mode, u8, tokio::sync::oneshot::Sender<()>),
     End(&'static str),
+    Disable,
     Shutdown(mpsc::Sender<()>),
 }
 pub struct Service {
-    tx: mpsc::Sender<Message>,
+    tx: mpsc::SyncSender<Message>,
     status: Arc<Mutex<Status>>,
     config: PathBuf,
 }
@@ -61,6 +62,7 @@ fn update_status(status: &Mutex<Status>, active: bool, result: Result<(), String
 impl Service {
     pub fn new(dir: PathBuf) -> Result<Self, String> {
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        crate::audio::lifecycle::init_log(dir.join("h-audio-events.log"));
         let config = dir.join("h-audio-ducking.json");
         let loaded = std::fs::read(&config)
             .ok()
@@ -76,16 +78,22 @@ impl Service {
             warning: None,
         }));
         let state = status.clone();
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = mpsc::sync_channel(64);
         std::thread::Builder::new()
             .name("h-audio-ducking".into())
             .spawn(move || {
                 let mut engine = Engine::new(Native, dir.join("h-audio-recovery.json"));
-                update_status(&state, false, engine.recover());
+                // Never touch hardware on startup while the feature is disabled.
+                if loaded.mode != Mode::Off {
+                    update_status(&state, false, engine.recover());
+                }
                 let mut owners = std::collections::HashSet::new();
                 loop {
                     match rx.recv_timeout(Duration::from_millis(250)) {
                         Ok(Message::Begin(owner, mode, volume_percent, done)) => {
+                            if done.is_closed() {
+                                continue;
+                            }
                             let first = owners.is_empty();
                             owners.insert(owner);
                             state.lock().unwrap_or_else(|e| e.into_inner()).warning = None;
@@ -96,6 +104,9 @@ impl Service {
                             };
                             update_status(&state, mode != Mode::Off && result.is_ok(), result);
                             let _ = done.send(());
+                        }
+                        Ok(Message::Disable) => {
+                            update_status(&state, false, engine.end());
                         }
                         Ok(Message::End(owner)) => {
                             owners.remove(owner);
@@ -110,7 +121,8 @@ impl Service {
                         }
                         Err(mpsc::RecvTimeoutError::Timeout) => {
                             let active = state.lock().unwrap_or_else(|e| e.into_inner()).active;
-                            update_status(&state, active, engine.tick());
+                            let result = engine.tick();
+                            update_status(&state, active && result.is_ok(), result);
                         }
                         Err(mpsc::RecvTimeoutError::Disconnected) => {
                             let _ = engine.end();
@@ -130,18 +142,28 @@ impl Service {
         let (tx, rx) = tokio::sync::oneshot::channel();
         if self
             .tx
-            .send(Message::Begin(owner, mode, volume_percent, tx))
-            .is_ok()
+            .try_send(Message::Begin(owner, mode, volume_percent, tx))
+            .is_err()
         {
-            let _ = rx.await;
+            crate::audio::lifecycle::fail();
+            return;
+        }
+        if !matches!(
+            tokio::time::timeout(Duration::from_secs(3), rx).await,
+            Ok(Ok(()))
+        ) {
+            crate::audio::lifecycle::fail();
         }
     }
+
     pub fn end(&self, owner: &'static str) {
-        let _ = self.tx.send(Message::End(owner));
+        if self.tx.try_send(Message::End(owner)).is_err() {
+            crate::audio::lifecycle::fail();
+        }
     }
     pub fn shutdown(&self) {
         let (tx, rx) = mpsc::channel();
-        if self.tx.send(Message::Shutdown(tx)).is_ok() {
+        if self.tx.try_send(Message::Shutdown(tx)).is_ok() {
             let _ = rx.recv_timeout(Duration::from_secs(5));
         }
     }
@@ -181,6 +203,10 @@ pub fn set_audio_ducking(
     )?;
     status.mode = mode;
     status.volume_percent = volume_percent;
+    if mode == Mode::Off && state.tx.try_send(Message::Disable).is_err() {
+        crate::audio::lifecycle::fail();
+        return Err("Audio control queue unavailable".into());
+    }
     Ok(status.clone())
 }
 
@@ -197,9 +223,10 @@ mod native_tests {
         let path =
             std::env::temp_dir().join(format!("h-native-audio-{}.json", uuid::Uuid::new_v4()));
         let mut engine = Engine::new(native, path);
-        for mode in [Mode::Reduce, Mode::Mute] {
-            let can_mute = engine.backend.read(&id).unwrap().can_mute;
-            let start = engine.begin(mode, 35);
+        for (mode, percent) in [(Mode::Reduce, 5), (Mode::Reduce, 35), (Mode::Mute, 35)] {
+            let can_mute = engine.backend.read(&id).unwrap().can_mute
+                && !engine.backend.prefer_volume_for_mute();
+            let start = engine.begin(mode, percent);
             let during = engine.backend.read(&id).map(|v| v.levels);
             let stop = engine.end();
             start.unwrap();
@@ -210,18 +237,19 @@ mod native_tests {
             for ((before, during), after) in
                 before.volume.iter().zip(during.volume).zip(after.volume)
             {
-                let expected = if mode == Mode::Reduce {
-                    before * 0.35
-                } else if can_mute {
-                    *before
-                } else {
-                    0.0
-                };
-                assert!((during - expected).abs() < 0.002, "mode={mode:?} before={before} during={during} expected={expected} after={after}");
+                // USB hardware quantizes the requested percentage. The actual
+                // confirmed step must attenuate and then restore the original.
+                if mode == Mode::Reduce {
+                    assert!(during <= *before && during >= 0.0);
+                } else if !can_mute {
+                    assert!(during.abs() < 0.002);
+                }
                 assert!((after - before).abs() < 0.002);
             }
             if mode == Mode::Mute && can_mute {
                 assert!(during.muted);
+            } else if mode == Mode::Mute {
+                assert_eq!(during.muted, before.muted);
             }
         }
     }

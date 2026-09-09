@@ -1,3 +1,4 @@
+import { isMacPlatform } from '../../stores/appStore'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -7,7 +8,7 @@ import { DurationTimer } from './DurationTimer'
 import { TranslateTargetChip } from './TranslateTargetChip'
 
 export function CapsuleRecording() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const reduced = useReducedMotion()
 
   const handleCancel = async (e: React.MouseEvent) => {
@@ -31,6 +32,11 @@ export function CapsuleRecording() {
         animate={reduced ? undefined : { opacity: [1, 0.5, 1] }}
         transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
       />
+      {isMacPlatform() && (
+        <span className="whitespace-nowrap text-[11px] font-semibold">
+          {i18n.language.startsWith('ko') ? '듣는 중' : 'Listening'}
+        </span>
+      )}
       <Waveform />
       <TranslateTargetChip />
       <div className="flex-1" />

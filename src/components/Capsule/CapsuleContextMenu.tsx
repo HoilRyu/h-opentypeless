@@ -1,3 +1,4 @@
+import { H_MANAGED_CLOUD_ENABLED } from '../../lib/h-features'
 import { useTranslation } from 'react-i18next'
 import { Settings, History, LogOut, CircleUser, Crown, AppWindow, Eye, EyeOff } from 'lucide-react'
 import { setCapsuleAutoHide } from '../../lib/tauri'
@@ -87,7 +88,11 @@ export function CapsuleContextMenu({ onClose }: Props) {
         onClose()
       },
     },
-  ]
+  ].filter(
+    (item) =>
+      H_MANAGED_CLOUD_ENABLED ||
+      !('icon' in item && (item.icon === CircleUser || item.icon === Crown)),
+  )
 
   return (
     <>

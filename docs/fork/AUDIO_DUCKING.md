@@ -27,7 +27,7 @@
 
 ## 플랫폼
 
-- macOS: Core Audio. 장치 UID로 식별. 출력 master volume 또는 쓰기 가능한 출력 채널들을 사용하며 채널별 비율을 보존. 음소거가 없으면 출력 음량0으로 대체.
+- macOS: Core Audio. 장치 UID로 식별. 출력 master volume 또는 쓰기 가능한 출력 채널들을 사용하며 채널별 비율을 보존. 새 음소거 세션은 하드웨어 mute 지원 여부와 관계없이 출력 음량0을 사용한다. 기존 하드웨어 mute 복구 기록은 계속 복원할 수 있다.
 - Windows: Core Audio MMDevice/IAudioEndpointVolume. 출력 endpoint ID로 식별. COM은 전용 스레드에서 초기화/해제.
 - Linux: pactl JSON 인터페이스. PulseAudio 또는 PipeWire의 PulseAudio 호환 서버와 pactl이 필요. sink 이름/채널 순서를 보존. 명령은 shell 없이 인자 배열로 실행하며 제한 시간을 둠. 순수 PipeWire만 있는 구성은 현재 미지원이며 음량 조절을 건너뜀.
 
@@ -41,3 +41,22 @@ Mac 실제 장치: opt-in actual_output_reduces_and_restores 테스트에서 red
 전체 Rust 최종 결과와 설치 상태는 HANDOFF.md 참조.
 
 실제 음악·유튜브 재생 중 발화 및 물리적인 헤드폰 교체 검증은 별도로 확인해야 한다. 자동 검사에서 장치 전환은 가짜 백엔드로 검사했다.
+
+## USB 안정화 후 동작
+끄기는 현재 녹음의 음량 조절에도 적용된다. 녹음 stop은 실제 backend 종료 완료를 최대3초 기다리고, Mac 음량 변경은 HAL 알림 및 실제 값 조회로 확인한다. USB 음량은 지원 단계로 반올림될 수 있으므로 알림 뒤 실제 값을 복구 기록에 저장한다. 음량 완료 확인만 실패하면 음량 쓰기를 중지하고 마이크는 계속 사용할 수 있다. native 전환 작업 자체가 막히거나 마이크 종료 확인이 실패하면 추가 녹음을 차단하므로 장치 상태 확인 후 H 앱을 다시 실행해야 한다. 미확정 음량 변경은 복구 JSON을 유지하고 무조건 원래값을 덮어쓰지 않는다. Off로 저장된 앱 시작에서는 복구를 실행하지 않는다. 진단 로그는 앱 데이터의 h-audio-events.log와 h-audio-events.previous.log에 최대 약256KiB씩 기록되며 음성·텍스트·인증정보는 포함하지 않는다. USB_AUDIO_PANIC_REVIEW.md에 한계와 검증 범위를 기록했다.
+
+
+## 2026-09-09 간헐적인 복원 누락 보완
+
+CoreAudio 변경 알림 직후 이전 값이 읽히는 경우를 성공으로 기록하지 않도록 확인 조건을 강화했다. USB 장치의 실제 양자화 값 사용은 유지한다. 복원 실패 시 250ms tick에서 최대 4회 재시도하고 복원 요청/완료/재시도 메타데이터를 기록한다. 수동으로 조절한 값은 덮어쓰지 않으며, 완료가 불명확한 네이티브 쓰기 차단도 유지한다. 받아쓰기 종료는 선택된 텍스트를 읽기 전에 캡처를 닫고 복원을 요청한다.
+
+최근 사용자 로그에 복원 API 성공 기록이 있었으므로 특정 사용자 사례의 원인을 확정한 것은 아니다. 이전 값+알림, 일시 복원 실패, 재시도 상한, 수동 값 보존 회귀 검사와 전체 Rust616개가 통과했다. 실제 출력 장치에서 5%/35% 감소 및 음소거 후 복원 검사를 별도 통과했다. 자체서명 빌드를 /Applications/H-OpenTypeless.app에 설치·재실행했다. 백업: ~/.local/share/h-opentypeless/volume-restore-backup-fpkk9a3b/H-OpenTypeless.app. 장치가 영구적으로 끊기거나 네이티브 완료가 확인되지 않으면 복원을 강제하지 않으며 재시작/장치 확인이 필요할 수 있다.
+
+
+## 2026-09-09 HAL unmute 성공 이후 무음 지속 대응
+
+사용자에게 YouTube와 macOS 테스트음 모두 들리지 않았으나, 기본 출력 EDIFIER M60의 HAL 값은 mute=0, volume=0.31640625였다. 사용자가 녹음을 다시 시작/종료하자 소리가 돌아왔다고 보고했다. 로그에는 복원 완료가 있었고 복구 JSON도 남아 있지 않았다. API 성공/조회값이 실제 가청 출력 복원을 보장하지 못한다는 증거이며, USB 펌웨어·드라이버 또는 입력 스트림 재시작 중 어느 동작이 회복시켰는지는 확정되지 않았다.
+
+새 Mac 음소거 세션은 하드웨어 mute 스위치를 조작하지 않고 출력 scalar를0으로 내린 후 저장된 값으로 복원한다. 기존 mute 상태와 사용자의 수동 음량·음소거 변경은 유지한다. 이전 버전의 하드웨어 mute 복구 JSON은 계속 처리한다. Windows/Linux 정책은 그대로다. 이는 의심 경로를 피하는 완화책이며 실제 재발 방지 완료로 주장하지 않는다. 장치 mute 반복 전환이나 USB 스트레스 테스트는 실시하지 않는다.
+
+검증: 관련 Rust27개 통과, 실제 장치 조절 테스트1개는 의도적으로 생략. 변경 파일 rustfmt 통과. 전체 fmt는 기존 lib.rs 트레이 아이콘 부분 형식 차이로 실패했으며 이번 변경과 무관해 수정하지 않았다. 자체서명 앱 빌드·서명 검증 후 /Applications/H-OpenTypeless.app에 설치·재실행. 백업: ~/.local/share/h-opentypeless/volume-mute-backup-fhtq_km9/H-OpenTypeless.app. 로그: ~/.local/share/h-opentypeless/volume-mute-{tests,build}.log. 설치 후 사용자 실제 가청 복원 및 재발 여부 확인은 아직 미완료.

@@ -4,6 +4,7 @@
     "tagline": "Input vocale AI"
   },
   "nav": {
+    "mobile": "Mobile connection",
     "home": "Home",
     "ask": "Chiedi",
     "settings": "Impostazioni",
@@ -14,6 +15,8 @@
     "mainNavigation": "Navigazione principale"
   },
   "ask": {
+    "copyResultTitle": "Copy text",
+    "copyResultHint": "Could not insert into the original field. Copy the text below to use it.",
     "title": "Chiedi",
     "voiceQuestion": "Domanda vocale",
     "voiceQuestionDesc": "Pronuncia la domanda. Ferma la registrazione per ricevere la risposta.",
@@ -36,7 +39,8 @@
     "copiedInstead": "Copiato invece di inserito",
     "routeDisabled": "Questa funzione è disattivata",
     "searchOpened": "Ricerca {{provider}} aperta",
-    "send": "Chiedi"
+    "send": "Chiedi",
+    "copyFailed": "Copy failed"
   },
   "errors": {
     "stt_timeout": "Il riconoscimento vocale è scaduto. Riprova.",
@@ -472,7 +476,9 @@
     "mappingResetConfirm": "Delete all device-only app mappings?",
     "mappingResetConfirmAction": "Reset mappings",
     "mappingNoMappings": "No custom app mappings",
-    "dictationMode": "Modalita dettatura"
+    "dictationMode": "Modalita dettatura",
+    "copyResultHotkey": "Copy result window text",
+    "copyResultHotkeyHint": "Copies text while the copy window is visible. The key is registered globally; choose a combination different from your normal Copy shortcut."
   },
   "contextFamilies": {
     "email": "Email",
