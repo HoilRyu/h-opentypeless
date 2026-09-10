@@ -10,7 +10,7 @@
 | Qwen3-ASR 0.6B | 약 1.75 GiB | 8 GB |
 | Qwen3-ASR 1.7B | 약 4.38 GiB | 16 GB |
 
-권장 메모리는 H의 보수적인 선택 가이드이며 속도·정확도 보장이 아니다. Whisper는 모두 다국어 모델이다. 한국어 정확도는 모델 크기와 발음/환경에 따라 다르다. 저사양 PC는 Base부터 검토한다. 현재 Mac에서 사용하던 MLX Qwen 서버와 달리 내장 Qwen은 CPU 네이티브 엔진이다.
+권장 메모리는 H의 보수적인 선택 가이드이며 속도·정확도 보장이 아니다. Whisper는 모두 다국어 모델이다. 한국어 정확도는 모델 크기와 발음/환경에 따라 다르다. 저사양 PC는 Base부터 검토한다. Qwen은 실행 엔진을 자동/MLX GPU/CPU 중 선택할 수 있다. 호환되는 Apple Silicon Mac에서는 자동 모드가 내장 MLX GPU를 사용한다. 최초 모델 검증·준비는 반복 입력보다 오래 걸릴 수 있다.
 
 ## 구조와 제한
 
@@ -19,17 +19,18 @@
 - 모델은 app data의 `local-stt/<model-id>`에 저장한다. 앱 업데이트 시 보존한다.
 - 모델별 고정 revision, 크기, SHA-256은 `catalog.json`에 있다. 임의 URL/경로를 IPC로 받지 않는다.
 - `.part` 이어받기, Range 응답 검증, 완료 체크섬 검증 후 이름 변경. 중단된 다운로드는 사용자가 재개한다. 자동 대용량 다운로드는 없다.
-- 실행 전 다시 체크섬을 검사한다. 모델 삭제/선택/다운로드와 녹음/전사는 단일 lease로 충돌을 막는다.
+- 앱 세션의 최초 실행 전 전체 체크섬을 검사하고 이후에는 파일 식별자·크기·변경 시각으로 검증 결과를 재사용한다. 변경된 파일은 재검증하며 모델 메모리 해제로 캐시를 지울 수 있다. 모델 삭제/선택/다운로드와 녹음/전사는 단일 lease로 충돌을 막는다.
 - 최대 녹음 120초, PCM16 mono 16kHz, 버퍼 3.84 MB, CPU 최대 4개 스레드, Qwen 세그먼트 20초. 전사 timeout 90초.
-- 엔진은 전사할 때만 실행하며 stdin으로 WAV를 전달한다. 음성 임시 파일을 쓰지 않는다. 출력은 각각 64 KiB로 제한한다.
-- 취소/timeout/future drop 시 kill_on_drop으로 종료하며 앱 종료 시 종료 신호와 짧은 대기 시간을 둔다. 모델 상주 프로세스를 남기지 않는다.
+- CPU 엔진에는 stdin으로 WAV를 전달한다. MLX는 전용 Python 워커에 길이가 제한된 헤더와 PCM을 전달하며 HTTP 포트를 열지 않는다. 음성 임시 파일을 쓰지 않고 출력은 64 KiB로 제한한다.
+- MLX는 녹음 중 준비하고 모델 하나를 재사용한다. 약 2분 유휴 또는 메모리 압박 시 해제하며, 취소/timeout/future drop 시 프로세스를 종료한다. 앱 종료 및 부모 프로세스 사망도 감시한다. CPU 엔진은 요청마다 종료한다.
 - 일반 입력·Ask·모바일 서버가 같은 제공자를 쓴다. Ask의 내장 모델 최종 전사 대기만 95초로 조정한다. 외부 제공자의 대기 설정은 유지한다.
 - Windows에서는 Qwen을 비활성화한다. POSIX 기반 Qwen 엔진의 Windows 포팅/검증 전까지 지원한다고 표시하지 않는다.
-- macOS Qwen은 Accelerate ABI 때문에 13.3 이상, 번들 Whisper는 11 이상을 기준으로 빌드한다. Windows/Linux 실기기 검증은 추후 수행한다.
+- MLX 번들은 네이티브 Apple Silicon과 macOS 14 이상을 대상으로 하며 실제 GPU 연산 검사를 통과해야 사용한다. 실패를 숨겨 CPU로 전환하지 않으며 사용자가 설정에서 CPU를 선택할 수 있다.
+- macOS CPU Qwen은 Accelerate ABI 때문에 13.3 이상, 번들 Whisper는 11 이상을 기준으로 빌드한다. Windows/Linux 실기기 검증은 추후 수행한다.
 
 ## 빌드
 
-macOS는 기존 `scripts/h-build-macos.sh`를 사용한다. 이 스크립트가 `h-prepare-local-stt.py`를 호출해 고정된 엔진 소스를 외부 캐시에 빌드하고 Tauri resource mapping을 생성한다. 모델 가중치는 패키지에 넣지 않는다. credential helper는 기존 서명을 보존하고 STT 실행 파일만 별도로 서명한 뒤 앱을 서명한다.
+macOS는 기존 `scripts/h-build-macos.sh`를 사용한다. 이 스크립트가 `h-prepare-local-stt.py`를 호출해 고정된 엔진 소스를 외부 캐시에 빌드하고 Tauri resource mapping을 생성한다. 모델 가중치는 패키지에 넣지 않는다. macOS arm64에서는 `h-prepare-mlx.py`가 해시로 고정된 재배치 가능 Python 3.12.14, MLX 0.31.1, mlx-qwen3-asr 0.4.0을 포함한다. credential helper는 기존 서명을 보존하고 MLX 라이브러리/실행 파일을 포함한 STT 코드를 별도로 서명한 뒤 앱을 서명한다.
 
 Windows/Linux 개발 빌드 준비:
 
@@ -38,11 +39,11 @@ python3 scripts/h-prepare-local-stt.py --config /absolute/external/build/local-s
 npm run tauri build -- --config /absolute/external/build/local-stt-bundle.json
 ```
 
-개발 의존성: Git, CMake, C/C++ compiler, Python(빌드 전용). Linux Qwen은 OpenBLAS 개발 패키지가 필요하다. Linux 배포 전 AppImage 내부에서 OpenBLAS 포함 여부/동적 라이브러리 경로를 확인해야 한다. Windows는 MSVC/Windows SDK로 Whisper를 빌드한다. 검증되지 않은 OS 패키지를 배포하지 않는다.
+개발 의존성: Git, CMake, C/C++ compiler, Python(빌드 도구; macOS arm64 배포본은 별도의 전용 Python 런타임도 포함). Linux Qwen은 OpenBLAS 개발 패키지가 필요하다. Linux 배포 전 AppImage 내부에서 OpenBLAS 포함 여부/동적 라이브러리 경로를 확인해야 한다. Windows는 MSVC/Windows SDK로 Whisper를 빌드한다. 검증되지 않은 OS 패키지를 배포하지 않는다.
 
 ## 검증과 다음 작업
 
-네트워크 다운로드와 실제 모델 전사 테스트는 평소 테스트에서 제외한다. 명시적으로 외부 테스트 디렉터리와 모델/음성 경로를 지정할 때만 실행한다. 사용자 설정과 기존 MLX 모델을 덮어쓰지 않는다.
+네트워크 다운로드와 실제 모델 전사 테스트는 평소 테스트에서 제외한다. 명시적으로 외부 테스트 디렉터리와 모델/음성 경로를 지정할 때만 실행한다. 사용자 모델 가중치와 설정을 보존한다. MLX용 고정 tokenizer 설정만 기존 모델 폴더에 추가한다.
 
 - 모델 크기/체크섬, Range 이어받기와 무시된 Range, 손상 파일 거부
 - 출력/PCM 제한, 녹음 루프 대기, 취소 후 프로세스 종료

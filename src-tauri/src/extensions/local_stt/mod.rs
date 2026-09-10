@@ -1,5 +1,7 @@
 //! H-owned native STT: opt-in pinned models and short-lived engine processes.
+mod mlx;
 mod provider;
+mod verification;
 pub use provider::Provider;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -74,8 +76,14 @@ pub struct Status {
     selected: Option<String>,
     progress: Progress,
     busy: bool,
+    engine: mlx::EngineStatus,
 }
 pub struct Service {
+    next_mlx_request: std::sync::atomic::AtomicU64,
+    mlx_platform: OnceLock<Option<String>>,
+    mlx_worker: AsyncMutex<Option<mlx::Worker>>,
+    mlx_probe: AsyncMutex<Option<Result<(), String>>>,
+    verified_files: AsyncMutex<std::collections::HashMap<PathBuf, verification::Stamp>>,
     qwen_platform: bool,
     memory_gb: Option<u64>,
     root: PathBuf,
@@ -90,6 +98,11 @@ impl Service {
     pub fn new(root: PathBuf, engines: PathBuf) -> Result<Arc<Self>, String> {
         std::fs::create_dir_all(&root).map_err(err)?;
         Ok(Arc::new(Self {
+            next_mlx_request: std::sync::atomic::AtomicU64::new(1),
+            mlx_platform: OnceLock::new(),
+            mlx_worker: AsyncMutex::new(None),
+            mlx_probe: AsyncMutex::new(None),
+            verified_files: AsyncMutex::new(std::collections::HashMap::new()),
             qwen_platform: qwen_supported_platform(),
             memory_gb: physical_memory_gb(),
             root,
@@ -106,9 +119,29 @@ impl Service {
         }))
     }
     pub fn install(root: PathBuf, engines: PathBuf) -> Result<(), String> {
+        let s = Self::new(root, engines)?;
         SERVICE
-            .set(Self::new(root, engines)?)
-            .map_err(|_| "STT already initialized".into())
+            .set(s.clone())
+            .map_err(|_| "STT already initialized".to_string())?;
+        tauri::async_runtime::spawn(async move {
+            let mut shutdown = s.shutdown.subscribe();
+            tokio::select! {
+                _ = shutdown.wait_for(|v| *v) => {},
+                _ = mlx::probe(&s) => {},
+            }
+            loop {
+                let stopping = tokio::select! {
+                    _ = shutdown.wait_for(|v| *v) => true,
+                    _ = tokio::time::sleep(Duration::from_secs(5)) => false,
+                };
+                if stopping {
+                    mlx::stop(&s).await;
+                    break;
+                }
+                mlx::reap_idle(&s).await;
+            }
+        });
+        Ok(())
     }
     pub fn shutdown(&self) {
         self.shutdown.send_replace(true);
@@ -117,6 +150,32 @@ impl Service {
     pub async fn wait_idle(&self) {
         // Let cancellation drop/kill the worker before the desktop runtime exits.
         let _ = tokio::time::timeout(Duration::from_secs(2), self.gate.lock()).await;
+        mlx::stop(self).await;
+    }
+    fn engine_preference(&self) -> String {
+        std::fs::read_to_string(self.root.join("engine"))
+            .ok()
+            .filter(|s| matches!(s.as_str(), "auto" | "mlx" | "cpu"))
+            .unwrap_or_else(|| "auto".into())
+    }
+    async fn verify_model(&self, m: &Model) -> Result<(), String> {
+        for f in &m.files {
+            let path = self.root.join(&m.id).join(&f.name);
+            let meta = fs::metadata(&path).await.map_err(err)?;
+            let key = verification::Stamp::new(&meta, &f.sha256)?;
+            if self.verified_files.lock().await.get(&path) == Some(&key) {
+                continue;
+            }
+            mlx::stop(self).await;
+            verify(&path, f).await?;
+            // A file changed while hashing must not be cached or executed.
+            let after = fs::metadata(&path).await.map_err(err)?;
+            if verification::Stamp::new(&after, &f.sha256)? != key {
+                return Err("Model changed during verification".into());
+            }
+            self.verified_files.lock().await.insert(path, key);
+        }
+        Ok(())
     }
     fn binary(&self, m: &Model) -> PathBuf {
         self.engines.join(format!(
@@ -175,12 +234,14 @@ impl Service {
                 model: m,
             });
         }
+        let engine = mlx::status(self).await;
         Status {
             memory_gb: self.memory_gb,
             models,
             selected: self.selected(),
             progress: self.progress.lock().unwrap().clone(),
             busy: self.gate.try_lock().is_err(),
+            engine,
         }
     }
     pub fn cancel(&self) {
@@ -217,6 +278,8 @@ impl Service {
         Ok(())
     }
     async fn download(&self, m: &Model) -> Result<(), String> {
+        mlx::stop(self).await;
+        self.verified_files.lock().await.clear();
         let dir = self.root.join(&m.id);
         fs::create_dir_all(&dir).await.map_err(err)?;
         let mut completed = 0;
@@ -335,6 +398,7 @@ pub async fn select_local_stt_model(id: String) -> Result<(), String> {
     let s = service()?;
     let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
     let m = model(&id)?;
+    mlx::stop(&s).await;
     if !s.available(&m) || !s.installed(&m).await {
         return Err("Download a supported model first".into());
     }
@@ -356,6 +420,8 @@ pub async fn delete_local_stt_model(id: String) -> Result<(), String> {
     let s = service()?;
     let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
     let m = model(&id)?;
+    mlx::stop(&s).await;
+    s.verified_files.lock().await.clear();
     let dir = s.root.join(&m.id);
     if dir.exists() {
         fs::remove_dir_all(dir).await.map_err(err)?;
@@ -365,6 +431,29 @@ pub async fn delete_local_stt_model(id: String) -> Result<(), String> {
             .await
             .map_err(err)?;
     }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_local_stt_engine(id: String) -> Result<(), String> {
+    if !matches!(id.as_str(), "auto" | "mlx" | "cpu") {
+        return Err("Unknown STT engine".into());
+    }
+    let s = service()?;
+    let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
+    mlx::stop(&s).await;
+    *s.mlx_probe.lock().await = None;
+    if id == "mlx" {
+        mlx::probe(&s).await?;
+    }
+    fs::write(s.root.join("engine"), id).await.map_err(err)
+}
+#[tauri::command]
+pub async fn unload_local_stt_engine() -> Result<(), String> {
+    let s = service()?;
+    let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
+    mlx::stop(&s).await;
+    s.verified_files.lock().await.clear();
     Ok(())
 }
 
@@ -424,6 +513,35 @@ mod tests {
         assert!(verify(&path, &m.files[0]).await.is_ok());
         fs::write(&path, b"jello").await.unwrap();
         assert!(verify(&path, &m.files[0]).await.is_err());
+    }
+    #[tokio::test]
+    async fn cached_verification_rejects_replaced_same_size_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let s = Service::new(dir.path().into(), dir.path().into()).unwrap();
+        let m = fixture("".into(), b"hello");
+        fs::create_dir(dir.path().join("fixture")).await.unwrap();
+        let path = dir.path().join("fixture/model.bin");
+        fs::write(&path, b"hello").await.unwrap();
+        s.verify_model(&m).await.unwrap();
+        s.verify_model(&m).await.unwrap();
+        let replacement = dir.path().join("replacement");
+        fs::write(&replacement, b"jello").await.unwrap();
+        fs::rename(replacement, &path).await.unwrap();
+        assert!(s.verify_model(&m).await.is_err());
+    }
+    #[tokio::test]
+    async fn cpu_override_does_not_probe_or_require_mlx() {
+        let dir = tempfile::tempdir().unwrap();
+        let s = Service::new(dir.path().into(), dir.path().into()).unwrap();
+        fs::write(dir.path().join("engine"), "cpu").await.unwrap();
+        assert!(!mlx::use_mlx(&s, &model("qwen-1.7b").unwrap())
+            .await
+            .unwrap());
+        assert!(s.mlx_probe.lock().await.is_none());
+        fs::write(dir.path().join("engine"), "mlx").await.unwrap();
+        assert!(mlx::use_mlx(&s, &model("qwen-1.7b").unwrap())
+            .await
+            .is_err());
     }
     #[tokio::test]
     async fn download_resumes_verified_range() {

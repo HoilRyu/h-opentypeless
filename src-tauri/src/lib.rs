@@ -1220,6 +1220,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             extensions::local_stt::get_local_stt_status,
+            extensions::local_stt::set_local_stt_engine,
+            extensions::local_stt::unload_local_stt_engine,
             extensions::local_stt::download_local_stt_model,
             extensions::local_stt::cancel_local_stt_download,
             extensions::local_stt::select_local_stt_model,

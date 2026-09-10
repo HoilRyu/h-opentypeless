@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build pinned native STT binaries outside the checkout. Python is build-only.
+"""Build pinned STT engines outside the checkout; macOS arm64 also bundles MLX.
 Windows bundles Whisper; Qwen is gated until its POSIX runtime is ported/tested.
 """
 import argparse
@@ -48,7 +48,15 @@ def prepare(root, config):
     files = [out / exe, out / 'LICENSE-whisper.txt', out / notices.name]
     if platform.system() != 'Windows':
         files += [out / 'qwen_asr', out / 'LICENSE-qwen-asr.txt']
-    config.write_text(json.dumps({'bundle': {'resources': {str(p.resolve()): 'local-stt/' + p.name for p in files}}}, indent=2) + '\n')
+    resources = {str(p.resolve()): 'local-stt/' + p.name for p in files}
+    if platform.system() == 'Darwin' and platform.machine() == 'arm64':
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('h_mlx', pathlib.Path(__file__).with_name('h-prepare-mlx.py'))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        runtime = module.prepare(pathlib.Path.home() / '.local/share/h-opentypeless/mlx-build')
+        resources[str(runtime.resolve()) + '/'] = 'local-stt/mlx/'
+    config.write_text(json.dumps({'bundle': {'resources': resources}}, indent=2) + '\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -58,6 +58,16 @@ describe('native model manager', () => {
     await screen.findByText('h.localStt.unavailable')
     expect(screen.queryByRole('button')).toBeNull()
   })
+  it('lets users explicitly choose CPU and surfaces selection failures', async () => {
+    vi.mocked(invoke).mockImplementation(async (command) => {
+      if (command === 'set_local_stt_engine') throw new Error('STT is busy')
+      return state({ engine: { preference: 'auto', active: 'mlx', reason: null, resident: false } })
+    })
+    render(<LocalSttSetting />)
+    fireEvent.change(await screen.findByRole('combobox'), { target: { value: 'cpu' } })
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('set_local_stt_engine', { id: 'cpu' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('STT is busy')
+  })
   it('displays backend failures', async () => {
     vi.mocked(invoke).mockRejectedValue('Disk full')
     render(<LocalSttSetting />)

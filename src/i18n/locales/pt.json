@@ -900,7 +900,7 @@
       "provider": "Built-in STT · Whisper / Qwen",
       "title": "Speech recognition on this computer",
       "description": "Download a model once, then transcribe without an STT server or internet connection. Your existing LLM provider is still used for polishing.",
-      "resources": "RAM values are conservative recommendations, not guarantees. Start with Whisper Base on a modest PC. Recording is limited to 2 minutes; one job runs at a time, with up to 4 CPU threads. The engine exits after each job.",
+      "resources": "Memory recommendations do not guarantee speed or accuracy. Start with Whisper Base on modest PCs. Recordings are limited to two minutes and one task at a time.",
       "loading": "Loading models…",
       "selected": "Selected",
       "ram": "{{count}} GB RAM recommended",
@@ -913,7 +913,15 @@
       "verifying": "Verifying downloaded files…",
       "choose": "Download a model and choose “Use model” before recording.",
       "memory": "This computer has {{count}} GB RAM.",
-      "limitReason": "Recording is limited to 2 minutes for bounded local processing."
+      "limitReason": "Recording is limited to 2 minutes for bounded local processing.",
+      "engineTitle": "Qwen engine",
+      "engineAuto": "Automatic (recommended)",
+      "engineActive": "Engine: {{engine}}",
+      "engineResident": "Model ready",
+      "engineIdle": "Idle",
+      "engineHelp": "Compatible Macs use MLX GPU. Initial model verification and preparation take longer. Models are released after about two minutes of inactivity. Whisper uses CPU.",
+      "engineUnload": "Release model memory",
+      "engineBusy": "Working"
     }
   }
 }

@@ -3519,7 +3519,7 @@ dependencies = [
 
 [[package]]
 name = "opentypeless"
-version = "0.1.43-beta.1"
+version = "0.1.45-beta.2"
 dependencies = [
  "anyhow",
  "arboard",
@@ -4713,6 +4713,16 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest",
+ "sha2-asm",
+]
+
+[[package]]
+name = "sha2-asm"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b845214d6175804686b2bd482bcffe96651bb2d1200742b712003504a2dac1ab"
+dependencies = [
+ "cc",
 ]
 
 [[package]]

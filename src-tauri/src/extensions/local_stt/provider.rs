@@ -10,7 +10,8 @@ use tokio::{process::Command, sync::OwnedMutexGuard};
 pub struct Provider {
     service: Arc<Service>,
     model: Option<Model>,
-    lease: Option<OwnedMutexGuard<()>>,
+    lease: Option<Arc<OwnedMutexGuard<()>>>,
+    warmup: Option<tokio::task::JoinHandle<Result<(), String>>>,
     pcm: Vec<u8>,
     language: Option<String>,
 }
@@ -23,8 +24,23 @@ impl Provider {
             service,
             model: None,
             lease: None,
+            warmup: None,
             pcm: Vec::new(),
             language: None,
+        }
+    }
+}
+impl Drop for Provider {
+    fn drop(&mut self) {
+        if let Some(task) = self.warmup.take() {
+            task.abort();
+        }
+        if self.model.is_some() {
+            // Cancellation before disconnect also releases a completed warmup.
+            // An in-flight warmup owns its worker and is killed by task abort.
+            if let Ok(mut worker) = self.service.mlx_worker.try_lock() {
+                worker.take();
+            }
         }
     }
 }
@@ -52,6 +68,28 @@ impl SttProvider for Provider {
                 "Download a supported STT model first".into(),
             ));
         }
+        let lease = Arc::new(lease);
+        if m.engine == "qwen"
+            && self.service.engine_preference() != "cpu"
+            && mlx::platform_reason(&self.service).is_none()
+        {
+            let service = self.service.clone();
+            let warm_model = m.clone();
+            let warm_lease = lease.clone();
+            self.warmup = Some(tokio::spawn(async move {
+                let _lease = warm_lease;
+                let mut shutdown = service.shutdown.subscribe();
+                tokio::select! {
+                    _ = shutdown.wait_for(|v| *v) => Err("STT stopped".into()),
+                    result = tokio::time::timeout(Duration::from_secs(FINALIZE_SECONDS), async {
+                        service.verify_model(&warm_model).await?;
+                        mlx::probe(&service).await?;
+                        mlx::transcribe(&service, &warm_model, &[], None).await?;
+                        Ok(())
+                    }) => result.unwrap_or_else(|_| Err("MLX model preparation timed out".into())),
+                }
+            }));
+        }
         self.model = Some(m);
         self.lease = Some(lease);
         self.pcm.clear();
@@ -73,6 +111,15 @@ impl SttProvider for Provider {
     }
     async fn disconnect(&mut self) -> Result<Option<String>, AppError> {
         let _lease = self.lease.take();
+        // Keep the JoinHandle owned by Provider while awaiting: cancellation of
+        // disconnect must still abort preparation in Drop.
+        if let Some(warmup) = self.warmup.as_mut() {
+            warmup
+                .await
+                .map_err(|e| AppError::Config(e.to_string()))?
+                .map_err(AppError::Config)?;
+        }
+        self.warmup.take();
         let m = self
             .model
             .take()
@@ -120,10 +167,26 @@ async fn transcribe(
     pcm: &[u8],
     language: Option<&str>,
 ) -> Result<String, String> {
-    // Verify before handing externally downloaded weights to native code.
-    for file in &m.files {
-        verify(&s.root.join(&m.id).join(&file.name), file).await?;
+    let started = std::time::Instant::now();
+    s.verify_model(m).await?;
+    tracing::info!(
+        "local_stt model={} verify_ms={}",
+        m.id,
+        started.elapsed().as_millis()
+    );
+    if mlx::use_mlx(s, m).await? {
+        return mlx::transcribe(
+            s,
+            m,
+            pcm,
+            language
+                .filter(|l| *l != "auto" && *l != "multi")
+                .map(qwen_language)
+                .transpose()?,
+        )
+        .await;
     }
+    let inference = std::time::Instant::now();
     let mut cmd = Command::new(s.binary(m));
     cmd.kill_on_drop(true)
         .stdin(Stdio::piped())
@@ -181,6 +244,11 @@ async fn transcribe(
             "STT engine exited unsuccessfully ({status}). Try a smaller model."
         ));
     }
+    tracing::info!(
+        "local_stt backend=cpu model={} process_ms={}",
+        m.id,
+        inference.elapsed().as_millis()
+    );
     String::from_utf8(output)
         .map(|s| s.trim().to_owned())
         .map_err(|_| "Invalid STT output".into())
@@ -213,7 +281,7 @@ mod tests {
         let mut p =
             Provider::with_service(Service::new(dir.path().into(), dir.path().into()).unwrap());
         assert!(p.send_audio(&[0, 0]).await.is_err());
-        p.lease = Some(p.service.gate.clone().lock_owned().await);
+        p.lease = Some(Arc::new(p.service.gate.clone().lock_owned().await));
         p.pcm.resize(MAX_AUDIO, 0);
         assert!(p.send_audio(&[0, 0]).await.is_err());
         assert!(p.service.gate.try_lock().is_err());
@@ -276,6 +344,46 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(25)).await;
         }
         panic!("native engine survived cancellation");
+    }
+    #[tokio::test]
+    #[ignore = "real MLX inference; H_LOCAL_STT_TEST_ROOT, H_LOCAL_STT_ENGINE_DIR, H_LOCAL_STT_TEST_PCM"]
+    async fn real_mlx_provider_reuses_and_releases_model() {
+        let s = Service::new(
+            PathBuf::from(std::env::var("H_LOCAL_STT_TEST_ROOT").unwrap()),
+            PathBuf::from(std::env::var("H_LOCAL_STT_ENGINE_DIR").unwrap()),
+        )
+        .unwrap();
+        let pcm = fs::read(std::env::var("H_LOCAL_STT_TEST_PCM").unwrap())
+            .await
+            .unwrap();
+        for _ in 0..3 {
+            let mut p = Provider::with_service(s.clone());
+            let start = std::time::Instant::now();
+            p.connect(&SttConfig {
+                language: Some("ko".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+            p.send_audio(&pcm).await.unwrap();
+            let text = p.disconnect().await.unwrap().unwrap();
+            eprintln!(
+                "provider wall_ms={} synthetic_result={text}",
+                start.elapsed().as_millis()
+            );
+            assert!(text.contains("설정") && text.contains("버튼"));
+            assert!(s.mlx_worker.lock().await.is_some());
+        }
+        mlx::stop(&s).await;
+        assert!(s.mlx_worker.lock().await.is_none());
+        let mut p = Provider::with_service(s.clone());
+        p.connect(&SttConfig::default()).await.unwrap();
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        drop(p);
+        let _lease = tokio::time::timeout(Duration::from_secs(3), s.gate.lock())
+            .await
+            .unwrap();
+        mlx::stop(&s).await;
     }
     #[tokio::test]
     #[ignore = "real native inference; set H_LOCAL_STT_TEST_ROOT, H_LOCAL_STT_ENGINE_DIR, H_LOCAL_STT_TEST_PCM"]

@@ -15,6 +15,7 @@ type Model = {
   files: { size: number }[]
 }
 type Status = {
+  engine?: { preference: string; active: string; reason: string | null; resident: boolean }
   memory_gb?: number | null
   models: Model[]
   selected: string | null
@@ -80,6 +81,47 @@ export function LocalSttSetting() {
           {status?.memory_gb ? ` ${t('h.localStt.memory', { count: status.memory_gb })}` : ''}
         </p>
       </div>
+      {status?.engine && (
+        <div className="rounded-xl border border-border p-4 space-y-3">
+          <label className="flex items-center justify-between gap-3 text-sm">
+            {t('h.localStt.engineTitle')}
+            <select
+              className="rounded-lg border border-border bg-bg-secondary px-3 py-2 text-xs"
+              value={status.engine.preference}
+              disabled={pending || status.busy}
+              onChange={(event) => void run('set_local_stt_engine', event.target.value)}
+            >
+              <option value="auto">{t('h.localStt.engineAuto')}</option>
+              <option value="mlx">MLX GPU</option>
+              <option value="cpu">CPU</option>
+            </select>
+          </label>
+          <p className="text-xs text-text-secondary" role="status">
+            {t('h.localStt.engineActive', { engine: status.engine.active.toUpperCase() })}
+            {' · '}
+            {t(
+              status.busy
+                ? 'h.localStt.engineBusy'
+                : status.engine.resident
+                  ? 'h.localStt.engineResident'
+                  : 'h.localStt.engineIdle',
+            )}
+          </p>
+          {status.engine.reason && (
+            <p className="text-xs text-text-tertiary">{status.engine.reason}</p>
+          )}
+          <p className="text-xs text-text-tertiary">{t('h.localStt.engineHelp')}</p>
+          {status.engine.resident && (
+            <button
+              className={button}
+              disabled={pending || status.busy}
+              onClick={() => void run('unload_local_stt_engine')}
+            >
+              {t('h.localStt.engineUnload')}
+            </button>
+          )}
+        </div>
+      )}
       {error && (
         <p role="alert" className="text-xs text-red-500">
           {error}
