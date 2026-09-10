@@ -60,3 +60,15 @@ CoreAudio 변경 알림 직후 이전 값이 읽히는 경우를 성공으로 �
 새 Mac 음소거 세션은 하드웨어 mute 스위치를 조작하지 않고 출력 scalar를0으로 내린 후 저장된 값으로 복원한다. 기존 mute 상태와 사용자의 수동 음량·음소거 변경은 유지한다. 이전 버전의 하드웨어 mute 복구 JSON은 계속 처리한다. Windows/Linux 정책은 그대로다. 이는 의심 경로를 피하는 완화책이며 실제 재발 방지 완료로 주장하지 않는다. 장치 mute 반복 전환이나 USB 스트레스 테스트는 실시하지 않는다.
 
 검증: 관련 Rust27개 통과, 실제 장치 조절 테스트1개는 의도적으로 생략. 변경 파일 rustfmt 통과. 전체 fmt는 기존 lib.rs 트레이 아이콘 부분 형식 차이로 실패했으며 이번 변경과 무관해 수정하지 않았다. 자체서명 앱 빌드·서명 검증 후 /Applications/H-OpenTypeless.app에 설치·재실행. 백업: ~/.local/share/h-opentypeless/volume-mute-backup-fhtq_km9/H-OpenTypeless.app. 로그: ~/.local/share/h-opentypeless/volume-mute-{tests,build}.log. 설치 후 사용자 실제 가청 복원 및 재발 여부 확인은 아직 미완료.
+
+## 2026-09-10 다른 출력 장치의 복구 실패로 음소거 차단
+
+실제 설정은 mute/2%였으나 9월 10일 19:40 Bluetooth 출력의 두 번째 채널 변경 완료 확인이 실패한 뒤 singleton 복구 파일이 confirmed=false로 남았다. 이후 EDIFIER M60 USB 출력을 사용해도 begin이 이전 장치 복구에서 중단되어 음량 쓰기가 실행되지 않았다. 최초 Bluetooth HAL 알림/조회 실패의 하위 원인은 당시 메타데이터 로그만으로 확정할 수 없다.
+
+복구 파일을 장치 UID의 SHA-256별로 분리했다. 기존 h-audio-recovery.json은 내용 변경 없이 해당 장치 파일로 원자적으로 이동한다. 기본 출력 장치의 기록만 로드하며, 장치 전환 시 이전 장치 복원 실패는 해당 파일에 보존하고 새 장치의 음량 조절을 계속한다. 이전 장치가 기본 출력으로 돌아오면 복구를 다시 시도한다. 아직 완료가 불분명한 **동일 장치**의 쓰기는 강제 재시도하지 않는다. macOS 음량 실패 차단도 프로세스 전체가 아닌 AudioObjectID별로 적용한다.
+
+작은 실제 변화가 0.002 허용 오차에 묻혀 완료로 인정되지 않는 조건을 수정했고, 무음 목표0은 정확한0만 변경 없음으로 인정한다. HAL 알림+readback 확인은 유지한다. Apple AudioObjectSetPropertyData 문서도 비동기 변경을 알림 전에 완료로 간주하지 않도록 명시한다: https://developer.apple.com/documentation/coreaudio/audioobjectsetpropertydata(_:_:_:_:_:_:)
+
+검증: 관련 Rust30개 통과. 실제 EDIFIER 출력에서 가짜 미완료 타 장치 기록이 있는 상태로 감소5%/35% 및 음소거 검사 통과. 음량 scalar 0.44444448 → 0.02126736 / 0.15668404 / 0.0 → 0.44444448로 각각 복원 확인. Bluetooth 재연결 및 사용자의 실제 가청 결과는 이 검사에 포함하지 않는다. 로그 /tmp/h-duck-fix-{tests,native,build}.log.
+
+설치 완료: 기존 자체서명 및 credential helper 유지, deep/strict 서명 검증 후 /Applications/H-OpenTypeless.app 교체·실행. 설정에서 음소거 유지 및 오류 문구 제거 확인. 실제 이전 Bluetooth 기록의 내용이 바뀌지 않은 채 장치별 파일로 이관된 것을 확인했다. 이전 앱 백업은 ~/.local/share/h-opentypeless/app-backups/before-audio-device-recovery-20260910-235613.app. 설치 기록은 ~/.local/share/h-opentypeless/audio-ducking-fix/install.json. 빌드 원본은 기존 capsule-whisper-build 통합 소스이며 오디오 모듈 3파일만 동기화하여 Stream Deck 수정과 기존 앱 기능을 보존했다. 작업 워크트리에서는 이번 수정만 미커밋 상태다.

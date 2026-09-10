@@ -18,11 +18,13 @@ impl Levels {
     fn matches(&self, other: &Self) -> bool {
         self.muted == other.muted
             && self.volume.len() == other.volume.len()
-            && self
-                .volume
-                .iter()
-                .zip(&other.volume)
-                .all(|(a, b)| (a - b).abs() < 0.002)
+            && self.volume.iter().zip(&other.volume).all(|(a, b)| {
+                if *a == 0.0 || *b == 0.0 {
+                    a == b
+                } else {
+                    (a - b).abs() < 0.002
+                }
+            })
     }
     fn valid(&self) -> bool {
         !self.volume.is_empty()
@@ -82,6 +84,7 @@ pub fn save_json(path: &std::path::Path, value: &impl Serialize) -> Result<()> {
 pub struct Engine<B> {
     pub backend: B,
     journal: PathBuf,
+    legacy_journal: PathBuf,
     pending: Option<Journal>,
     mode: Mode,
     volume_percent: u8,
@@ -92,6 +95,7 @@ impl<B: Backend> Engine<B> {
     pub fn new(backend: B, journal: PathBuf) -> Self {
         Self {
             backend,
+            legacy_journal: journal.clone(),
             journal,
             pending: None,
             mode: Mode::Off,
@@ -100,13 +104,51 @@ impl<B: Backend> Engine<B> {
             restore_retries: 0,
         }
     }
-    pub fn recover(&mut self) -> Result<()> {
-        if self.pending.is_none() && self.journal.exists() {
-            self.pending = Some(
-                serde_json::from_slice(&fs::read(&self.journal).map_err(|e| e.to_string())?)
-                    .map_err(|e| e.to_string())?,
-            );
+    fn device_journal(&self, id: &str) -> PathBuf {
+        use sha2::{Digest, Sha256};
+        self.legacy_journal
+            .with_extension(format!("{:x}.json", Sha256::digest(id.as_bytes())))
+    }
+    fn select_device(&mut self, id: &str) -> Result<()> {
+        // Migrate the old singleton journal without touching its device. A
+        // disconnected headset must not block a different output indefinitely.
+        if self.legacy_journal.exists() {
+            let old: Journal =
+                serde_json::from_slice(&fs::read(&self.legacy_journal).map_err(|e| e.to_string())?)
+                    .map_err(|e| e.to_string())?;
+            let target = self.device_journal(&old.id);
+            if target.exists() {
+                return Err("Conflicting audio recovery records".into());
+            }
+            fs::rename(&self.legacy_journal, target).map_err(|e| e.to_string())?;
         }
+        let target = self.device_journal(id);
+        if self.journal != target {
+            if self.pending.is_some() {
+                // Best effort for the previous output. Its durable record stays
+                // available until that device becomes the default output again.
+                if self.restore().is_err() {
+                    crate::audio::lifecycle::event("volume_recovery_deferred");
+                }
+            }
+            self.pending = None;
+            self.restore_retries = 0;
+            self.journal = target;
+        }
+        if self.pending.is_none() && self.journal.exists() {
+            let record: Journal =
+                serde_json::from_slice(&fs::read(&self.journal).map_err(|e| e.to_string())?)
+                    .map_err(|e| e.to_string())?;
+            if record.id != id {
+                return Err("Audio recovery device mismatch".into());
+            }
+            self.pending = Some(record);
+        }
+        Ok(())
+    }
+    pub fn recover(&mut self) -> Result<()> {
+        let id = self.backend.default_device()?;
+        self.select_device(&id)?;
         self.restore_retries = 4;
         self.restore()
     }
@@ -192,7 +234,8 @@ impl<B: Backend> Engine<B> {
             return Ok(());
         }
         let id = self.backend.default_device()?;
-        if self.pending.as_ref().is_some_and(|j| j.id != id) {
+        if self.journal != self.device_journal(&id) {
+            self.select_device(&id)?;
             self.restore()?;
         }
         // A device is changed at most once per recording, including after a
@@ -319,7 +362,7 @@ mod tests {
             }
         }
         let fake = engine();
-        let mut e = Engine::new(Quantized(fake.backend), fake.journal);
+        let mut e = Engine::new(Quantized(fake.backend), fake.legacy_journal);
         e.begin(Mode::Reduce, 35).unwrap();
         assert_eq!(e.pending.as_ref().unwrap().applied.volume, vec![0.3, 0.15]);
         e.end().unwrap();
@@ -330,17 +373,51 @@ mod tests {
         assert_eq!(e.backend.0.values["a"].volume, vec![0.6, 0.2]);
     }
     #[test]
-    fn failed_device_transition_stops_polling_until_explicit_retry() {
+    fn disconnected_previous_output_does_not_block_new_output() {
         let mut e = engine();
         e.begin(Mode::Reduce, 20).unwrap();
+        let old_path = e.journal.clone();
         let old = e.backend.values.remove("a").unwrap();
         e.backend.id = "b".into();
-        assert!(e.tick().is_err());
-        e.backend.values.insert("a".into(), old);
         e.tick().unwrap();
-        assert_eq!(e.backend.values["b"].volume, vec![0.6]);
+        assert!(old_path.exists());
+        assert!((e.backend.values["b"].volume[0] - 0.12).abs() < 0.002);
         e.end().unwrap();
+        assert_eq!(e.backend.values["b"].volume, vec![0.6]);
+        e.backend.values.insert("a".into(), old);
+        e.backend.id = "a".into();
+        e.recover().unwrap();
         assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
+        assert!(!old_path.exists());
+    }
+    #[test]
+    fn legacy_unconfirmed_other_device_is_preserved_without_blocking_mute() {
+        let mut e = engine();
+        let legacy = Journal {
+            id: "disconnected-headset".into(),
+            before: Levels {
+                volume: vec![0.007874; 2],
+                muted: false,
+            },
+            applied: Levels {
+                volume: vec![0.000157; 2],
+                muted: false,
+            },
+            confirmed: false,
+        };
+        save_json(&e.legacy_journal, &legacy).unwrap();
+        let saved = e.device_journal(&legacy.id);
+        e.begin(Mode::Mute, 2).unwrap();
+        assert!(e.backend.values["a"].muted);
+        assert!(saved.exists());
+        assert!(!e.legacy_journal.exists());
+        e.end().unwrap();
+        assert!(!e.backend.values["a"].muted);
+        let mut restarted = Engine::new(e.backend, e.legacy_journal);
+        restarted.begin(Mode::Mute, 2).unwrap();
+        restarted.end().unwrap();
+        assert!(saved.exists());
+        fs::remove_file(saved).unwrap();
     }
     #[test]
     fn uncertain_delayed_write_preserves_journal_until_observed() {
@@ -412,6 +489,16 @@ mod tests {
         }
     }
     #[test]
+    fn low_volume_is_still_muted_to_exact_zero_and_restored() {
+        let mut e = engine();
+        e.backend.volume_mute = true;
+        e.backend.values.get_mut("a").unwrap().volume = vec![0.001, 0.000157];
+        e.begin(Mode::Mute, 2).unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.0, 0.0]);
+        e.end().unwrap();
+        assert_eq!(e.backend.values["a"].volume, vec![0.001, 0.000157]);
+    }
+    #[test]
     fn volume_mute_preserves_user_volume_and_mute_changes() {
         let mut e = engine();
         e.backend.volume_mute = true;
@@ -427,7 +514,7 @@ mod tests {
         let mut e = engine();
         e.begin(Mode::Mute, 20).unwrap();
         assert!(e.backend.values["a"].muted);
-        let mut restarted = Engine::new(e.backend, e.journal);
+        let mut restarted = Engine::new(e.backend, e.legacy_journal);
         restarted.backend.volume_mute = true;
         restarted.recover().unwrap();
         assert!(!restarted.backend.values["a"].muted);
@@ -468,7 +555,7 @@ mod tests {
     fn restart_recovers_only_unchanged_applied_volume() {
         let mut e = engine();
         e.begin(Mode::Reduce, 20).unwrap();
-        let mut restarted = Engine::new(e.backend, e.journal);
+        let mut restarted = Engine::new(e.backend, e.legacy_journal);
         restarted.recover().unwrap();
         assert_eq!(restarted.backend.values["a"].volume, vec![0.8, 0.4]);
     }
@@ -515,7 +602,7 @@ mod tests {
         let mut e = engine();
         e.begin(Mode::Reduce, 20).unwrap();
         e.backend.values.get_mut("a").unwrap().volume = vec![0.5, 0.25];
-        let mut restarted = Engine::new(e.backend, e.journal);
+        let mut restarted = Engine::new(e.backend, e.legacy_journal);
         restarted.recover().unwrap();
         assert_eq!(restarted.backend.values["a"].volume, vec![0.5, 0.25]);
         assert!(!restarted.journal.exists());
@@ -524,6 +611,7 @@ mod tests {
     fn journal_failure_prevents_volume_change() {
         let mut e = engine();
         e.journal = e.journal.join("missing-parent.json");
+        e.legacy_journal = e.journal.clone();
         assert!(e.begin(Mode::Reduce, 20).is_err());
         assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
     }

@@ -73,7 +73,7 @@ fn read<T: Default>(o: u32, a: &Address) -> Result<T> {
     }
     Ok(v)
 }
-trait PropertyValue: Copy + Default {
+trait PropertyValue: Copy + Default + PartialEq {
     fn valid(self) -> bool;
     fn matches(self, desired: Self) -> bool;
 }
@@ -82,7 +82,12 @@ impl PropertyValue for f32 {
         self.is_finite() && (0.0..=1.0).contains(&self)
     }
     fn matches(self, desired: Self) -> bool {
-        self.is_finite() && (self - desired).abs() < 0.002
+        self.is_finite()
+            && if desired == 0.0 {
+                self == 0.0
+            } else {
+                (self - desired).abs() < 0.002
+            }
     }
 }
 impl PropertyValue for u32 {
@@ -93,14 +98,14 @@ impl PropertyValue for u32 {
         self == desired
     }
 }
-static WRITE_FAILED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static WRITE_FAILED: std::sync::Mutex<Vec<u32>> = std::sync::Mutex::new(Vec::new());
 
 // HAL reports the hardware's supported step, which can differ substantially
 // from the requested scalar on USB devices. Keep that observed value for recovery.
 fn completed_value<T: PropertyValue>(observed: T, previous: T, notified: bool) -> Option<T> {
     // HAL may notify before readback stops returning its cached previous value.
     // Recording that value as "applied" would lose ownership of the later mute.
-    (observed.valid() && notified && !observed.matches(previous)).then_some(observed)
+    (observed.valid() && notified && observed != previous).then_some(observed)
 }
 fn write<T: PropertyValue>(o: u32, a: &Address, v: &T) -> Result<T> {
     use std::sync::atomic::{AtomicU64, Ordering};
@@ -125,7 +130,11 @@ fn write<T: PropertyValue>(o: u32, a: &Address, v: &T) -> Result<T> {
             context: *mut c_void,
         ) -> i32;
     }
-    if WRITE_FAILED.load(Ordering::SeqCst) {
+    if WRITE_FAILED
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .contains(&o)
+    {
         return Err("Output volume control suspended; restart H to retry".into());
     }
     let current = read::<T>(o, a)?;
@@ -179,7 +188,10 @@ fn write<T: PropertyValue>(o: u32, a: &Address, v: &T) -> Result<T> {
     if result.is_err() || removed.is_err() {
         // A returned volume API call with an unconfirmed value disables only
         // further volume writes. Capture has its own teardown/transition guard.
-        WRITE_FAILED.store(true, Ordering::SeqCst);
+        let mut failed = WRITE_FAILED.lock().unwrap_or_else(|e| e.into_inner());
+        if !failed.contains(&o) {
+            failed.push(o);
+        }
     }
     let result = result.and(removed);
     crate::audio::lifecycle::event(if result.is_ok() {
@@ -337,6 +349,12 @@ mod tests {
         assert_eq!(completed_value(0u32, 0, true), None);
         assert_eq!(completed_value(1u32, 0, true), Some(1));
         assert_eq!(completed_value(0.8f32, 0.8, true), None);
+    }
+    #[test]
+    fn small_confirmed_changes_and_exact_silence_are_not_noops() {
+        assert_eq!(completed_value(0.000157f32, 0.001, true), Some(0.000157));
+        assert!(!0.001f32.matches(0.0));
+        assert!(0.0f32.matches(0.0));
     }
     #[test]
     fn cached_readback_alone_does_not_confirm_a_write() {
