@@ -6,7 +6,6 @@ import * as tauri from '../../../lib/tauri'
 
 const mockConfig = {
   hotkey: 'Fn',
-  ask_hotkey: 'Fn+Space',
   hotkey_mode: 'toggle',
   output_mode: 'clipboard',
 }
@@ -34,9 +33,6 @@ vi.mock('react-i18next', () => ({
         'onboarding.done.holdPressSub': 'Use your hotkey to start and stop recording',
         'onboarding.test.hold': 'Hold',
         'onboarding.test.press': 'Press',
-        'onboarding.done.askAnything': 'Ask Anything',
-        'onboarding.done.askAnythingSub':
-          'Use the Ask hotkey to record a question; stop to get one answer.',
         'onboarding.done.dragToReposition': 'Drag to Reposition',
         'onboarding.done.dragToRepositionSub': 'When visible, drag the capsule anywhere on screen.',
         'onboarding.done.rightClickMenu': 'Right-click Menu',
@@ -65,7 +61,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   Object.assign(mockConfig, {
     hotkey: 'Fn',
-    ask_hotkey: 'Fn+Space',
     hotkey_mode: 'toggle',
     output_mode: 'clipboard',
   })
@@ -75,36 +70,28 @@ afterEach(() => cleanup())
 
 describe('DoneStep', () => {
   it.each([
-    ['macOS', 'Fn', 'Fn+Space', 'toggle', 'Press Fn', 'Ask Anything Fn+Space'],
-    ['Windows', 'Ctrl+/', 'Ctrl+.', 'hold', 'Hold Ctrl+/', 'Ask Anything Ctrl+.'],
-    ['Linux', 'Ctrl+/', 'Ctrl+.', 'hold', 'Hold Ctrl+/', 'Ask Anything Ctrl+.'],
+    ['macOS', 'Fn', 'toggle', 'Press Fn'],
+    ['Windows', 'Ctrl+/', 'hold', 'Hold Ctrl+/'],
+    ['Linux', 'Ctrl+/', 'hold', 'Hold Ctrl+/'],
   ])(
-    'teaches current %s shortcuts and capsule controls during onboarding',
-    (_platform, hotkey, askHotkey, mode, dictationTitle, askTitle) => {
+    'teaches the current %s dictation shortcut and capsule controls during onboarding',
+    (_platform, hotkey, mode, dictationTitle) => {
       Object.assign(mockConfig, {
         hotkey,
-        ask_hotkey: askHotkey,
         hotkey_mode: mode,
       })
 
       render(<DoneStep />)
 
       expect(screen.getByText(dictationTitle)).toBeInTheDocument()
-      expect(screen.getByText(askTitle)).toBeInTheDocument()
-      expect(
-        screen.getByText('Use the Ask hotkey to record a question; stop to get one answer.'),
-      ).toBeInTheDocument()
+      expect(screen.queryByText(/Ask Anything/)).not.toBeInTheDocument()
       expect(screen.getByText('Drag to Reposition')).toBeInTheDocument()
       expect(screen.getByText('Right-click the capsule for more options')).toBeInTheDocument()
       expect(screen.queryByText('Click Capsule')).not.toBeInTheDocument()
     },
   )
 
-  it('does not show Ask Anything guidance when the shortcut is disabled', () => {
-    Object.assign(mockConfig, {
-      ask_hotkey: '',
-    })
-
+  it('does not show Ask Anything guidance', () => {
     render(<DoneStep />)
 
     expect(screen.getByText('Press Fn')).toBeInTheDocument()

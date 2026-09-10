@@ -136,6 +136,7 @@ export function AskPanel({ embedded = false, showHeader = true, title = 'Ask' }:
     ownsDictationRef.current = false
     try {
       const result = await stopAskDictation()
+      if (result.output === 'cancelled') return
       if (ignoreNextLocalResultRef.current) {
         ignoreNextLocalResultRef.current = false
       } else {

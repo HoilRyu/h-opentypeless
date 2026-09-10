@@ -1,5 +1,43 @@
 # H-OpenTypeless 인계
 
+## 2026-09-10 동일 프롬프트 모델 비교
+
+Qwen3.5:9b 설치 모델로 동일 12전사문×3회=36회 검사, 직전 Gemma4 current 36개와 비교. 반말→존댓말 Gemma0/33 Qwen5/33; 선택지 보존3/3 대0/3. Qwen 교체 권하지 않음. [전체 결과](LLM_MODEL_POLISH_COMPARISON.md), tools/diagnostics/model-polish-review. 모델명/digest/양자화/프롬프트 해시 포함. 앱/프롬프트 변경 없음. 종료 후 Qwen 해제/Gemma4 재준비, 설정 gemma4:12b/structured 유지 확인. 실제 Gemma 말투 문제 해결을 의미하지 않음.
+
+## 2026-09-10 프롬프트 길이·말투 비교
+
+현재안 3405자/짧은안 502자, 12문장×각3회=72회 Gemma4:12b 로컬 비교 완료. 반말→존댓말 현재0/33·짧은5/33; 선택지 보존 현재3/3·짧은1/3. 짧은안은 명사형/지시문체 변형도 있어 적용하지 않음. [전체 결과](PROMPT_LENGTH_COMPARISON.md), 자료 tools/diagnostics/prompt-length-review. 이번 현재0/33이 실제 사용에서 확인한 말투 전환을 부정하지 않으며 길이만의 인과실험도 아님. 앱/모델/설정 변경 없음.
+
+## 2026-09-10 Ask 제거·재매핑 Fn 오작동 수정
+
+Ask 설정/시험 버튼과 기존 온보딩 안내 제거. H product_scope에서 로드/저장 시 Ask 키 비우기 및 실행 진입점 차단(원본 내부 코드는 보존). 실제 이벤트에서 BetterTouchTool이 방향키 뒤 합성 Fn down/up(source PID 66467)을 보내는 원인 확인. native Fn 처리에서 source PID > 0을 무시하며 사용자 BTT 설정은 변경하지 않았다. 자세한 내용: [ASK_REMOVAL_AND_FN_FIX.md](ASK_REMOVAL_AND_FN_FIX.md).
+
+Rust 642 통과/7 ignored, 최종 전체 UI 492 통과, TypeScript/Vite·ESLint 통과. 자체 서명 앱 설치/재실행, 실행 바이너리와 helper 보존 확인. 백업 app-backups/before-ask-fn-fix-20260910-175854.app. 설치 후 Control+I/J/K/L 및 실제 Fn 검사 요청에 사용자가 정상 작동을 확인했다. 커밋/푸시는 하지 않았다.
+
+## 2026-09-10 구조화 3차 통합안 적용 완료
+
+사용자 승인 후 h_polish.rs의 STRUCTURED와 구조화 예시만 변경. 공통/다른 스타일 유지. Rust prompt 검사 35개 통과, 실제 빌더 export가 검토 candidate-v3.txt와 바깥 공백 외 일치 확인. TypeScript/Vite 및 자체 서명 빌드 완료, /Applications/H-OpenTypeless.app 교체/재실행. credential helper 바이트 보존. 백업 app-backups/before-structured-v3-20260910-174721.app. 설정 structured/polish on/Whisper Large-v3 Turbo 유지. 설치 후 실제 마이크 발화는 사용자 확인 필요. 커밋·푸시 미진행.
+
+## 2026-09-10 구조화 3차 통합안 — 검토 준비
+
+기존 공통/문맥/개인 지침 및 예시 유지, 구조화 본문 교체와 예시 1개 추가한 후보를 10문장+취약 3문장 각 2회로 16회 검사. 결과 보고 포함 4항목 및 최소 포함 4선택지 모두 해당 3회에서 유지. 짧은 복수 요청의 평문 출력/말투 강도 변화는 남음. [검토안](STRUCTURED_POLISH_V3_REVIEW.md), 재현 자료 `tools/diagnostics/polish-review/{structured-v3,candidate-v3}.txt`, `run-v3.py`, `results-v3*.json`. 사용자 검토 전이며 앱 소스/설정/설치본은 변경하지 않았다.
+
+## 2026-09-10 구조화 품질 비교 — 적용 전 검토
+
+개발 요청 재구성 10문장 × 기존/1차/2차 프롬프트, Gemma4:12b 로컬 호출 30회 완료. 2차안은 결과 보고와 단계 목록화가 개선됐으나 두 후보 모두 선택지 최소를 누락하여 앱 적용 보류. 실제 음성 데이터셋이나 다른 LLM 비교는 아님. 자료: `tools/diagnostics/polish-review`, [전체 검토](STRUCTURED_POLISH_REVIEW.md). 앱/설정/모델은 변경하지 않았다. Whisper MLX는 여전히 미구현(Qwen만 MLX).
+
+## 2026-09-10 캡슐 배치·내장 모델 선택 간소화
+
+- 녹음 행을 듣는 중 → 확장 음량 게이지 → (번역 언어) → 시간 → 스타일 → 닫기로 배치. 일반 녹음의 게이지는 남은 가로 공간을 사용하는 21개 막대이며, 다른 캡슐은 기존 7개를 유지한다.
+- 내장 모델은 선택 상자와 선택한 모델 카드 하나로 표시한다. 살펴보기와 실제 사용/다운로드를 분리하고, 다른 항목을 보는 동안에도 다운로드 진행 보기로 돌아갈 수 있다.
+- Whisper Large-v3 Turbo를 선택 다운로드 카탈로그에 추가. 원본 README의 Groq API 추천 모델과 같은 계열이며 기존 H 목록에서 빠져 있었다. 고정 revision/LFS SHA-256/크기와 HEAD 200 응답을 확인했다. 엔진 소스도 Turbo를 지원한다. 가중치는 자동 다운로드하지 않았고 실제 Turbo 전사는 미검증이다. 현재 Whisper는 CPU 전용이므로 Qwen MLX보다 빠르거나 정확하다고 보장하지 않는다.
+- UI 494, TypeScript/ESLint/Vite 통과; Rust 카탈로그 고정 파일 검사 통과. 설치본에서 모델 선택 상자와 Turbo 정보/다운로드 버튼 표시 확인. 캡슐의 새 배치는 코드/UI 회귀 검증을 했으나 이번 OS 자동 캡처는 확보하지 못했다. Orca AX 조회는 권한 상태 granted인데도 permission_denied를 반환하여 설정 화면 확인은 기존 CUA 도구로 수행했다.
+- /Applications/H-OpenTypeless.app 설치, 자체 서명·credential helper 보존. 이전 앱 백업은 ~/.local/share/h-opentypeless/model-selector-backup-20260910-170811. Qwen 1.7B 활성 선택과 기존 모델/설정 유지. 커밋·푸시는 아직 하지 않았다.
+
+## 2026-09-10 다듬기 프롬프트·캡슐 스타일 선택
+
+사용자 승인한 네 스타일과 번역 지침을 H 전용 모듈로 적용했다. 녹음 중 캡슐에서 현재 녹음의 스타일을 선택할 수 있다. 기본 스타일 구조화/짧은 개인 지침/콤보 박스 사전을 현재 설치본에 반영했다. UI 492, Rust 640 통과, 실제 메뉴 선택·녹음 지속·Esc 취소 확인. 긴 한국어에서 첫 글머리표가 누락되는 Gemma 출력 한계는 남는다. 상세 내용과 백업/검증은 [POLISH_STYLE_IMPLEMENTATION.md](POLISH_STYLE_IMPLEMENTATION.md). 아직 커밋·푸시하지 않았다.
+
 ## 2026-09-10 튜토리얼 디자인 간소화 (0.1.45-beta.2)
 
 - 사용자 피드백에 따라 Superwhisper/Raycast/Linear 공식 시작 안내를 조사했다. [TUTORIAL_REDESIGN.md](TUTORIAL_REDESIGN.md)에 출처·설계 판단·검증 범위를 기록.
@@ -201,3 +239,25 @@ Mac 최종 빌드/패키지 검증 결과는 별도 releases 폴더의 PREPARATI
 ## DMG 설치 방식 — 2026-09-09
 
 사용자 요청으로 macOS 공개 산출물을 ZIP에서 DMG로 전환했다. scripts/h-package-dmg.sh는 기존 자체 서명 앱을 변경하지 않고 dmgbuild 1.6.7의 고정 Finder 배치로 포장한다. 앱 → Applications 바로가기 드래그 방식이며 기본 배경 화살표를 사용한다. 도구는 저장소 밖 가상 환경에 설치한다. release/초안 등록/형식 검증/배포 안내도 DMG로 맞췄다. 미리보기 DMG의 hdiutil verify 통과. 최종 산출물의 마운트·서명·Finder 확인은 해당 releases 폴더의 검증 기록에 남긴다. 실제 /Applications 설치본은 변경하지 않는다.
+
+## 내장 STT 발화 미리보기 — 2026-09-10
+
+`LIVE_STT_PREVIEW.md` 참고. Earshot VAD와 bounded 구간 전사 작업자, 녹음 캡슐 두 줄 미리보기,
+내장 STT 설정 토글 추가. UI 원문 미리보기와 최종 전사를 분리하여 구간 경계 누락을 방지한다.
+최종 입력은 기존 전체 PCM 전사→LLM 경로를 사용한다. Ask/모바일은 미리보기를 요청하지 않는다.
+Qwen 1.7B MLX와 Whisper Base CPU의 실제 합성음성 3구간 미리보기/최종 전사 통과.
+플랫폼 공통 구현이나 Windows/Linux 실기기·CPU Qwen·사용자 실제 마이크 검증은 아직 미실시.
+
+자체서명 debug 빌드·서명 strict 확인 후 /Applications 교체 및 홈 실행 확인 완료.
+실행 파일 SHA256 빌드와 일치. 백업 utterance-preview-backup-68ey_j1o.
+사용자에게 녹음 중 한 문장 뒤 1초 멈춰 캡슐 미리보기 확인 요청 상태.
+
+
+## Esc 취소 — 2026-09-10
+
+ESCAPE_CANCEL.md 참고. 활성 음성 작업 동안만 Esc 전역 등록, 대기 상태 해제.
+일반 pipeline.abort 재사용, Ask STT/LLM watch 취소와 Cancelled 결과 표시 억제 추가.
+플러그인 콜백의 mutex 재진입을 피하도록 비동기 전달하며 등록 세대를 검사한다.
+Rust656/UI491 통과, lint/clippy/자체서명 설치 완료. 실제 설치 앱에 Fn/Esc CGEvent를 보내
+마이크 종료·Idle·음량 복원 및 대기 시 Esc 미등록 확인. 백업 escape-cancel-backup-ki5e4bee.
+기존 STT 미리보기 변경과 함께 미커밋 상태. Windows/Linux 실기기 검증은 아직 안 함.

@@ -1170,6 +1170,7 @@ impl ConfigManager {
             Err(_) => AppConfig::new_install_default(),
         };
 
+        crate::extensions::product_scope::apply(&mut config);
         self.migrate_legacy_config_secrets_on_load(&mut config);
 
         *self.cache.lock().unwrap_or_else(|e| e.into_inner()) = Some(config.clone());
@@ -1179,6 +1180,7 @@ impl ConfigManager {
     pub async fn save(&self, config: &AppConfig) -> Result<()> {
         let mut config = config.clone();
         config.normalize_values();
+        crate::extensions::product_scope::apply(&mut config);
         let report = migrate_legacy_config_secrets(&mut config, &SystemCredentialVault)?;
         if !report.migrated.is_empty() {
             tracing::info!(

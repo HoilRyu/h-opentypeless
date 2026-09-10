@@ -30,6 +30,7 @@ pub enum AskResultOutput {
     OpenedSearch,
     InsertedText,
     CopiedFallback,
+    Cancelled,
 }
 
 #[derive(Default)]
@@ -42,6 +43,7 @@ struct AskDictationStateInner {
     stop_after_start: bool,
     session: Option<AskDictationSession>,
     processing: bool,
+    processing_cancel: Option<tokio::sync::watch::Sender<bool>>,
     pending_message: Option<PendingAskMessage>,
 }
 
@@ -91,6 +93,7 @@ impl AskDictationState {
         true
     }
 
+    #[cfg(test)]
     fn set_processing(&self, processing: bool) {
         self.0.lock().unwrap_or_else(|e| e.into_inner()).processing = processing;
     }
@@ -143,6 +146,12 @@ impl AskDictationState {
     fn abort_starting_or_recording(&self) -> (Option<AskDictationSession>, bool) {
         let mut guard = self.0.lock().unwrap_or_else(|e| e.into_inner());
         let was_starting = guard.starting;
+        if let Some(cancel) = guard.processing_cancel.take() {
+            cancel.send_replace(true);
+        }
+        if let Some(session) = guard.session.as_ref() {
+            session.cancel.send_replace(true);
+        }
         guard.starting = false;
         guard.stop_after_start = false;
         (guard.session.take(), was_starting)
@@ -150,6 +159,7 @@ impl AskDictationState {
 }
 
 pub struct AskDictationSession {
+    cancel: tokio::sync::watch::Sender<bool>,
     finalize_timeout_secs: u64,
     handle: AudioCaptureHandle,
     recording_session_id: u64,
@@ -260,6 +270,18 @@ impl AskDictationResultMetadata {
 }
 
 impl AskDictationResult {
+    fn cancelled() -> Self {
+        let mut metadata = AskDictationResultMetadata::popup(false, false);
+        metadata.output = AskResultOutput::Cancelled;
+        metadata.actual_placement = None;
+        Self::new(
+            String::new(),
+            String::new(),
+            VoiceIntentKind::OpenQuestion,
+            metadata,
+        )
+    }
+
     pub(crate) fn new(
         question: String,
         answer: String,
@@ -281,7 +303,10 @@ impl AskDictationResult {
     }
 
     pub(crate) fn should_show_window(&self) -> bool {
-        self.output != AskResultOutput::InsertedText
+        !matches!(
+            self.output,
+            AskResultOutput::InsertedText | AskResultOutput::Cancelled
+        )
     }
 }
 
@@ -978,6 +1003,7 @@ pub async fn ask_anything(
     token_store: tauri::State<'_, SessionTokenStore>,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<String, String> {
+    crate::extensions::product_scope::require_ask()?;
     let question = validate_ask_question(&question)?;
     let config = config_state.load().await.map_err(|e| e.to_string())?;
     let voice_intent = route_ask_intent(
@@ -1014,6 +1040,7 @@ pub async fn start_ask_dictation(
     token_store: tauri::State<'_, SessionTokenStore>,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<AskDictationStartResult, String> {
+    crate::extensions::product_scope::require_ask()?;
     if !state.try_begin_starting() {
         return Ok(AskDictationStartResult::empty());
     }
@@ -1029,6 +1056,7 @@ pub async fn start_ask_flow(
     token_store: tauri::State<'_, SessionTokenStore>,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<(), String> {
+    crate::extensions::product_scope::require_ask()?;
     if !state.try_begin_starting() {
         return Ok(());
     }
@@ -1060,6 +1088,10 @@ pub(crate) async fn start_reserved_ask_dictation(
         let guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
         !guard.starting || guard.start_generation != start_generation
     };
+    if start_cancelled() {
+        return Ok(AskDictationStartResult::empty());
+    }
+    crate::extensions::escape_cancel::transition(&app, PipelineState::Preparing);
     let audio_cleanup_app = app.clone();
     let result = async {
         let config = config_state.load().await.map_err(|e| e.to_string())?;
@@ -1164,6 +1196,7 @@ pub(crate) async fn start_reserved_ask_dictation(
         let error = Arc::new(Mutex::new(None::<String>));
         let done = Arc::new(Notify::new());
         let task_operation_id = operation_id.clone();
+        let (cancel, mut cancelled) = tokio::sync::watch::channel(false);
 
         let should_discard_started_resources = {
             let mut guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
@@ -1172,6 +1205,7 @@ pub(crate) async fn start_reserved_ask_dictation(
             } else {
                 guard.starting = false;
                 guard.session = Some(AskDictationSession {
+                    cancel,
                     finalize_timeout_secs: if config.stt_provider == crate::extensions::local_stt::ID { crate::extensions::local_stt::FINALIZE_SECONDS + 5 } else { ASK_STT_FINALIZE_TIMEOUT_SECS },
                     handle: handle.take().expect("Ask audio handle was already consumed"),
                     recording_session_id,
@@ -1251,7 +1285,10 @@ pub(crate) async fn start_reserved_ask_dictation(
         }
 
         tauri::async_runtime::spawn(async move {
-            let capture_error = capture_fault.guard(async {
+            let capture_error = tokio::select! {
+            biased;
+            _ = cancelled.wait_for(|v| *v) => None,
+            error = capture_fault.guard(async {
             loop {
                 tokio::select! {
                     chunk = audio_rx.recv() => {
@@ -1330,7 +1367,8 @@ pub(crate) async fn start_reserved_ask_dictation(
                 }
             }
 
-            }).await;
+            }) => error,
+            };
             if let Some(message) = capture_error {
                 *error.lock().unwrap_or_else(|e| e.into_inner()) = Some(message.clone());
                 surface_async_recording_error(&app, &state_inner, &task_operation_id, message);
@@ -1407,6 +1445,7 @@ pub(crate) async fn start_reserved_ask_dictation(
     .await;
 
     if result.is_err() && state.clear_starting_if_current(start_generation) {
+        crate::extensions::escape_cancel::transition(&audio_cleanup_app, PipelineState::Idle);
         if let Some(service) =
             audio_cleanup_app.try_state::<crate::extensions::audio_ducking::Service>()
         {
@@ -1435,10 +1474,15 @@ pub async fn stop_ask_dictation(
             .ok_or_else(|| "Ask dictation is not recording".to_string())?;
         guard.stop_after_start = false;
         guard.processing = true;
+        guard.processing_cancel = Some(session.cancel.clone());
         session
     };
 
-    let result = async {
+    let mut cancelled = session.cancel.subscribe();
+    let result = tokio::select! {
+        biased;
+        _ = cancelled.wait_for(|v| *v) => Ok(AskDictationResult::cancelled()),
+        result = async {
         session.handle.stop();
         emit_capsule_state(&app, PipelineState::AskThinking);
 
@@ -1575,10 +1619,15 @@ pub async fn stop_ask_dictation(
             AskDictationResultMetadata::popup(used_selected_text, selected_text_truncated),
         ))
     }
-    .await;
+    => result,
+    };
 
-    state.set_processing(false);
     emit_capsule_state(&app, PipelineState::Idle);
+    {
+        let mut guard = state.0.lock().unwrap_or_else(|e| e.into_inner());
+        guard.processing = false;
+        guard.processing_cancel.take();
+    }
 
     result
 }
@@ -2141,6 +2190,25 @@ mod tests {
         state.clear_starting();
         assert!(!state.request_stop_after_start());
         assert!(!state.take_stop_after_start());
+    }
+
+    #[tokio::test]
+    async fn abort_ask_signals_processing_and_retains_busy_until_cleanup() {
+        let state = AskDictationState::default();
+        let (tx, mut rx) = tokio::sync::watch::channel(false);
+        {
+            let mut guard = state.0.lock().unwrap();
+            guard.processing = true;
+            guard.processing_cancel = Some(tx);
+        }
+        state.abort_starting_or_recording();
+        assert!(*rx.borrow());
+        assert!(state.is_busy());
+        tokio::time::timeout(std::time::Duration::from_millis(30), rx.wait_for(|v| *v))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(!AskDictationResult::cancelled().should_show_window());
     }
 
     #[test]

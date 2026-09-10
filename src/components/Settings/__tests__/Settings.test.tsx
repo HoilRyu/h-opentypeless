@@ -351,25 +351,25 @@ describe('Settings tab 切换', () => {
 
     expect(screen.getByText('settings.hotkey')).toBeDefined()
     expect(screen.getByText('settings.dictationHotkey')).toBeDefined()
-    expect(screen.getByText('settings.askHotkey')).toBeDefined()
+    expect(screen.queryByText('settings.askHotkey')).toBeNull()
     expect(screen.getByText('settings.translateHotkey')).toBeDefined()
     expect(screen.getByText('settings.dictationMode')).toBeDefined()
     expect(screen.getByText('settings.copyResultHotkey')).toBeDefined()
-    expect(screen.getAllByRole('button', { name: 'settings.shortcutAdd' })).toHaveLength(4)
+    expect(screen.getAllByRole('button', { name: 'settings.shortcutAdd' })).toHaveLength(3)
     expect(screen.queryByText('settings.askAnything')).toBeNull()
     expect(screen.queryByText('settings.askAnythingDesc')).toBeNull()
-    expect(screen.getByLabelText('settings.tryAsk')).toBeDefined()
+    expect(screen.queryByLabelText('settings.tryAsk')).toBeNull()
     expect(screen.queryByText('ask.voiceQuestion')).toBeNull()
     expect(screen.getByText('settings.outputMode')).toBeDefined()
     expect(screen.getByText('settings.dictationMode')).toBeDefined()
     expect(screen.queryByText('settings.diagnostics')).toBeNull()
   })
 
-  it('General pane keeps Ask visible and hides low-frequency settings until More is opened', () => {
+  it('General pane hides Ask and hides low-frequency settings until More is opened', () => {
     renderSettings()
 
     expect(screen.getByText('settings.hotkey')).toBeDefined()
-    expect(screen.getByText('settings.askHotkey')).toBeDefined()
+    expect(screen.queryByText('settings.askHotkey')).toBeNull()
     expect(screen.getByText('settings.outputMode')).toBeDefined()
     expect(screen.queryByText('settings.diagnostics')).toBeNull()
     expect(screen.queryByText('settings.restoreClipboardAfterPaste')).toBeNull()
@@ -379,7 +379,7 @@ describe('Settings tab 切换', () => {
 
     fireEvent.click(screen.getByText('settings.advancedGeneral'))
 
-    expect(screen.getAllByText('settings.askHotkey')).toHaveLength(1)
+    expect(screen.queryByText('settings.askHotkey')).toBeNull()
     expect(screen.getByText('settings.saveHistory')).toBeDefined()
     expect(screen.getByText('settings.launchAtStartup')).toBeDefined()
     expect(screen.queryByText('settings.diagnostics')).toBeNull()
@@ -421,14 +421,10 @@ describe('Settings tab 切换', () => {
     expect(screen.queryByText('settings.waylandHotkeyLimited')).toBeNull()
   })
 
-  it('General pane starts Ask recording from a lightweight Try Ask entry', async () => {
+  it('General pane does not expose an Ask recording entry', () => {
     renderSettings()
-
-    fireEvent.click(screen.getByLabelText('settings.tryAsk'))
-
-    await waitFor(() => {
-      expect(startAskFlow).toHaveBeenCalledTimes(1)
-    })
+    expect(screen.queryByLabelText('settings.tryAsk')).toBeNull()
+    expect(startAskFlow).not.toHaveBeenCalled()
   })
 
   it('General pane leaves macOS Accessibility to the global permission banner', () => {
@@ -460,7 +456,7 @@ describe('Settings tab 切换', () => {
     renderSettings()
     fireEvent.click(screen.getByText('settings.advancedGeneral'))
 
-    expect(screen.getAllByText('settings.askHotkey')).toHaveLength(1)
+    expect(screen.queryByText('settings.askHotkey')).toBeNull()
     expect(screen.getByText('settings.launchAtStartup')).toBeDefined()
     expect(screen.getByText('settings.saveHistory')).toBeDefined()
     expect(screen.queryByText('settings.startMinimized')).toBeNull()
@@ -623,10 +619,6 @@ describe('Settings tab 切换', () => {
     try {
       renderSettings()
 
-      fireEvent.click(screen.getByText('Ctrl+.'))
-      expect(screen.queryByRole('button', { name: 'Right Alt' })).toBeNull()
-      fireEvent.click(screen.getByText('settings.pressKeyCombination'))
-
       fireEvent.click(screen.getByText('Ctrl+/'))
       expect(screen.queryByRole('button', { name: 'Right Alt' })).toBeNull()
       expect(useAppStore.getState().config.hotkey).toBe('Ctrl+/')
@@ -638,29 +630,9 @@ describe('Settings tab 切换', () => {
     }
   })
 
-  it('blocks local Ask hotkey drafts that conflict with Dictation', async () => {
-    vi.useFakeTimers()
-    try {
-      renderSettings()
-      fireEvent.click(screen.getByText('Ctrl+.'))
-      await act(async () => {
-        await Promise.resolve()
-      })
-      fireEvent.keyDown(window, { key: '/', ctrlKey: true })
 
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(1600)
-      })
 
-      expect(useAppStore.getState().config.ask_hotkey).toBe('Ctrl+.')
-      expect(screen.getByText('settings.hotkeyConflict')).toBeDefined()
-      expect(screen.queryByText('Unsaved changes')).toBeNull()
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('blocks local Dictation hotkey drafts that conflict with Ask', async () => {
+  it('allows Dictation to reuse the removed Ask shortcut', async () => {
     vi.useFakeTimers()
     try {
       renderSettings()
@@ -674,9 +646,9 @@ describe('Settings tab 切换', () => {
         await vi.advanceTimersByTimeAsync(1600)
       })
 
-      expect(useAppStore.getState().config.hotkey).toBe('Ctrl+/')
-      expect(screen.getByText('settings.hotkeyConflict')).toBeDefined()
-      expect(screen.queryByText('Unsaved changes')).toBeNull()
+      expect(useAppStore.getState().config.hotkey).toBe('Ctrl+.')
+      expect(screen.queryByText('settings.hotkeyConflict')).toBeNull()
+      expect(screen.getByText('Unsaved changes')).toBeDefined()
     } finally {
       vi.useRealTimers()
     }
@@ -736,7 +708,7 @@ describe('Settings tab 切换', () => {
 
     clickSidebarItem('settings.general')
     expect(screen.getByText('settings.hotkey')).toBeDefined()
-    expect(screen.getByLabelText('settings.tryAsk')).toBeDefined()
+    expect(screen.queryByLabelText('settings.tryAsk')).toBeNull()
 
     clickSidebarItem('settings.scenes')
 
@@ -755,40 +727,7 @@ describe('Settings tab 切换', () => {
     expect(titles.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('records macOS Ask hotkey as a local draft without immediate persistence', async () => {
-    vi.useFakeTimers()
-    try {
-      Object.defineProperty(window.navigator, 'platform', {
-        value: 'MacIntel',
-        configurable: true,
-      })
-      const { resumeHotkey, updateAskHotkey } = await import('../../../lib/tauri')
-      const mockUpdateAskHotkey = vi.mocked(updateAskHotkey)
-      const mockResumeHotkey = vi.mocked(resumeHotkey)
-      mockUpdateAskHotkey.mockClear()
-      mockResumeHotkey.mockClear()
-      useAppStore.getState().updateConfig({ ask_hotkey: 'Command+.' })
-      seedSavedConfig()
 
-      renderSettings()
-      fireEvent.click(screen.getByText('Command+.'))
-      await act(async () => {
-        await Promise.resolve()
-      })
-      fireEvent.keyDown(window, { key: ';', metaKey: true })
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(1600)
-      })
-
-      expect(useAppStore.getState().config.ask_hotkey).toBe('Command+;')
-      expect(mockUpdateAskHotkey).not.toHaveBeenCalled()
-      expect(mockResumeHotkey).toHaveBeenCalledTimes(1)
-      expect(screen.getByText('Unsaved changes')).toBeDefined()
-    } finally {
-      vi.useRealTimers()
-    }
-  })
 })
 
 describe('Settings Scenes local custom scenes', () => {

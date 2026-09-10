@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import {
   Check,
   Keyboard,
-  MessageCircleQuestion,
   GripHorizontal,
   MousePointer,
   LayoutGrid,
@@ -50,13 +49,6 @@ export function DoneStep() {
           title={`${dictationAction} ${config.hotkey}`}
           desc={t('onboarding.done.holdPressSub')}
         />
-        {config.ask_hotkey && (
-          <Tip
-            icon={MessageCircleQuestion}
-            title={`${t('onboarding.done.askAnything')} ${config.ask_hotkey}`}
-            desc={t('onboarding.done.askAnythingSub')}
-          />
-        )}
         <Tip
           icon={GripHorizontal}
           title={t('onboarding.done.dragToReposition')}

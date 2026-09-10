@@ -1,15 +1,14 @@
 import { VoiceFeedbackSetting } from '../ForkSettings/VoiceFeedbackSetting'
 import { AudioDuckingSetting } from '../ForkSettings/AudioDuckingSetting'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, MessageCircle } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { isMacPlatform, useAppStore } from '../../stores/appStore'
 import type { HotkeyMode, OutputMode, ShortcutBinding } from '../../stores/appStore'
 import {
   getPlatformCapabilities,
   getHotkeyStatus,
   resumeHotkey,
-  startAskFlow,
 } from '../../lib/tauri'
 import type { HotkeyStatus } from '../../lib/tauri'
 import { SegmentedControl } from './shared/SegmentedControl'
@@ -82,12 +81,6 @@ export function GeneralPane() {
       })
   }, [accessibilityTrusted, hotkeyRegistrationError, isMac, setHotkeyRegistrationError])
 
-  const handleOpenAsk = useCallback(() => {
-    startAskFlow().catch((err) => {
-      console.error('Failed to start Ask flow:', err)
-    })
-  }, [])
-
   const hotkeyStatusMessage = hotkeyStatus?.conflict
     ? t('settings.hotkeyConflict')
     : hotkeyStatus && (!hotkeyStatus.dictation.valid || !hotkeyStatus.ask.valid)
@@ -99,12 +92,10 @@ export function GeneralPane() {
     hotkeyRegistrationError?.includes('Accessibility permission may be denied'),
   )
   const dictationSpecialOptions = isMac ? [{ value: 'Fn', label: 'Fn' }] : []
-  const askSpecialOptions = isMac ? [{ value: 'Fn+Space', label: 'Fn + Space' }] : []
   const translateSpecialOptions = isMac ? [{ value: 'Fn+LeftShift', label: 'Fn + Left Shift' }] : []
   const dictationBindings = config.hotkeys.dictationBindings?.length
     ? config.hotkeys.dictationBindings
     : [config.hotkeys.dictation]
-  const askBindings = config.hotkeys.askBindings ?? (config.hotkeys.ask ? [config.hotkeys.ask] : [])
   const translateBindings =
     config.hotkeys.translateBindings ?? (config.hotkeys.translate ? [config.hotkeys.translate] : [])
   const secondaryBindings = [
@@ -113,14 +104,13 @@ export function GeneralPane() {
     config.hotkeys.openApp,
     config.hotkeys.copyResult,
   ].filter((binding): binding is ShortcutBinding => Boolean(binding))
-  const otherBindingsFor = (role: 'dictation' | 'ask' | 'translate') => [
+  const otherBindingsFor = (role: 'dictation' | 'translate') => [
     ...(role === 'dictation' ? [] : dictationBindings),
-    ...(role === 'ask' ? [] : askBindings),
     ...(role === 'translate' ? [] : translateBindings),
     ...secondaryBindings,
   ]
   const updateCoreBindings = (
-    role: 'dictation' | 'ask' | 'translate',
+    role: 'dictation' | 'translate',
     bindings: ShortcutBinding[],
   ) => {
     const nextHotkeys = { ...config.hotkeys }
@@ -128,9 +118,7 @@ export function GeneralPane() {
       if (bindings.length === 0) return
       nextHotkeys.dictationBindings = bindings
       nextHotkeys.dictation = bindings[0]
-    } else if (role === 'ask') {
-      nextHotkeys.askBindings = bindings
-      nextHotkeys.ask = bindings[0] ?? null
+
     } else {
       nextHotkeys.translateBindings = bindings
       nextHotkeys.translate = bindings[0] ?? null
@@ -154,26 +142,6 @@ export function GeneralPane() {
             onChange={(bindings) => updateCoreBindings('dictation', bindings)}
           />
           <ShortcutBindingList
-            role="ask"
-            label={t('settings.askHotkey')}
-            bindings={askBindings}
-            otherBindings={otherBindingsFor('ask')}
-            required={false}
-            specialOptions={askSpecialOptions}
-            onChange={(bindings) => updateCoreBindings('ask', bindings)}
-            trailingAction={
-              <button
-                type="button"
-                aria-label={t('settings.tryAsk')}
-                title={t('settings.tryAsk')}
-                onClick={handleOpenAsk}
-                className="grid h-7 w-7 place-items-center rounded-[6px] border border-transparent bg-bg-secondary text-text-tertiary hover:border-border hover:text-text-primary"
-              >
-                <MessageCircle size={13} />
-              </button>
-            }
-          />
-          <ShortcutBindingList
             role="translate"
             label={t('settings.translateHotkey')}
             bindings={translateBindings}
@@ -188,7 +156,6 @@ export function GeneralPane() {
             bindings={config.hotkeys.copyResult ? [config.hotkeys.copyResult] : []}
             otherBindings={[
               ...dictationBindings,
-              ...askBindings,
               ...translateBindings,
               ...[
                 config.hotkeys.editSelection,

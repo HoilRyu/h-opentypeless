@@ -426,6 +426,20 @@ describe('AskPanel', () => {
     expect(screen.queryByRole('button', { name: 'Ask' })).toBeNull()
   })
 
+  it('does not display a result when an in-flight question was cancelled by Escape', async () => {
+    vi.mocked(stopAskDictation).mockResolvedValueOnce(
+      askResult({ output: 'cancelled', answer: '' }),
+    )
+    render(<AskPanel embedded />)
+    fireEvent.click(screen.getByRole('button', { name: 'Record question' }))
+    await waitFor(() => expect(startAskDictation).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'Stop and ask' }))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Record question' })).toBeEnabled(),
+    )
+    expect(screen.queryByText('It turns speech into useful text.')).toBeNull()
+  })
+
   it('renders backend errors as popup content only', async () => {
     render(<AskPanel />)
 
