@@ -1,0 +1,20 @@
+{
+  "installed": {
+    "cases": 20,
+    "llm_calls": 40,
+    "automatically_flagged_audio": 4,
+    "automatically_flagged_reference": 5,
+    "stt_median_ms": 649.0,
+    "llm_median_ms": 1861.5,
+    "insertion_tested": 0
+  },
+  "quality": {
+    "cases": 20,
+    "llm_calls": 40,
+    "automatically_flagged_audio": 1,
+    "automatically_flagged_reference": 1,
+    "stt_median_ms": 634.5,
+    "llm_median_ms": 1801.5,
+    "insertion_tested": 0
+  }
+}

@@ -1,0 +1,310 @@
+{
+  "cases": [
+    {
+      "id": "roles_ko",
+      "raw": "초안은 가영이 맡고 검토는 도윤이 맡아요. 저는 승인할게요. 승인 전에는 공유하지 마세요.",
+      "required": [
+        "가영",
+        "도윤",
+        "저",
+        "승인"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {
+        "min_list_items": 3
+      },
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "roles_two",
+      "raw": "사진은 은수가 찍고 편집은 현우가 해줘.",
+      "required": [
+        "은수",
+        "현우"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "roles_three",
+      "raw": "정리는 지훈이 해줘. 저는 검수할게요. 업로드는 예린이 맡아요.",
+      "required": [
+        "지훈",
+        "저",
+        "예린"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {
+        "min_list_items": 3
+      },
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "one_person",
+      "raw": "민호가 자료를 모으고 정리해서 보고서를 쓰고 있어.",
+      "required": [
+        "민호"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "question",
+      "raw": "검수는 나리가 하는 게 좋을까 아니면 준서가 하는 게 좋을까?",
+      "required": [
+        "나리",
+        "준서"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "alternative",
+      "raw": "서연이 가능하면 발표하고 안 되면 하준이가 해줘.",
+      "required": [
+        "서연",
+        "하준"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "number_digits",
+      "raw": "파일은 3개, 아니 4개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+      "required": [
+        "4개",
+        "마지막",
+        "복사"
+      ],
+      "forbidden": [
+        "3개",
+        "아니"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "number_words",
+      "raw": "파일은 세 개, 아니 네 개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+      "required": [],
+      "forbidden": [
+        "세 개",
+        "3개",
+        "아니"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "number_mixed",
+      "raw": "시안은 5개, 아니 일곱 개로 만들어줘.",
+      "required": [],
+      "forbidden": [
+        "5개",
+        "아니"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "time",
+      "raw": "약속은 오후 2시, 아니 오후 5시예요. 장소는 그대로예요.",
+      "required": [
+        "5시",
+        "장소"
+      ],
+      "forbidden": [
+        "2시",
+        "아니"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "quantity",
+      "raw": "수량은 17개로 해주세요. 정정할게요. 21개로 해주세요.",
+      "required": [
+        "21개"
+      ],
+      "forbidden": [
+        "17개",
+        "정정할게요"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "comparison",
+      "raw": "지난번은 3개였고 이번에는 4개야. 둘 다 남겨줘.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "objects",
+      "raw": "사진은 3개고 파일은 4개야.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "range",
+      "raw": "최소 3개에서 최대 4개까지 허용해줘.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "condition",
+      "raw": "3개가 안 되면 4개로 해줘.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "negative_contrast",
+      "raw": "3개는 실패했고 4개는 성공했어. 실패한 것도 기록해줘.",
+      "required": [
+        "3개",
+        "4개",
+        "실패"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "name_correction",
+      "raw": "담당자는 유진이, 아니 수아로 바꿔줘. 검수는 태민이가 그대로 해.",
+      "required": [
+        "수아",
+        "태민"
+      ],
+      "forbidden": [
+        "유진"
+      ],
+      "prompt_key": "structured-false",
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "quote",
+      "raw": "문구는 3개 아니 4개로 저장해줘. 이건 제목이라 그대로 둬.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "uncertain_number",
+      "raw": "3개인지 4개인지 모르겠어. 확인해줘.",
+      "required": [
+        "3개",
+        "4개"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {},
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    },
+    {
+      "id": "role_condition",
+      "raw": "서류는 유리가 확인해줘. 승인이 나면 준혁이 보내줘. 아직 승인 전이면 보내지 마.",
+      "required": [
+        "유리",
+        "준혁",
+        "승인"
+      ],
+      "forbidden": [],
+      "prompt_key": "structured-false",
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "역할 주체·말투·부정·조건·최종 숫자·숫자 비교와 인용을 수동 대조한다."
+      ]
+    }
+  ]
+}

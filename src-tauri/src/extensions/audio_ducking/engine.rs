@@ -217,6 +217,12 @@ impl<B: Backend> Engine<B> {
         self.restore_retries = 4;
         self.restore()
     }
+    pub fn has_tick_work(&self) -> bool {
+        self.mode != Mode::Off || (self.pending.is_some() && self.restore_retries > 0)
+    }
+    pub fn recovery_pending(&self) -> bool {
+        self.mode == Mode::Off && self.pending.is_some()
+    }
     pub fn tick(&mut self) -> Result<()> {
         let result = self.tick_inner();
         if result.is_err() {
@@ -311,6 +317,24 @@ mod tests {
             self.values.insert(id.into(), to.clone());
             Ok(())
         }
+    }
+    #[test]
+    fn exhausted_retry_is_not_a_successful_idle_tick() {
+        let mut e = engine();
+        e.begin(Mode::Reduce, 20).unwrap();
+        e.backend.fail = true;
+        assert!(e.end().is_err());
+        for _ in 0..4 {
+            assert!(e.has_tick_work());
+            assert!(e.tick().is_err());
+        }
+        assert!(!e.has_tick_work());
+        assert!(e.recovery_pending());
+        e.backend.fail = false;
+        e.recover().unwrap();
+        assert!(!e.recovery_pending());
+        assert!(!e.has_tick_work());
+        assert_eq!(e.backend.values["a"].volume, vec![0.8, 0.4]);
     }
     fn engine() -> Engine<Fake> {
         Engine::new(

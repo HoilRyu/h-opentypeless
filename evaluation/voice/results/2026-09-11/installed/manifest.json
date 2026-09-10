@@ -1,0 +1,41 @@
+{
+  "kind": "synthetic_tts",
+  "corpus_sha256": "3ce312acca5b2d86843ac50034c0503b1cb3b8c95f3da02da539af369b91069c",
+  "prompt_sha256": "45b7daa345423a1506362ec491962d3216d2d665b95a7fbbd606ac5b592e3c96",
+  "prompt_key": "structured-false",
+  "llm_model": "gemma4:12b",
+  "stt_model": "/Users/ryuhoil/Library/Application Support/dev.hoilryu.hopentypeless/local-stt/large-v3-turbo",
+  "worker_sha256": "33c4d29613f52626f63d6bbc73c52e291650a125bdb2ae82ea15f197fab604cd",
+  "evaluator_sha256": "a89ef07d46277b3768c1e28720ac316370082517f70487edb2c61026ad89173d",
+  "weights": {
+    "ggml-large-v3-turbo.bin": "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69"
+  },
+  "temperature": 0,
+  "reasoning_effort": "none",
+  "split": "all",
+  "reference_polish": true,
+  "scope": "WAV -> installed MLX worker -> local Ollama; microphone/capture/VAD/paste path NOT exercised",
+  "semantic_verdict": "manual_review_required",
+  "audio": {
+    "short": "57bbe5bb6df2fdd99f3f23c0116cd4c35bb64326d5928fdcf30f38bc53a16fb4",
+    "steps": "7340e7e8fa9dcee39e624d4cc0ae9e7b536f88e4e234406b37656801d46f4852",
+    "correction": "17d4f9628c48337fa509e993a3a4facbed8b0751697729394786208ddd49ea06",
+    "negative": "0adab218b0e56033be13a4fa4b2e4289711f9e70b8e52b0dbdaa82bb7d01d8c8",
+    "numbers": "ce6f74425349f885c0562a50a526636f03107768e70acf2a0cd57e5371d36ee3",
+    "names": "11254c35895f648542f0db0a69ee65d292ce79d0083c40aa02d6c3bcd3385c61",
+    "mixed": "b0527faebf56b438e9c8e62ecf721f72ed94042bed43ef8d7afd32a85395cf71",
+    "question": "4c27a482cb51c3dc951f172cb44c9059acd828f0205a29478f777fa011eecfe2",
+    "email": "99dd267fd552a807b6b315ace47cf0e021beb6664eb3d4c3af53bcf694c616a9",
+    "long": "bbca03ccaaf4c7beb2b1d5cc9324911e43845ac09e55dae011da545cc5e89e3d",
+    "roles": "2614bab8d3537c73e134d6e7f230a03003615c09037b230bd76654c12f012fcd",
+    "limit": "bdf9f2cfb40c4d656c2e30e544cd6bb20e3e18a9b284e29a878080aba1c37076",
+    "uncertain": "1b080271f086c148ed2411f29a6b4e4be48f0f974586d0d06ae8bc6b022a6299",
+    "filler": "59baab6b85f641511d70c5861179999a9f866d3dc49b6e9f56059d0495a51e9e",
+    "literal": "fc4501f99ffe0a8525cfbf01e3f3c3c131b48dea0da788d17654e1445427c92b",
+    "holdout_order": "ad7aa7c143cbd16375d5088533febf74d9f0a817315dec53cd9454d059fd161f",
+    "holdout_correction": "9fcd327b8f9772461098280fdf242ee6cea73cca6eb3177fe6bedc81e61464b1",
+    "holdout_groups": "ba95e4a00012531a4b0f30b6161809ca493b8a9ddf0aefcb9440a82edeb3eb6b",
+    "holdout_english": "0194dbdaab53c32be119aa609183d5a109dbcd59d5f2535818f5437d0e315225",
+    "holdout_intent": "d4e413e3e3993816dd82cbe828ffa193347a6287408119c428984fddafe6398d"
+  }
+}

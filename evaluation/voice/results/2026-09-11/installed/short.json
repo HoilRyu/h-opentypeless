@@ -1,0 +1,26 @@
+{
+  "id": "short",
+  "reference": "내일 오전에 다시 연락해 주세요.",
+  "review": [
+    "숫자·이름·조건·부정·정정·요청의 말투를 원문과 대조한다.",
+    "말하지 않은 내용을 추가하거나 요청에 답하지 않았는지 확인한다.",
+    "항목 순서와 줄바꿈이 발화 의도에 맞는지 확인한다."
+  ],
+  "semantic_verdict": "reviewed_with_notes",
+  "insertion_verdict": "not_tested",
+  "stt": " 내일 오전에 다시 연락해주세요.",
+  "stt_ms": 1964,
+  "audio_ms": 2145,
+  "cer": 0.0,
+  "polished": "내일 오전에 다시 연락해 주세요.",
+  "finish_reason": "stop",
+  "llm_ms": 3218,
+  "flags": [],
+  "reference_polished": "내일 오전에 다시 연락해 주세요.",
+  "reference_finish": "stop",
+  "reference_flags": [],
+  "reference_llm_ms": 886,
+  "manual_notes": [
+    "검토한 결과에서 조건·숫자·이름·부정·말투의 중요한 변형을 발견하지 못함; 일반적 정확도를 보장하지 않음"
+  ]
+}

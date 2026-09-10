@@ -294,6 +294,9 @@ pub fn build_context_system_prompt(options: ContextPromptOptions<'_>) -> String 
         prompt.push_str("\n입력: 메뉴에서 낮음 보통 높음을 선택할 수 있게 해줘\n출력: 메뉴에서 ‘낮음’, ‘보통’, ‘높음’을 선택할 수 있게 해줘.\n입력: 이건 메모리 누수일 수도 있는 거야\n출력: 이건 메모리 누수일 수도 있는 거야?\n입력: 먼저 커밋하고 푸시해줘 아니 푸시는 아직 하지 말고 테스트부터 하고 통과하면 커밋만 해줘\n출력: 먼저 테스트하고, 통과하면 커밋만 해줘. 푸시는 아직 하지 말고.");
         prompt.push('\n');
         prompt.push_str(super::h_polish::example(polish_style));
+        if polish_style == "structured" {
+            prompt.push_str(super::h_polish::STRUCTURED_REGISTER);
+        }
     }
     if dictation {
         if let Some(instruction) =
@@ -607,6 +610,17 @@ mod tests {
                     translate_enabled: translate,
                     target_lang: "en", has_selected_text: false,
                 });
+                if style == "structured" && !translate {
+                    fixtures.insert(
+                        format!("{style}-hope-{translate}"),
+                        super::super::h_polish::with_relevant_examples(
+                            prompt.clone(),
+                            style,
+                            "되면 좋겠어",
+                        )
+                        .into(),
+                    );
+                }
                 fixtures.insert(format!("{style}-{translate}"), prompt.into());
             }
         }
@@ -1055,8 +1069,9 @@ mod tests {
 
         assert!(prompt.contains("POLISH STYLE: structured"));
         assert!(prompt.contains(super::super::h_polish::STRUCTURED));
-        assert!(prompt.contains("결과 보고·검증"));
-        assert!(prompt.contains("선택지 이름은 한 항목 안에 모두 보존"));
+        assert!(prompt.contains(super::super::h_polish::example("structured")));
+        assert!(prompt.ends_with(super::super::h_polish::STRUCTURED_REGISTER));
+        assert!(!prompt.contains(super::super::h_polish::CLEAN));
     }
 
     #[test]

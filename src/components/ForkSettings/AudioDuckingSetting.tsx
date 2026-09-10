@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useTranslation } from 'react-i18next'
 type Mode = 'off' | 'reduce' | 'mute'
-type Status = { mode: Mode; volume_percent: number; active: boolean; warning: string | null }
+type Status = {
+  mode: Mode
+  volume_percent: number
+  active: boolean
+  warning: string | null
+  recovery_pending?: boolean
+}
 export function AudioDuckingSetting() {
   const { i18n } = useTranslation()
   const ko = i18n.language.startsWith('ko')
@@ -153,8 +159,18 @@ export function AudioDuckingSetting() {
       {(error || status?.warning) && (
         <p role="status" className="text-xs text-amber-500">
           {ko
-            ? '음량 조절 또는 설정 저장에 실패했습니다. 오디오 장치를 확인한 뒤 앱을 다시 실행해 주세요.'
-            : 'Audio control or saving settings failed. Check your audio device and restart the app.'}
+            ? '음량 조절 또는 설정 저장을 완료하지 못했습니다. 복구 대기 중이라면 원인을 확인해 주세요.'
+            : 'Audio control or saving settings did not complete. Check the reason if recovery is pending.'}
+        </p>
+      )}
+      {status?.warning && (
+        <p className="text-xs text-text-secondary">
+          {ko ? '원인: ' : 'Reason: '}
+          {status.warning}
+          {status.recovery_pending &&
+            (ko
+              ? ' — 복구 기록을 보관 중입니다. 해당 장치를 기본 출력으로 선택한 뒤 다시 시도해 주세요.'
+              : ' — Recovery is pending. Select the affected device as the default output and retry.')}
         </p>
       )}
     </section>

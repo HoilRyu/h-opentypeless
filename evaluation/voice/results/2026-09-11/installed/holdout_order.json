@@ -1,0 +1,30 @@
+{
+  "id": "holdout_order",
+  "reference": "결제 오류부터 고치고 알림 기능은 그다음에 해줘. 디자인 변경은 이번 작업에서 제외해줘.",
+  "review": [
+    "숫자·이름·조건·부정·정정·요청의 말투를 원문과 대조한다.",
+    "말하지 않은 내용을 추가하거나 요청에 답하지 않았는지 확인한다.",
+    "항목 순서와 줄바꿈이 발화 의도에 맞는지 확인한다."
+  ],
+  "semantic_verdict": "reviewed_with_notes",
+  "insertion_verdict": "not_tested",
+  "stt": " 결제 오류부터 고치고 알림 기능은 그 다음에 해줘. 디자인 변경은 이번 작업에서 제외해줘.",
+  "stt_ms": 712,
+  "audio_ms": 6330,
+  "cer": 0.0,
+  "polished": "결제 오류부터 고치고 알림 기능은 그 다음에 해줘. 디자인 변경은 이번 작업에서 제외해줘.",
+  "finish_reason": "stop",
+  "llm_ms": 1998,
+  "flags": [
+    "structure_review_needed"
+  ],
+  "reference_polished": "결제 오류부터 고치고 알림 기능은 그다음에 해줘. 디자인 변경은 이번 작업에서 제외해줘.",
+  "reference_finish": "stop",
+  "reference_flags": [
+    "structure_review_needed"
+  ],
+  "reference_llm_ms": 2059,
+  "manual_notes": [
+    "순서 의미는 보존했으나 기대한 항목 구분 없음"
+  ]
+}

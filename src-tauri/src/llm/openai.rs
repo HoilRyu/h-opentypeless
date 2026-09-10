@@ -12,6 +12,26 @@ pub struct OpenAiProvider {
     client: Client,
 }
 
+// Local structured dictation edits supplied content; reduce sampling variation.
+// Scenes, translations, selected-text operations and remote providers keep their settings.
+fn request_temperature(config: &LlmConfig, req: &PolishRequest) -> f64 {
+    if config.provider.trim().eq_ignore_ascii_case("ollama")
+        && req.polish_style == "structured"
+        && req.voice_intent.kind == crate::voice_intent::VoiceIntentKind::DictateInsert
+        && !req.translate_enabled
+        && req
+            .selected_text
+            .as_ref()
+            .is_none_or(|s| s.trim().is_empty())
+        && req.mapped_scene_prompt.trim().is_empty()
+        && req.active_scene_prompt.trim().is_empty()
+    {
+        0.0
+    } else {
+        config.temperature
+    }
+}
+
 impl Default for OpenAiProvider {
     fn default() -> Self {
         Self::new()
@@ -58,6 +78,11 @@ impl LlmProvider for OpenAiProvider {
             voice_intent: Some(&req.voice_intent),
         });
 
+        let system_prompt = if super::dictation_guard::enabled(req) && !has_selected_text {
+            super::h_polish::with_relevant_examples(system_prompt, &req.polish_style, &req.raw_text)
+        } else {
+            system_prompt
+        };
         let mut messages = vec![serde_json::json!({ "role": "system", "content": system_prompt })];
         if has_selected_text {
             messages.push(serde_json::json!({
@@ -79,7 +104,7 @@ impl LlmProvider for OpenAiProvider {
             &config.model,
             messages,
             config.max_tokens,
-            config.temperature,
+            request_temperature(config, req),
             on_chunk.is_some(),
         );
 
@@ -316,6 +341,31 @@ mod dictation_tests {
         }
     }
 
+    #[test]
+    fn local_structured_sampling_does_not_change_other_operations() {
+        let mut config = LlmConfig {
+            provider: "ollama".into(),
+            ..Default::default()
+        };
+        let mut req = request();
+        assert_eq!(request_temperature(&config, &req), 0.3);
+        req.polish_style = "structured".into();
+        assert_eq!(request_temperature(&config, &req), 0.0);
+        for field in ["mapped", "manual", "selected", "translation", "ask"] {
+            let mut other = req.clone();
+            match field {
+                "mapped" => other.mapped_scene_prompt = "Story".into(),
+                "manual" => other.active_scene_prompt = "Story".into(),
+                "selected" => other.selected_text = Some("Existing text".into()),
+                "translation" => other.translate_enabled = true,
+                _ => other.voice_intent.kind = VoiceIntentKind::OpenQuestion,
+            }
+            assert_eq!(request_temperature(&config, &other), 0.3, "{field}");
+        }
+        config.provider = "openai".into();
+        assert_eq!(request_temperature(&config, &req), 0.3);
+    }
+
     #[tokio::test]
     async fn dictation_stream_is_validated_before_any_callback() {
         for (field, content, accepted) in [
@@ -359,6 +409,15 @@ mod dictation_tests {
                     }
                 }
                 assert!(String::from_utf8_lossy(&received).contains("FINAL_DICTATION_CONTRACT"));
+                let start = received.windows(4).position(|v| v == b"\r\n\r\n").unwrap() + 4;
+                let request_body: serde_json::Value =
+                    serde_json::from_slice(&received[start..]).unwrap();
+                assert_eq!(request_body["temperature"], 0.0);
+                assert_eq!(request_body["reasoning_effort"], "none");
+                assert!(request_body["messages"][0]["content"]
+                    .as_str()
+                    .unwrap()
+                    .contains("즐겨찾기도 할 수 있으면 좋겠어"));
                 let header = format!("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
                 socket.write_all(header.as_bytes()).await.unwrap();
                 socket.write_all(body.as_bytes()).await.unwrap();
@@ -369,11 +428,15 @@ mod dictation_tests {
                 Box::new(move |s| captured.lock().unwrap().push(s.to_string()));
             let config = LlmConfig {
                 provider: "ollama".into(),
+                model: "gemma4:12b".into(),
                 base_url: format!("http://{address}/v1"),
                 ..Default::default()
             };
+            let mut req = request();
+            req.polish_style = "structured".into();
+            req.raw_text = "검색도 되면 좋겠어".into();
             let result = OpenAiProvider::new()
-                .polish(&config, &request(), Some(&callback))
+                .polish(&config, &req, Some(&callback))
                 .await;
             server.await.unwrap();
             assert_eq!(result.is_ok(), accepted);

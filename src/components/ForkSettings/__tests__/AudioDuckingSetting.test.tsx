@@ -1,11 +1,12 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { invoke } from '@tauri-apps/api/core'
 import { AudioDuckingSetting } from '../AudioDuckingSetting'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'ko' } }) }))
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.resetAllMocks()
 })
 it('loads saved mode and saves changes without the upstream dirty bar', async () => {
@@ -49,4 +50,38 @@ it('saves a custom percentage and rejects values above 100', async () => {
   fireEvent.blur(input)
   expect(screen.getByRole('alert')).toBeInTheDocument()
   expect(invoke).toHaveBeenCalledTimes(2)
+})
+
+it('shows recovery reason and clears it after a successful status refresh', async () => {
+  let refresh: () => void = () => {}
+  const originalInterval = window.setInterval.bind(window)
+  vi.spyOn(window, 'setInterval').mockImplementation((callback, delay) => {
+    if (delay === 2000) refresh = callback as () => void
+    return originalInterval(callback, delay)
+  })
+  vi.mocked(invoke)
+    .mockResolvedValueOnce({
+      mode: 'reduce',
+      volume_percent: 20,
+      active: false,
+      warning: 'Output device disconnected',
+      recovery_pending: true,
+    })
+    .mockResolvedValueOnce({
+      mode: 'reduce',
+      volume_percent: 20,
+      active: false,
+      warning: null,
+      recovery_pending: false,
+    })
+  render(<AudioDuckingSetting />)
+  expect(await screen.findByText(/Output device disconnected/)).toBeInTheDocument()
+  expect(screen.getByText(/복구 기록을 보관 중/)).toBeInTheDocument()
+  await act(async () => {
+    refresh()
+  })
+  await waitFor(() =>
+    expect(screen.queryByText(/Output device disconnected/)).not.toBeInTheDocument(),
+  )
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
 })

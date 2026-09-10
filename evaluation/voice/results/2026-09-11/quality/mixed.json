@@ -1,0 +1,26 @@
+{
+  "id": "mixed",
+  "reference": "리액트 컴포넌트에서 유즈 이펙트 정리 함수를 확인하고 타입스크립트 타입도 맞춰줘.",
+  "review": [
+    "숫자·이름·조건·부정·정정·요청의 말투를 원문과 대조한다.",
+    "말하지 않은 내용을 추가하거나 요청에 답하지 않았는지 확인한다.",
+    "항목 순서와 줄바꿈이 발화 의도에 맞는지 확인한다."
+  ],
+  "semantic_verdict": "reviewed_with_notes",
+  "insertion_verdict": "not_tested",
+  "stt": " 리액트 컴포넌트에서 useEffect 정리 함수를 확인하고 타입스크립트 타입도 맞춰줘.",
+  "stt_ms": 662,
+  "audio_ms": 6127,
+  "cer": 0.2571428571428571,
+  "polished": "리액트 컴포넌트에서 useEffect 정리 함수를 확인하고 타입스크립트 타입도 맞춰줘.",
+  "finish_reason": "stop",
+  "llm_ms": 2088,
+  "flags": [],
+  "reference_polished": "리액트 컴포넌트에서 유즈 이펙트 정리 함수를 확인하고 타입스크립트 타입도 맞춰줘.",
+  "reference_finish": "stop",
+  "reference_flags": [],
+  "reference_llm_ms": 2317,
+  "manual_notes": [
+    "정답 전사 경로에서 유즈 이펙트를 useEffect로 표준화하지 않음; 의미 누락은 아님"
+  ]
+}
