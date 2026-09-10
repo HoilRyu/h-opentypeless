@@ -1,0 +1,100 @@
+{
+  "cases": [
+    {
+      "id": "roles_new",
+      "raw": "포장은 지안이가 맡고 배송은 건우가 맡아요. 저는 주소를 확인할게요. 확인하기 전에는 출발하지 마세요.",
+      "required": [
+        "지안",
+        "건우",
+        "저는",
+        "주소"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 3
+      },
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    },
+    {
+      "id": "price",
+      "raw": "금액은 12000원 아니 9500원으로 적어 주세요. 배송비는 별도예요.",
+      "required": [
+        "9500",
+        "배송비"
+      ],
+      "forbidden": [
+        "12000",
+        "아니"
+      ],
+      "shape": {},
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    },
+    {
+      "id": "decimal",
+      "raw": "용량은 1.5기가 아니 2.5기가예요. 파일명은 바꾸지 마세요.",
+      "required": [
+        "2.5",
+        "파일명"
+      ],
+      "forbidden": [
+        "1.5",
+        "아니"
+      ],
+      "shape": {},
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    },
+    {
+      "id": "two_limits",
+      "raw": "첫 묶음은 7개고 다음 묶음은 9개예요. 두 묶음을 합치지 마세요.",
+      "required": [
+        "7개",
+        "9개",
+        "합치지"
+      ],
+      "forbidden": [],
+      "shape": {},
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    },
+    {
+      "id": "quoted_title",
+      "raw": "제목은 여덟 아니 열로 써줘. 이 문구는 말 고침이 아니라 제목 자체야.",
+      "required": [
+        "여덟",
+        "아니",
+        "열"
+      ],
+      "forbidden": [],
+      "shape": {},
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    },
+    {
+      "id": "proposal",
+      "raw": "연구는 승민이가 맡으면 어떨까요? 발표는 혜원이가 맡을 수 있을까요?",
+      "required": [
+        "승민",
+        "혜원"
+      ],
+      "forbidden": [],
+      "shape": {},
+      "prompt_key": "structured-false",
+      "review": [
+        "원문의 말투·역할·최종 값·금지·질문·제목의 원형을 직접 대조"
+      ]
+    }
+  ]
+}

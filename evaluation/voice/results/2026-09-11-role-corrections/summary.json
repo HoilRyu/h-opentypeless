@@ -1,0 +1,8 @@
+{
+  "evaluations": 114,
+  "reused_identical_requests": 106,
+  "new_conditional_requests": 8,
+  "automatic_flags": 2,
+  "varying_identical_requests": 0,
+  "scope": "LLM text evaluation with previous STT transcripts; no new microphone or paste test"
+}
