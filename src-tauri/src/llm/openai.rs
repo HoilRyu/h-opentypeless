@@ -256,6 +256,9 @@ impl LlmProvider for OpenAiProvider {
         } else {
             // Non-streaming mode
             let v: serde_json::Value = crate::response_limits::json(response).await?;
+            if let Some(error) = protocol::completion_error(api_kind, &v) {
+                return Err(AppError::Output(error));
+            }
             let text = protocol::final_response_text(api_kind, &v);
 
             if text.is_empty() {
@@ -318,23 +321,32 @@ mod dictation_tests {
 
     #[tokio::test]
     async fn dictation_stream_is_validated_before_any_callback() {
-        for (field, content, accepted) in [
-            ("content", "왜 안 되는 거야? 알려줘".to_string(), true),
+        for (field, content, accepted, finish) in [
+            (
+                "content",
+                "왜 안 되는 거야? 알려줘".to_string(),
+                true,
+                "stop",
+            ),
+            ("content", "왜 안 되는".to_string(), false, "length"),
             (
                 "content",
                 "새로운 해결 방법을 설명하겠습니다. ".repeat(30),
                 false,
+                "stop",
             ),
             (
                 "reasoning_content",
                 "질문에 답해야겠습니다".to_string(),
                 false,
+                "stop",
             ),
         ] {
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let address = listener.local_addr().unwrap();
             let event = serde_json::json!({"choices":[{"delta":{field:content}}]});
-            let body = format!("data: {event}\n\ndata: [DONE]\n\n");
+            let end = serde_json::json!({"choices":[{"delta":{},"finish_reason":finish}]});
+            let body = format!("data: {event}\n\ndata: {end}\n\ndata: [DONE]\n\n");
             let server = tokio::spawn(async move {
                 let (mut socket, _) = listener.accept().await.unwrap();
                 let mut received = Vec::new();

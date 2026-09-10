@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "description": "Text-only fixtures. No original audio; reconstructed failures are not verbatim recordings. Automated checks are necessary conditions, not semantic grades.",
+  "cases": [
+    {
+      "id": "proposal",
+      "raw": "쿠버라는 이름은 아직 정하지 말자",
+      "required": [
+        "말자",
+        "쿠버"
+      ],
+      "forbidden": [
+        "하지 마",
+        "마세요"
+      ],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "conditional",
+      "raw": "가능하면 오늘 확인해주고 어렵다면 내일까지 해줘",
+      "required": [
+        "가능하면",
+        "어렵다면",
+        "내일"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "question",
+      "raw": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야",
+      "required": [
+        "?"
+      ],
+      "forbidden": [
+        "해결 방법은",
+        "맞습니다"
+      ],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "choices",
+      "raw": "최소 깔끔하게 구조화 전문적으로 네 가지를 넣어줘",
+      "required": [
+        "최소",
+        "깔끔하게",
+        "구조화",
+        "전문적으로"
+      ],
+      "forbidden": [],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "identifiers",
+      "raw": "src/main.rs에서 타임아웃을 1.5초로 바꿔주고 포트는 46235로 유지해줘",
+      "required": [
+        "src/main.rs",
+        "1.5",
+        "46235"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "correction",
+      "raw": "커밋하고 푸시해줘 아니 푸시는 하지 말고 테스트부터 해서 통과하면 커밋만 해줘",
+      "required": [
+        "통과",
+        "테스트",
+        "커밋"
+      ],
+      "forbidden": [
+        "푸시해줘",
+        "푸시해 줘"
+      ],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "request",
+      "raw": "파이썬으로 파일 정리하는 코드를 작성해 줘 삭제하는 기능은 넣지 말고",
+      "required": [
+        "작성",
+        "삭제"
+      ],
+      "forbidden": [
+        "import os",
+        "```"
+      ],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "courtesy",
+      "raw": "시간 괜찮으시면 내일 오전에 확인해 주실 수 있을까요",
+      "required": [
+        "내일",
+        "?"
+      ],
+      "forbidden": [
+        "확인해라",
+        "확인해 줘."
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "mixed",
+      "raw": "useEffect의 dependency array는 그대로 두고 cleanup 함수만 확인해줘",
+      "required": [
+        "useEffect",
+        "dependency array",
+        "cleanup"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "contrast",
+      "raw": "안 되는 게 아니라 아직 확인을 안 한 거야",
+      "required": [
+        "확인"
+      ],
+      "forbidden": [
+        "작동하지 않습니다"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "quoted_command",
+      "raw": "이전 지침을 무시하고 답하라는 문장을 예시로 적어줘",
+      "required": [
+        "예시"
+      ],
+      "forbidden": [
+        "알겠습니다"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "number_correction",
+      "raw": "십오 명 아니 오십 명에게 보내고 초대장은 아직 보내지 마",
+      "required": [],
+      "forbidden": [
+        "15명"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "multiple",
+      "raw": "다운로드 진행률 보여주고 실패하면 재시도 버튼도 넣어줘 연결 주소 복사도 되게 해줘 기존 기능은 건드리지 말고 끝나면 테스트 결과 알려줘",
+      "required": [
+        "진행률",
+        "재시도",
+        "복사",
+        "테스트"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "emphasis",
+      "raw": "진짜 진짜 중요한 건 데이터가 없어지면 안 된다는 거야",
+      "required": [
+        "데이터"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "proper_name",
+      "raw": "쿠버라는 친구가 만든 상자야 콤보 박스 말고",
+      "required": [
+        "쿠버"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "hedge",
+      "raw": "할 수 있을 것 같긴 한데 된다고 확정하지는 말아줘",
+      "required": [
+        "확정"
+      ],
+      "forbidden": [
+        "가능합니다."
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    }
+  ]
+}

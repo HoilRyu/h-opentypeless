@@ -667,6 +667,31 @@
       "partial": "Partial result",
       "fallback": "Fallback output",
       "clipboardFallback": "Copied to clipboard"
+    },
+    "repolish": "결과 비교·다시 다듬기",
+    "repolishHint": "현재 AI 제공자·사전·개인 지침과 선택한 스타일을 사용합니다. 번역과 장면은 적용하지 않습니다. 결과를 확인하고 복사할 수 있으며 기존 기록은 유지됩니다.",
+    "originalTranscript": "음성 인식 원문",
+    "previousResult": "기존 결과",
+    "newResult": "새 결과",
+    "repolishStyle": "다듬기 스타일",
+    "repolishRun": "다시 다듬기",
+    "repolishing": "다듬는 중…",
+    "copyOriginal": "원문 복사",
+    "copyNewResult": "새 결과 복사",
+    "repolishClose": "닫기",
+    "repolishCopied": "복사했습니다",
+    "repolishInvalidStyle": "지원되는 스타일을 선택해 주세요.",
+    "repolishInvalidSource": "원문이 비어 있거나 처리하기에 너무 깁니다.",
+    "repolishMissing": "이 기록이 삭제되어 다시 처리할 수 없습니다.",
+    "repolishConfigure": "설정에서 Ollama 또는 직접 AI 제공자를 먼저 설정해 주세요.",
+    "repolishFailed": "다듬기를 완료하지 못했습니다. 원문과 이전 결과는 그대로 남아 있습니다.",
+    "repolishTimeout": "다듬기 시간이 초과되었습니다. 원문은 복사할 수 있습니다.",
+    "repolishBusy": "다른 기록을 다듬고 있습니다. 잠시 후 다시 시도해 주세요.",
+    "repolishStyles": {
+      "minimal": "최소",
+      "clean": "깔끔하게",
+      "structured": "구조화",
+      "professional": "전문적으로"
     }
   },
   "upgrade": {

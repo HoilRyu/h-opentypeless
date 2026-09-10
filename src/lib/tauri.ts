@@ -649,3 +649,16 @@ export async function saveOnboardingCompleted(): Promise<void> {
     console.error('Failed to persist onboarding state:', e)
   }
 }
+
+export interface RepolishResult {
+  history_id: number
+  polished_text: string
+  model: string
+  style: string
+  prompt_sha256: string
+  elapsed_ms: number
+}
+
+export async function repolishHistory(id: number, style: string): Promise<RepolishResult> {
+  return invoke('repolish_history', { id, style })
+}

@@ -667,6 +667,31 @@
       "partial": "Partial result",
       "fallback": "Fallback output",
       "clipboardFallback": "Copied to clipboard"
+    },
+    "repolish": "Review and polish again",
+    "repolishHint": "Uses your current AI provider, dictionary and personal instructions with the selected style. Translation and scenes are not applied. Review and copy a result; your original history stays unchanged.",
+    "originalTranscript": "Original transcript",
+    "previousResult": "Previous result",
+    "newResult": "New result",
+    "repolishStyle": "Style",
+    "repolishRun": "Polish again",
+    "repolishing": "Polishing…",
+    "copyOriginal": "Copy original",
+    "copyNewResult": "Copy new result",
+    "repolishClose": "Close",
+    "repolishCopied": "Copied",
+    "repolishInvalidStyle": "Choose a supported style.",
+    "repolishInvalidSource": "The original transcript is empty or too long to process.",
+    "repolishMissing": "This history entry no longer exists.",
+    "repolishConfigure": "Configure a direct AI provider or Ollama in Settings first.",
+    "repolishFailed": "Could not finish polishing. The original and any previous result are still available.",
+    "repolishTimeout": "Polishing timed out. You can still copy the original.",
+    "repolishBusy": "Another history request is still processing. Please try again shortly.",
+    "repolishStyles": {
+      "minimal": "Minimal",
+      "clean": "Clean",
+      "structured": "Structured",
+      "professional": "Professional"
     }
   },
   "upgrade": {
