@@ -441,7 +441,12 @@ export type VoiceExecutionFallbackReason =
   | 'focus_restore_failed'
   | 'output_failed'
 
-export type AskResultOutput = 'popupAnswer' | 'openedSearch' | 'insertedText' | 'copiedFallback'
+export type AskResultOutput =
+  | 'popupAnswer'
+  | 'openedSearch'
+  | 'insertedText'
+  | 'copiedFallback'
+  | 'cancelled'
 
 export interface AskDictationResult {
   question: string

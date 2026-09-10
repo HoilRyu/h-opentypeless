@@ -6,7 +6,8 @@ const BAR_COUNT = 7
 const MIN_HEIGHT = 3
 const MAX_HEIGHT = 16
 
-export function Waveform() {
+export function Waveform({ expanded = false }: { expanded?: boolean }) {
+  const count = expanded ? 21 : BAR_COUNT
   const barsRef = useRef<(HTMLDivElement | null)[]>([])
   const rafRef = useRef<number>(0)
   const reduced = useReducedMotion()
@@ -24,7 +25,7 @@ export function Waveform() {
 
     const mac = isMacPlatform()
     let last = 0
-    const history = Array<number>(BAR_COUNT).fill(0)
+    const history = Array<number>(count).fill(0)
     const animate = (now: number) => {
       if (mac && now - last < 33) {
         rafRef.current = requestAnimationFrame(animate)
@@ -49,17 +50,20 @@ export function Waveform() {
 
     rafRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [reduced])
+  }, [reduced, count])
 
   return (
-    <div className="flex items-center justify-center gap-[3px] h-4">
-      {Array.from({ length: BAR_COUNT }).map((_, i) => (
+    <div
+      className={`flex items-center h-4 ${expanded ? 'flex-1 min-w-8 justify-between overflow-hidden' : 'justify-center gap-[3px]'}`}
+      aria-hidden="true"
+    >
+      {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
           ref={(el) => {
             barsRef.current[i] = el
           }}
-          className="w-[2px] rounded-full bg-white/80"
+          className="w-[2px] shrink-0 rounded-full bg-white/80"
           style={{
             height: `${MIN_HEIGHT}px`,
             opacity: 0.5,

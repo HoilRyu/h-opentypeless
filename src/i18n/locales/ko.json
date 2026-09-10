@@ -897,6 +897,8 @@
   },
   "h": {
     "localStt": {
+      "previewTitle": "녹음 중 인식 내용 표시",
+      "previewDescription": "말을 잠시 멈추면 캡슐에 미리보기가 표시됩니다. 처리 속도가 느리면 종료 후 인식으로 전환합니다. 최종 문장은 달라질 수 있습니다.",
       "provider": "내장 STT · Whisper / Qwen",
       "title": "이 컴퓨터에서 음성 인식",
       "description": "모델을 한 번 다운로드하면 STT 서버나 인터넷 연결 없이 전사합니다. 문장 다듬기는 기존 LLM 설정을 사용합니다.",
@@ -921,7 +923,13 @@
       "engineIdle": "대기 중",
       "engineHelp": "호환되는 Mac에서는 MLX GPU를 사용합니다. 최초 모델 검증·준비에는 시간이 더 걸릴 수 있습니다. 약 2분간 사용하지 않으면 모델 메모리를 해제합니다. Whisper는 CPU를 사용합니다.",
       "engineUnload": "모델 메모리 해제",
-      "engineBusy": "작업 중"
+      "engineBusy": "작업 중",
+      "modelLabel": "STT 모델",
+      "downloaded": "다운로드됨",
+      "modelBrowseHint": "모델을 골라 정보를 확인하세요. 다운로드 후 ‘이 모델 사용’을 누르면 전환됩니다.",
+      "showDownload": "진행 보기",
+      "whisperCpuHint": "Whisper는 현재 CPU로 실행됩니다. 큰 모델은 더 오래 걸릴 수 있으며, Qwen보다 정확한지는 같은 음성으로 비교해 보세요.",
+      "qwenEngineHint": "호환 Mac에서는 자동 설정으로 MLX GPU를 사용합니다. 다른 환경에서는 지원되는 CPU 엔진으로 실행됩니다."
     }
   }
 }

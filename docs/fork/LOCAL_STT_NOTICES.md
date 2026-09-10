@@ -19,3 +19,34 @@ The app includes a private Python runtime, not an externally hosted STT service.
 - Qwen tokenizer configuration files use the same pinned model revisions and Apache-2.0 license as the weights. Their provenance and SHA-256 values are in `native/mlx-stt/tokenizers.json`.
 
 MLX GPU support here applies to compatible Apple Silicon Macs; it does not advertise Qwen GPU support on Windows or Linux.
+
+
+## Earshot 1.2.2 — voice activity detection
+
+https://github.com/pykeio/earshot — distributed under the MIT option.
+
+MIT License
+
+Copyright (c) 2025-2026 pyke.io
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## 2026-09-10 Whisper Large-v3 Turbo 카탈로그 추가
+
+기존 Whisper와 동일한 OpenAI Whisper MIT 모델 계열이며, whisper.cpp 배포의 고정된 GGML 파일을 선택 다운로드한다. 배포 URL·크기·SHA-256은 catalog.json에 포함한다. 엔진/가중치 라이선스 처리는 기존 Whisper와 동일하다.

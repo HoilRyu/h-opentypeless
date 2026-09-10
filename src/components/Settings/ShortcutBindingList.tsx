@@ -11,7 +11,6 @@ const STANDALONE_KEYS = new Set([
   'Tab',
   'Enter',
   'Backspace',
-  'Escape',
   'Delete',
   'Insert',
   'Home',

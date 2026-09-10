@@ -64,6 +64,40 @@ describe('Capsule flow states', () => {
     })
   })
 
+  it('changes this recording style without stopping recording or saving global config', async () => {
+    useAppStore.setState({
+      pipelineState: 'recording',
+      config: {
+        ...useAppStore.getState().config,
+        polish_enabled: true,
+        polish_style: 'clean',
+        active_scene: null,
+      },
+    })
+    render(<Capsule />)
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Style for this recording' }))
+    fireEvent.pointerUp(screen.getByRole('button', { name: 'Style for this recording' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Style for this recording' }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'settings.polishStyleStructured' }))
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('set_recording_polish_style', { style: 'structured' }),
+    )
+    await waitFor(() => expect(useAppStore.getState().polishStyleMenuOpen).toBe(false))
+    expect(useAppStore.getState().config.polish_style).toBe('clean')
+    expect(invoke).not.toHaveBeenCalledWith('stop_recording')
+  })
+
+  it('shows local preview while recording and keeps its size bounded', () => {
+    useAppStore.setState({
+      pipelineState: 'recording',
+      partialTranscript: '설정 화면에 버튼을 추가해 주세요',
+      config: { ...useAppStore.getState().config, stt_provider: 'builtin-stt' },
+    })
+    render(<Capsule />)
+    expect(screen.getByRole('status')).toHaveTextContent('설정 화면에 버튼을 추가해 주세요')
+    expect(screen.getByRole('status').className).toContain('overflow-hidden')
+  })
+
   it('renders preparing state', () => {
     useAppStore.setState({ pipelineState: 'preparing' })
 
@@ -194,7 +228,7 @@ describe('Capsule flow states', () => {
     )
 
     const shell = container.querySelector('.jelly-capsule-active') as HTMLElement
-    expect(shell.style.width).toBe('200px')
+    expect(shell.style.width).toBe('360px')
     expect(shell.style.height).toBe('36px')
   })
 })

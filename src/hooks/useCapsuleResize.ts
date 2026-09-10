@@ -45,15 +45,21 @@ function getSizeForState(
   hasError: boolean,
   contextMenuOpen: boolean,
   translationTargetMenuOpen = false,
+  preview = false,
+  styleMenu = false,
 ): CapsuleSize {
   if (translationTargetMenuOpen) return { width: 360, height: 180 }
   if (contextMenuOpen) return { width: 220, height: 220 }
   if (hasError) return getCapsuleShellSize('error')
   if (expanded) return { width: 220, height: 90 }
-  return getCapsuleShellSize(state)
+  return getCapsuleShellSize(state, undefined, preview, styleMenu)
 }
 
 export function useCapsuleResize() {
+  const preview = useAppStore(
+    (s) => s.config.stt_provider === 'builtin-stt' && Boolean(s.partialTranscript),
+  )
+  const styleMenu = useAppStore((s) => s.polishStyleMenuOpen)
   const pipelineState = useAppStore((s) => s.pipelineState)
   const capsuleExpanded = useAppStore((s) => s.capsuleExpanded)
   const pipelineError = useAppStore((s) => s.pipelineError)
@@ -73,6 +79,8 @@ export function useCapsuleResize() {
       hasError,
       contextMenuOpen,
       translationTargetMenuOpen,
+      preview,
+      styleMenu,
     )
     const windowWidth = size.width + 24
     const windowHeight = size.height + 24
@@ -166,6 +174,8 @@ export function useCapsuleResize() {
       })
       .catch(() => {})
   }, [
+    preview,
+    styleMenu,
     pipelineState,
     capsuleExpanded,
     hasError,
@@ -181,5 +191,7 @@ export function useCapsuleResize() {
     hasError,
     contextMenuOpen,
     translationTargetMenuOpen,
+    preview,
+    styleMenu,
   )
 }

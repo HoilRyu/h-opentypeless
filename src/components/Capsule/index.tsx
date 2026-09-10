@@ -25,6 +25,8 @@ function getCapsuleState(pipelineState: string, hasError: boolean) {
 }
 
 export function Capsule() {
+  const styleMenu = useAppStore((s) => s.polishStyleMenuOpen)
+  const setStyleMenu = useAppStore((s) => s.setPolishStyleMenuOpen)
   const pipelineState = useAppStore((s) => s.pipelineState)
   const pipelineError = useAppStore((s) => s.pipelineError)
   const contextMenuOpen = useAppStore((s) => s.contextMenuOpen)
@@ -42,7 +44,10 @@ export function Capsule() {
 
   const hasError = pipelineError !== null
   const capsuleState = getCapsuleState(pipelineState, hasError)
-  const capsuleShellSize = getCapsuleShellSize(capsuleState)
+  const preview = useAppStore(
+    (s) => s.config.stt_provider === 'builtin-stt' && Boolean(s.partialTranscript),
+  )
+  const capsuleShellSize = getCapsuleShellSize(capsuleState, undefined, preview, styleMenu)
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return
@@ -92,6 +97,7 @@ export function Capsule() {
     e.preventDefault()
     if (!contextMenuOpen) {
       setTranslationTargetMenuOpen(false)
+      setStyleMenu(false)
       setContextMenuOpen(true)
     }
   }
@@ -100,6 +106,10 @@ export function Capsule() {
     setContextMenuReady(false)
     setContextMenuOpen(false)
   }
+
+  useEffect(() => {
+    if (styleMenu && capsuleState !== 'recording') setStyleMenu(false)
+  }, [capsuleState, styleMenu, setStyleMenu])
 
   useEffect(() => {
     if (
@@ -120,14 +130,17 @@ export function Capsule() {
       <motion.div
         layout
         transition={{ layout: { duration: 0.2, ease: [0.2, 0, 0, 1] } }}
-        className={`absolute left-3 rounded-full pointer-events-auto shrink-0 ${
+        className={`absolute left-3 ${capsuleState === 'recording' && (preview || styleMenu) ? 'rounded-2xl' : 'rounded-full'} pointer-events-auto shrink-0 ${
           capsuleState === 'error'
             ? 'jelly-capsule-error'
             : capsuleState === 'idle'
               ? 'jelly-capsule text-neutral-700'
               : 'jelly-capsule-active text-white'
         }`}
-        style={capsuleShellSize}
+        style={{
+          ...capsuleShellSize,
+          ...(capsuleState === 'recording' && (preview || styleMenu) ? { borderRadius: 20 } : {}),
+        }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

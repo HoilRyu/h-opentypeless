@@ -1254,6 +1254,7 @@ pub fn run() {
             commands::ask::abort_ask_dictation,
             commands::ask::take_pending_ask_message,
             commands::translation::set_active_translation_target,
+            commands::translation::set_recording_polish_style,
             commands::app_mappings::get_latest_mapping_candidate,
             commands::app_mappings::list_custom_app_mappings,
             commands::app_mappings::save_custom_app_mapping,

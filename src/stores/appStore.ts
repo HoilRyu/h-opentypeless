@@ -342,6 +342,8 @@ interface AppState {
   setContextMenuOpen: (open: boolean) => void
   contextMenuReady: boolean
   setContextMenuReady: (ready: boolean) => void
+  polishStyleMenuOpen: boolean
+  setPolishStyleMenuOpen: (open: boolean) => void
   translationTargetMenuOpen: boolean
   setTranslationTargetMenuOpen: (open: boolean) => void
 
@@ -875,6 +877,8 @@ export const useAppStore = create<AppState>((set) => ({
   setContextMenuOpen: (contextMenuOpen) => set({ contextMenuOpen }),
   contextMenuReady: false,
   setContextMenuReady: (contextMenuReady) => set({ contextMenuReady }),
+  polishStyleMenuOpen: false,
+  setPolishStyleMenuOpen: (polishStyleMenuOpen) => set({ polishStyleMenuOpen }),
   translationTargetMenuOpen: false,
   setTranslationTargetMenuOpen: (translationTargetMenuOpen) => set({ translationTargetMenuOpen }),
 

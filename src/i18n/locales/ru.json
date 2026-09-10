@@ -897,6 +897,8 @@
   },
   "h": {
     "localStt": {
+      "previewTitle": "Show text while recording",
+      "previewDescription": "Preview appears when you pause speaking. Slower devices fall back to transcription after recording. Final text may differ.",
       "provider": "Built-in STT · Whisper / Qwen",
       "title": "Speech recognition on this computer",
       "description": "Download a model once, then transcribe without an STT server or internet connection. Your existing LLM provider is still used for polishing.",
@@ -921,7 +923,13 @@
       "engineIdle": "Idle",
       "engineHelp": "Compatible Macs use MLX GPU. Initial model verification and preparation take longer. Models are released after about two minutes of inactivity. Whisper uses CPU.",
       "engineUnload": "Release model memory",
-      "engineBusy": "Working"
+      "engineBusy": "Working",
+      "modelLabel": "STT model",
+      "downloaded": "Downloaded",
+      "modelBrowseHint": "Choose a model to view its details. After downloading, select Use this model to switch.",
+      "showDownload": "Show progress",
+      "whisperCpuHint": "Whisper currently runs on the CPU. Larger models may take longer; compare the same recording to assess accuracy against Qwen.",
+      "qwenEngineHint": "Automatic mode uses MLX GPU on compatible Macs, and the supported CPU engine on other systems."
     }
   }
 }

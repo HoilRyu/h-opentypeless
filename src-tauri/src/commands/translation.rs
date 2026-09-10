@@ -38,3 +38,11 @@ pub async fn set_active_translation_target(
     );
     Ok(config.translation)
 }
+
+#[tauri::command]
+pub fn set_recording_polish_style(
+    style: String,
+    pipeline: tauri::State<'_, PipelineHandle>,
+) -> Result<(), String> {
+    pipeline.switch_recording_polish_style(&style)
+}

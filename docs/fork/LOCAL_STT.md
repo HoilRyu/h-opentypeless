@@ -1,12 +1,13 @@
 # 내장 STT
 
-설정 → 음성 인식 → **내장 STT · Whisper / Qwen**에서 모델을 다운로드한 뒤 **이 모델 사용**을 누른다. 기존 외부 STT 주소·모델·API 키와 LLM API/Ollama 설정은 유지된다. 내장 STT로 바꿔도 LLM 다듬기에 필요한 네트워크/모델 엔진은 별도다.
+설정 → 음성 인식 → **내장 STT · Whisper / Qwen**에서 **STT 모델 선택 상자**로 모델을 고르고 다운로드한 뒤 **이 모델 사용**을 누른다. 기존 외부 STT 주소·모델·API 키와 LLM API/Ollama 설정은 유지된다. 내장 STT로 바꿔도 LLM 다듬기에 필요한 네트워크/모델 엔진은 별도다.
 
 | 모델 | 다운로드 | 권장 시스템 메모리 |
 |---|---:|---:|
 | Whisper Tiny | 약 74 MiB | 4 GB |
 | Whisper Base | 약 141 MiB | 4 GB |
 | Whisper Small | 약 465 MiB | 8 GB |
+| Whisper Large-v3 Turbo | 약 1.51 GiB | 16 GB |
 | Qwen3-ASR 0.6B | 약 1.75 GiB | 8 GB |
 | Qwen3-ASR 1.7B | 약 4.38 GiB | 16 GB |
 
@@ -27,6 +28,16 @@
 - Windows에서는 Qwen을 비활성화한다. POSIX 기반 Qwen 엔진의 Windows 포팅/검증 전까지 지원한다고 표시하지 않는다.
 - MLX 번들은 네이티브 Apple Silicon과 macOS 14 이상을 대상으로 하며 실제 GPU 연산 검사를 통과해야 사용한다. 실패를 숨겨 CPU로 전환하지 않으며 사용자가 설정에서 CPU를 선택할 수 있다.
 - macOS CPU Qwen은 Accelerate ABI 때문에 13.3 이상, 번들 Whisper는 11 이상을 기준으로 빌드한다. Windows/Linux 실기기 검증은 추후 수행한다.
+
+## 모델 선택과 비교
+
+선택 상자는 모델의 정보와 다운로드/사용 버튼을 보여 준다. 둘러보기만으로 다운로드하거나 활성 모델을 바꾸지 않는다. 다운로드 중 다른 항목을 확인해도 ‘진행 보기’로 돌아갈 수 있다.
+
+원본 OpenTypeless README의 추천 예는 [Groq의 whisper-large-v3-turbo](https://github.com/tover0314-w/opentypeless)다. H의 내장 목록에는 기존 Tiny/Base/Small에 이어 동일 모델 계열의 **Whisper Large-v3 Turbo**를 추가했다. [whisper.cpp 모델 배포](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1)의 고정 revision, 파일 크기(1,624,555,275 bytes), SHA-256을 사용한다. 자동 다운로드하지 않는다.
+
+현재 번들 Whisper는 Metal을 끈 CPU 빌드다. Qwen은 호환 Mac에서 MLX GPU를 사용한다. 따라서 Turbo가 현재 Qwen보다 빠르거나 한국어 인식이 더 좋다고 단정할 수 없다. 표의 권장 RAM은 앱에서 정한 보수적인 안내이며, 개발사 최소 요구 사양이 아니다. 같은 녹음을 AI 다듬기 전 전사문 기준으로 비교해야 STT 자체의 오류를 판단할 수 있다. 긴 음성은 기존 90초 전사 제한에 걸릴 수 있다.
+
+개인 사전은 최종 LLM 문맥 교정을 돕는 보조 수단이다. 이번 변경은 STT를 재학습하거나 모든 오인식을 자동 교정하는 기능은 아니다.
 
 ## 빌드
 
