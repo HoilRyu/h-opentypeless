@@ -45,7 +45,7 @@ pub fn platform_reason(s: &Service) -> Option<String> {
 }
 fn detect_platform(s: &Service) -> Option<String> {
     if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
-        return Some("MLX Qwen requires a native Apple Silicon Mac build".into());
+        return Some("MLX requires a native Apple Silicon Mac build".into());
     }
     if !s.engines.join("mlx/bin/python3").is_file() {
         return Some("This build does not include the MLX runtime".into());
@@ -111,7 +111,7 @@ pub async fn probe(s: &Service) -> Result<(), String> {
 }
 
 pub async fn use_mlx(s: &Service, m: &Model) -> Result<bool, String> {
-    if m.engine != "qwen" || s.engine_preference() == "cpu" {
+    if !matches!(m.engine.as_str(), "qwen" | "whisper") || s.engine_preference() == "cpu" {
         return Ok(false);
     }
     if let Some(reason) = platform_reason(s) {
@@ -137,11 +137,11 @@ pub async fn status(s: &Service) -> EngineStatus {
             .ok()
             .and_then(|p| p.as_ref().and_then(|r| r.as_ref().err().cloned()))
     });
-    let qwen = s
+    let supported = s
         .selected()
         .and_then(|id| model(&id).ok())
-        .is_some_and(|m| m.engine == "qwen");
-    let active = if !qwen || preference == "cpu" {
+        .is_some_and(|m| matches!(m.engine.as_str(), "qwen" | "whisper"));
+    let active = if !supported || preference == "cpu" {
         "cpu"
     } else if reason.is_some() {
         if preference == "mlx" || unsupported.is_none() {
@@ -223,7 +223,9 @@ pub async fn transcribe(
     pcm: &[u8],
     language: Option<&str>,
 ) -> Result<String, String> {
-    tokenizer(s, m).await?;
+    if m.engine == "qwen" {
+        tokenizer(s, m).await?;
+    }
     let mut worker = s.mlx_worker.lock().await.take();
     if let Some(w) = worker.as_mut() {
         if w.model != m.id
@@ -244,7 +246,7 @@ pub async fn transcribe(
     let id = s
         .next_mlx_request
         .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let request = serde_json::to_vec(&serde_json::json!({"id": id, "model": s.root.join(&m.id), "pcm_bytes": pcm.len(), "language": language, "weights": m.files.iter().filter(|f| f.name.ends_with(".safetensors")).map(|f| &f.name).collect::<Vec<_>>()})).map_err(err)?;
+    let request = serde_json::to_vec(&serde_json::json!({"id": id, "engine": m.engine, "model": s.root.join(&m.id), "pcm_bytes": pcm.len(), "language": language, "weights": m.files.iter().filter(|f| f.name.ends_with(".safetensors") || f.name.ends_with(".bin")).map(|f| &f.name).collect::<Vec<_>>()})).map_err(err)?;
     let result = async {
         let stdin = worker.child.stdin.as_mut().ok_or("MLX stdin missing")?;
         stdin.write_u32(request.len() as u32).await.map_err(err)?;

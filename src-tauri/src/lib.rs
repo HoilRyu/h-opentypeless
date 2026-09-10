@@ -131,21 +131,23 @@ fn sync_auto_start_preference(
     config_manager: &storage::ConfigManager,
     config: &mut storage::AppConfig,
 ) {
-    use tauri_plugin_autostart::ManagerExt;
-
-    let autolaunch = app.autolaunch();
     let outcome = reconcile_auto_start_preference(
         config.auto_start,
-        autolaunch.is_enabled().map_err(|e| e.to_string()),
+        extensions::auto_start::is_enabled(app),
         |enabled| {
             if enabled {
-                autolaunch.enable()
+                extensions::auto_start::enable(app)
             } else {
-                autolaunch.disable()
+                extensions::auto_start::disable(app)
             }
-            .map_err(|e| e.to_string())
         },
     );
+
+    if outcome.config_auto_start {
+        if let Err(error) = extensions::auto_start::repair(app) {
+            tracing::warn!("Failed to migrate login item to app bundle: {error}");
+        }
+    }
 
     if let Some(error) = &outcome.error {
         tracing::warn!("{error}");

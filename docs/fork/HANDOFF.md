@@ -1,5 +1,19 @@
 # H-OpenTypeless 인계
 
+## 2026-09-10 로그인 항목 앱 번들 등록
+
+macOS 13+ 설치 앱은 SMAppService.mainAppService를 사용한다. 이전 LaunchAgent 활성 등록을 새 등록 성공 후 제거하고, 시작 시 마이그레이션한다. 설치본 적용 및 시스템 설정의 H-OpenTypeless 응용 프로그램 표시, 앱 켜기/끄기 단일 저장 검증 완료. 최종 자동 실행 켜짐. 이전 파일·서비스가 제거됐고, 최종 확인에서 과거 백그라운드 표시도 사라짐. [LOGIN_ITEM_BUNDLE_FIX.md](LOGIN_ITEM_BUNDLE_FIX.md) 참고. 이 워크트리에서 커밋하며, 병합 대상은 부모 브랜치 `feat/h-foundation-direct-providers`다.
+
+## 2026-09-10 캡슐 상태 전환 수정 · Whisper MLX 적용
+
+이 워크트리(`HoilRyu/fix-capsule-recording-preview`)에서 Whisper MLX 구현 및 설치 완료.
+아래 과거 기록의 “Whisper MLX 미구현” 상태를 대체한다. 캡슐 종료 시 원문 잔류/겹침 수정,
+기존 GGML 가중치의 오프라인 MLX 로딩, CPU 선택 보존, 기존 Qwen 회귀 확인.
+Turbo 미리보기 연속 5발화 및 cold start 실시간 간격 3발화/최종 전사 통과.
+미리보기 중단 정책은 변경하지 않았고 실제 사용자 마이크 환경은 후속 확인 대상.
+상세 구현·측정·검증·백업은 [LIVE_STT_PREVIEW.md](LIVE_STT_PREVIEW.md) 참고.
+설치본은 이 워크트리 버전이다. 변경을 커밋하며, 병합·푸시는 아직 수행하지 않았다.
+
 ## 2026-09-10 동일 프롬프트 모델 비교
 
 Qwen3.5:9b 설치 모델로 동일 12전사문×3회=36회 검사, 직전 Gemma4 current 36개와 비교. 반말→존댓말 Gemma0/33 Qwen5/33; 선택지 보존3/3 대0/3. Qwen 교체 권하지 않음. [전체 결과](LLM_MODEL_POLISH_COMPARISON.md), tools/diagnostics/model-polish-review. 모델명/digest/양자화/프롬프트 해시 포함. 앱/프롬프트 변경 없음. 종료 후 Qwen 해제/Gemma4 재준비, 설정 gemma4:12b/structured 유지 확인. 실제 Gemma 말투 문제 해결을 의미하지 않음.

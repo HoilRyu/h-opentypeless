@@ -106,7 +106,7 @@ describe('Capsule flow states', () => {
     expect(screen.getByText('capsule.preparing')).toBeInTheDocument()
   })
 
-  it('renders transcribing state with partial transcript when available', () => {
+  it('renders transcribing status even when a recording preview remains', () => {
     useAppStore.setState({
       pipelineState: 'transcribing',
       partialTranscript: 'hello world',
@@ -114,7 +114,8 @@ describe('Capsule flow states', () => {
 
     render(<Capsule />)
 
-    expect(screen.getByText(/hello world/)).toBeInTheDocument()
+    expect(screen.queryByText(/hello world/)).toBeNull()
+    expect(screen.getByText('capsule.transcribing')).toBeInTheDocument()
   })
 
   it('renders thinking state during polishing', () => {

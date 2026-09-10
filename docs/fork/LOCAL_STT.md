@@ -11,7 +11,7 @@
 | Qwen3-ASR 0.6B | 약 1.75 GiB | 8 GB |
 | Qwen3-ASR 1.7B | 약 4.38 GiB | 16 GB |
 
-권장 메모리는 H의 보수적인 선택 가이드이며 속도·정확도 보장이 아니다. Whisper는 모두 다국어 모델이다. 한국어 정확도는 모델 크기와 발음/환경에 따라 다르다. 저사양 PC는 Base부터 검토한다. Qwen은 실행 엔진을 자동/MLX GPU/CPU 중 선택할 수 있다. 호환되는 Apple Silicon Mac에서는 자동 모드가 내장 MLX GPU를 사용한다. 최초 모델 검증·준비는 반복 입력보다 오래 걸릴 수 있다.
+권장 메모리는 H의 보수적인 선택 가이드이며 속도·정확도 보장이 아니다. Whisper는 모두 다국어 모델이다. 한국어 정확도는 모델 크기와 발음/환경에 따라 다르다. 저사양 PC는 Base부터 검토한다. Whisper와 Qwen은 실행 엔진을 자동/MLX GPU/CPU 중 선택할 수 있다. 호환되는 Apple Silicon Mac에서는 자동 모드가 내장 MLX GPU를 사용한다. 최초 모델 검증·준비는 반복 입력보다 오래 걸릴 수 있다.
 
 ## 구조와 제한
 
@@ -35,7 +35,7 @@
 
 원본 OpenTypeless README의 추천 예는 [Groq의 whisper-large-v3-turbo](https://github.com/tover0314-w/opentypeless)다. H의 내장 목록에는 기존 Tiny/Base/Small에 이어 동일 모델 계열의 **Whisper Large-v3 Turbo**를 추가했다. [whisper.cpp 모델 배포](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1)의 고정 revision, 파일 크기(1,624,555,275 bytes), SHA-256을 사용한다. 자동 다운로드하지 않는다.
 
-현재 번들 Whisper는 Metal을 끈 CPU 빌드다. Qwen은 호환 Mac에서 MLX GPU를 사용한다. 따라서 Turbo가 현재 Qwen보다 빠르거나 한국어 인식이 더 좋다고 단정할 수 없다. 표의 권장 RAM은 앱에서 정한 보수적인 안내이며, 개발사 최소 요구 사양이 아니다. 같은 녹음을 AI 다듬기 전 전사문 기준으로 비교해야 STT 자체의 오류를 판단할 수 있다. 긴 음성은 기존 90초 전사 제한에 걸릴 수 있다.
+호환 Apple Silicon Mac에서는 Whisper와 Qwen 모두 MLX GPU를 사용한다. Whisper는 기존에 검증한 GGML F16/F32 가중치를 메모리에서 읽으며 별도 모델 다운로드나 변환 파일을 만들지 않는다. CPU 선택 및 MLX 미지원 환경에서는 기존 CPU 엔진을 사용한다. 따라서 Turbo가 현재 Qwen보다 빠르거나 한국어 인식이 더 좋다고 단정할 수 없다. 표의 권장 RAM은 앱에서 정한 보수적인 안내이며, 개발사 최소 요구 사양이 아니다. 같은 녹음을 AI 다듬기 전 전사문 기준으로 비교해야 STT 자체의 오류를 판단할 수 있다. 긴 음성은 기존 90초 전사 제한에 걸릴 수 있다.
 
 개인 사전은 최종 LLM 문맥 교정을 돕는 보조 수단이다. 이번 변경은 STT를 재학습하거나 모든 오인식을 자동 교정하는 기능은 아니다.
 

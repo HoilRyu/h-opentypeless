@@ -1,6 +1,6 @@
 import { getCapsuleShellSize } from '../../lib/capsule-layout'
 import { useRef, useCallback, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useRecording } from '../../hooks/useRecording'
 import { useCapsuleResize } from '../../hooks/useCapsuleResize'
@@ -145,26 +145,23 @@ export function Capsule() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
-        <AnimatePresence mode="sync" initial={false}>
-          <motion.div
-            key={capsuleState}
-            className="absolute inset-0"
-            initial={{ opacity: 0, filter: 'blur(2px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(2px)' }}
-            transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
-          >
-            {capsuleState === 'idle' && <CapsuleIdle />}
-            {capsuleState === 'preparing' && <CapsulePreparing />}
-            {capsuleState === 'recording' && <CapsuleRecording />}
-            {capsuleState === 'transcribing' && <CapsuleProcessing />}
-            {capsuleState === 'polishing' && <CapsulePolishing />}
-            {capsuleState === 'outputting' && <CapsuleComplete />}
-            {capsuleState === 'ask_recording' && <CapsuleAskRecording />}
-            {capsuleState === 'ask_thinking' && <CapsuleAskThinking />}
-            {capsuleState === 'error' && <CapsuleError />}
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={capsuleState}
+          className="absolute inset-0"
+          initial={{ opacity: 0, filter: 'blur(2px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
+        >
+          {capsuleState === 'idle' && <CapsuleIdle />}
+          {capsuleState === 'preparing' && <CapsulePreparing />}
+          {capsuleState === 'recording' && <CapsuleRecording />}
+          {capsuleState === 'transcribing' && <CapsuleProcessing />}
+          {capsuleState === 'polishing' && <CapsulePolishing />}
+          {capsuleState === 'outputting' && <CapsuleComplete />}
+          {capsuleState === 'ask_recording' && <CapsuleAskRecording />}
+          {capsuleState === 'ask_thinking' && <CapsuleAskThinking />}
+          {capsuleState === 'error' && <CapsuleError />}
+        </motion.div>
       </motion.div>
 
       {/* Context menu appears to the right of capsule */}

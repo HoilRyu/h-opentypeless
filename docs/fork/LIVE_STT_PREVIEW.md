@@ -51,3 +51,37 @@ Earshot의 MSRV에 맞춰 Rust 최소 버전을 1.87로 올렸다. MIT 고지는
 - 설치본과 빌드 산출물 실행 파일 SHA-256 일치, 기존 인증서/credential helper 유지, 앱 홈 실행 확인.
 - 전체 Rust 652 pass/6 ignored, UI 489 pass. 이후 큐 포화·이벤트 초기화 테스트를 추가하고 관련 검사를 재실행했다.
 - 실제 마이크에서 캡슐 표시 여부는 사용자 확인 요청 상태다. 커밋/푸시는 아직 하지 않았다.
+
+## 2026-09-10 캡슐 전환 및 Whisper MLX 재진단
+
+녹음 종료 시 미리보기를 비우고 이후 partial 이벤트를 무시한다. 변환 단계는 항상
+상태 문구를 표시하며 이전 녹음 화면의 exit 애니메이션을 함께 렌더링하지 않는다.
+
+Whisper large-v3-turbo CPU에서 약 3.97초 시험 음성 처리에 7.04초/14.90초가 걸렸다.
+첫 결과를 전달한 직후 `max(음성 길이, 2초)` 초과 조건으로 미리보기 작업이 종료되고,
+세션 내 재시작도 중단 안내도 없어 첫 결과만 남는 현상과 부합한다.
+
+Whisper MLX 적용 후 같은 입력 10회: 첫 인식 2.41초, 이후 0.58~0.68초.
+첫 인식 이후 MLX active bytes는 1,618,308,302로 일정했다. 이는 제한된 반복 시험이며
+장시간 앱 전체 메모리 누수가 없음을 보장하는 결과는 아니다.
+실제 Rust Provider/Preview/VAD 경로의 5개 발화 갱신과 전체 최종 전사도 통과했다.
+미리보기 중단 정책은 변경하지 않았으므로 느린 환경·짧은 첫 발화·큐 포화에서는
+여전히 종료 후 전사로 전환될 수 있다. 실제 사용자 마이크 환경은 별도 확인이 필요하다.
+
+재현 도구: `tools/diagnostics/check_whisper_mlx.py` (명시한 시험용 PCM만 사용).
+GGML 파서 회귀: `scripts/tests/test_whisper_ggml.py`.
+MLX 공식 구현 참고: https://github.com/ml-explore/mlx-examples/tree/main/whisper
+GGML 형식 참고: https://github.com/ggml-org/whisper.cpp/blob/master/models/convert-pt-to-ggml.py
+
+추가 검증: cold start부터 16ms 간격으로 PCM을 공급한 3발화 미리보기/최종 전사 통과
+(`real_streaming_preview_from_cold_start`, 약 13.4초). 준비 완료 후 시작하는 시험과 별도다.
+UI 492, Rust 전체 642(이후 추가한 실제 cold start 테스트 별도 통과), GGML 파서 2개,
+TypeScript/Vite 및 ESLint 통과. Whisper Base MLX 및 기존 Qwen MLX 반복 인식도 통과했다.
+
+설치: `/Applications/H-OpenTypeless.app`, 기존 인증서 서명과 credential helper 보존,
+빌드/설치 실행 파일 SHA-256 일치 확인. 설정 화면에서 `Whisper Large-v3 Turbo · 사용 중`,
+`실행 엔진: MLX` 확인. 설치된 런타임으로 추가 3회 인식은 0.78/0.37/0.38초,
+MLX active bytes는 모두 1,618,308,302였다. 환경 부하에 따른 변동이 있으므로 보장값은 아니다.
+백업: `~/.local/share/h-opentypeless/app-backups/before-capsule-whisper-mlx-20260910-200516.app`.
+진단 원본: `~/.local/share/h-opentypeless/whisper-mlx-build/{turbo-repeat,base-repeat,installed-turbo,install}.json`.
+변경은 `HoilRyu/fix-capsule-recording-preview` 워크트리에서 커밋한다. 병합 대상은 부모 브랜치 `feat/h-foundation-direct-providers`이며, 병합·푸시는 아직 수행하지 않았다.

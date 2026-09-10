@@ -2,15 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { abortRecording } from '../../lib/tauri'
-import { useAppStore } from '../../stores/appStore'
 import { CapsuleWorkIndicator } from './CapsuleWorkIndicator'
 
 export function CapsuleProcessing() {
   const { t } = useTranslation()
-  const partialTranscript = useAppStore((s) => s.partialTranscript)
   const reduced = useReducedMotion()
 
-  const displayText = partialTranscript || t('capsule.transcribing')
+  const displayText = t('capsule.transcribing')
 
   const handleCancel = async (e: React.MouseEvent) => {
     e.stopPropagation()

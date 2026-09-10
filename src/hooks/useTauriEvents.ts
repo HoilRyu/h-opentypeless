@@ -88,11 +88,13 @@ export function useTauriEvents() {
     }
 
     addListener<number>('audio:volume', setAudioVolume)
-    addListener<string>('stt:partial', setPartialTranscript)
+    addListener<string>('stt:partial', (text) => {
+      if (useAppStore.getState().pipelineState === 'recording') setPartialTranscript(text)
+    })
     addListener<string>('stt:final', setFinalTranscript)
     addListener<string>('llm:chunk', appendPolishedChunk)
     addListener<PipelineState>('pipeline:state', (state) => {
-      if (state === 'preparing' || state === 'idle') {
+      if (state !== 'recording') {
         setPartialTranscript('')
         if (state === 'preparing') setFinalTranscript('')
       }

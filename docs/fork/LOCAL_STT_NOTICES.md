@@ -50,3 +50,5 @@ SOFTWARE.
 ## 2026-09-10 Whisper Large-v3 Turbo 카탈로그 추가
 
 기존 Whisper와 동일한 OpenAI Whisper MIT 모델 계열이며, whisper.cpp 배포의 고정된 GGML 파일을 선택 다운로드한다. 배포 URL·크기·SHA-256은 catalog.json에 포함한다. 엔진/가중치 라이선스 처리는 기존 Whisper와 동일하다.
+
+- mlx-whisper 0.4.3: https://github.com/ml-explore/mlx-examples/tree/main/whisper — MIT, Apple Inc. Package license and dependency licenses are retained in the bundled Python distribution. The local GGML adapter follows whisper.cpp's tensor format and MLX Whisper's tensor mapping without downloading additional weights.

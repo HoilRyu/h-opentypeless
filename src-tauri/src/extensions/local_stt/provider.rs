@@ -78,7 +78,7 @@ impl SttProvider for Provider {
         }
         self.preview_requested &= self.service.preview_enabled();
         let lease = Arc::new(lease);
-        if m.engine == "qwen"
+        if matches!(m.engine.as_str(), "qwen" | "whisper")
             && self.service.engine_preference() != "cpu"
             && mlx::platform_reason(&self.service).is_none()
         {
@@ -207,16 +207,13 @@ pub(super) async fn transcribe(
         started.elapsed().as_millis()
     );
     if mlx::use_mlx(s, m).await? {
-        return mlx::transcribe(
-            s,
-            m,
-            pcm,
+        let language = language.filter(|l| *l != "auto" && *l != "multi");
+        let language = if m.engine == "qwen" {
+            language.map(qwen_language).transpose()?
+        } else {
             language
-                .filter(|l| *l != "auto" && *l != "multi")
-                .map(qwen_language)
-                .transpose()?,
-        )
-        .await;
+        };
+        return mlx::transcribe(s, m, pcm, language).await;
     }
     let inference = std::time::Instant::now();
     let mut cmd = Command::new(s.binary(m));
@@ -346,6 +343,71 @@ mod tests {
         assert!(final_text.contains("설정") && final_text.contains("버튼"));
         mlx::stop(&s).await;
         assert!(s.gate.try_lock().is_ok());
+    }
+    #[tokio::test]
+    #[ignore = "real local models and test PCM; feeds audio during cold model preparation"]
+    async fn real_streaming_preview_from_cold_start() {
+        let service = Service::new(
+            PathBuf::from(std::env::var("H_LOCAL_STT_TEST_ROOT").unwrap()),
+            PathBuf::from(std::env::var("H_LOCAL_STT_ENGINE_DIR").unwrap()),
+        )
+        .unwrap();
+        let sample = fs::read(std::env::var("H_LOCAL_STT_TEST_PCM").unwrap())
+            .await
+            .unwrap();
+        let mut audio = Vec::new();
+        for _ in 0..3 {
+            audio.extend_from_slice(&sample);
+            audio.extend_from_slice(&[0; 32000]);
+        }
+        let mut provider = Provider::with_service(service.clone());
+        provider.enable_preview();
+        provider
+            .connect(&SttConfig {
+                language: Some("ko".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        let started = std::time::Instant::now();
+        let mut ticks = tokio::time::interval(Duration::from_millis(16));
+        ticks.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        let mut chunks = audio.chunks(512);
+        let mut previews = 0;
+        let mut latest = String::new();
+        tokio::time::timeout(Duration::from_secs(45), async {
+            loop {
+                tokio::select! {
+                    _ = ticks.tick() => {
+                        match chunks.next() {
+                            Some(chunk) => provider.send_audio(chunk).await.unwrap(),
+                            None => break,
+                        }
+                    }
+                    event = provider.recv_transcript() => {
+                        if let Some(TranscriptEvent::Partial { text }) = event.unwrap() {
+                            assert!(text.len() > latest.len());
+                            latest = text;
+                            previews += 1;
+                            eprintln!("cold_stream preview={previews} elapsed_ms={}", started.elapsed().as_millis());
+                        }
+                    }
+                }
+            }
+            while previews < 3 {
+                if let Some(TranscriptEvent::Partial { text }) = provider.recv_transcript().await.unwrap() {
+                    assert!(text.len() > latest.len());
+                    latest = text;
+                    previews += 1;
+                }
+            }
+        }).await.expect("preview stopped before all three utterances");
+        assert_eq!(previews, 3);
+        assert!(latest.contains("설정"));
+        let final_text = provider.disconnect().await.unwrap().unwrap();
+        assert!(final_text.contains("설정") && final_text.contains("버튼"));
+        mlx::stop(&service).await;
+        assert!(service.gate.try_lock().is_ok());
     }
     #[tokio::test]
     async fn recording_does_not_busy_spin() {

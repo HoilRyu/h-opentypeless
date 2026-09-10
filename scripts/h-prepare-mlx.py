@@ -38,8 +38,9 @@ def prepare(root):
         if bundle.exists():
             shutil.rmtree(bundle)
         runtime.rename(bundle)
-        marker.write_text(json.dumps({'fingerprint': fingerprint, 'python': '3.12.14', 'mlx': '0.31.1', 'asr': '0.4.0', 'minimum_macos': '14.0'}))
-    shutil.copy2(source/'native/mlx-stt/worker.py', bundle/'worker.py')
+        marker.write_text(json.dumps({'fingerprint': fingerprint, 'python': '3.12.14', 'mlx': '0.31.1', 'asr': '0.4.0', 'whisper': '0.4.3', 'minimum_macos': '14.0'}))
+    for name in ('worker.py', 'whisper_session.py'):
+        shutil.copy2(source/'native/mlx-stt'/name, bundle/name)
     shutil.copy2(lock, bundle/'requirements.lock')
     aux = bundle/'tokenizers'
     aux.mkdir(exist_ok=True)

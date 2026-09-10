@@ -65,7 +65,7 @@ def main():
         reply({'ok': True, 'backend': 'mlx'})
         return
     threading.Thread(target=watchdog, daemon=True).start()
-    from mlx_qwen3_asr import Session
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
     session = None
     model_path = None
     while True:
@@ -82,20 +82,38 @@ def main():
         started = last_activity
         try:
             path = pathlib.Path(request['model']).resolve(strict=True)
-            if not path.is_dir() or not (path / 'tokenizer_config.json').is_file():
-                raise ValueError('local model incomplete')
-            if sorted(p.name for p in path.glob('*.safetensors')) != sorted(request['weights']):
-                raise ValueError('unexpected weight files')
-            if model_path != str(path):
-                session = None
+            engine = request.get('engine', 'qwen')
+            if engine not in ('qwen', 'whisper') or not path.is_dir():
+                raise ValueError('unsupported local model')
+            if engine == 'qwen':
+                if not (path / 'tokenizer_config.json').is_file():
+                    raise ValueError('local model incomplete')
+                if sorted(p.name for p in path.glob('*.safetensors')) != sorted(request['weights']):
+                    raise ValueError('unexpected weight files')
+            else:
+                weights = request['weights']
+                if len(weights) != 1 or pathlib.Path(weights[0]).name != weights[0] or not weights[0].endswith('.bin'):
+                    raise ValueError('invalid Whisper weights')
+            if model_path != (engine, str(path)):
+                if session is not None:
+                    raise ValueError('worker model changed')
                 mx.clear_cache()
-                session = Session(model=str(path), dtype=mx.float16)
-                model_path = str(path)
+                if engine == 'qwen':
+                    from mlx_qwen3_asr import Session
+                    session = Session(model=str(path), dtype=mx.float16)
+                else:
+                    from whisper_session import Session
+                    session = Session(path / weights[0])
+                model_path = (engine, str(path))
             loaded = time.monotonic()
             text = ''
             if size:
                 audio = np.frombuffer(pcm, dtype='<i2').astype(np.float32) / 32768.0
-                text = session.transcribe((audio, 16000), language=request.get('language')).text
+                if engine == 'qwen':
+                    text = session.transcribe((audio, 16000), language=request.get('language')).text
+                else:
+                    text = session.transcribe(audio, request.get('language'))
+                del audio
             reply({'ok': True, 'id': request['id'], 'text': text,
                    'load_ms': round((loaded-started)*1000),
                    'inference_ms': round((time.monotonic()-loaded)*1000),

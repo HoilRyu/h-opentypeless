@@ -307,12 +307,10 @@ pub async fn set_auto_start(
     config_state: tauri::State<'_, storage::ConfigManager>,
     enabled: bool,
 ) -> Result<(), String> {
-    use tauri_plugin_autostart::ManagerExt;
-    let autolaunch = app.autolaunch();
     if enabled {
-        autolaunch.enable().map_err(|e| e.to_string())?;
+        crate::extensions::auto_start::enable(&app)?;
     } else {
-        autolaunch.disable().map_err(|e| e.to_string())?;
+        crate::extensions::auto_start::disable(&app)?;
     }
     let mut config = config_state.load().await.map_err(|e| e.to_string())?;
     config.auto_start = enabled;

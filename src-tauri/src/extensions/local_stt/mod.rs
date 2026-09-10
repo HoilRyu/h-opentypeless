@@ -551,15 +551,13 @@ mod tests {
     async fn cpu_override_does_not_probe_or_require_mlx() {
         let dir = tempfile::tempdir().unwrap();
         let s = Service::new(dir.path().into(), dir.path().into()).unwrap();
-        fs::write(dir.path().join("engine"), "cpu").await.unwrap();
-        assert!(!mlx::use_mlx(&s, &model("qwen-1.7b").unwrap())
-            .await
-            .unwrap());
-        assert!(s.mlx_probe.lock().await.is_none());
-        fs::write(dir.path().join("engine"), "mlx").await.unwrap();
-        assert!(mlx::use_mlx(&s, &model("qwen-1.7b").unwrap())
-            .await
-            .is_err());
+        for id in ["qwen-1.7b", "large-v3-turbo", "base"] {
+            fs::write(dir.path().join("engine"), "cpu").await.unwrap();
+            assert!(!mlx::use_mlx(&s, &model(id).unwrap()).await.unwrap());
+            assert!(s.mlx_probe.lock().await.is_none());
+            fs::write(dir.path().join("engine"), "mlx").await.unwrap();
+            assert!(mlx::use_mlx(&s, &model(id).unwrap()).await.is_err());
+        }
     }
     #[tokio::test]
     async fn download_resumes_verified_range() {

@@ -916,19 +916,19 @@
       "choose": "Download a model and choose “Use model” before recording.",
       "memory": "This computer has {{count}} GB RAM.",
       "limitReason": "Recording is limited to 2 minutes for bounded local processing.",
-      "engineTitle": "Qwen engine",
+      "engineTitle": "Speech recognition engine",
       "engineAuto": "Automatic (recommended)",
       "engineActive": "Engine: {{engine}}",
       "engineResident": "Model ready",
       "engineIdle": "Idle",
-      "engineHelp": "Compatible Macs use MLX GPU. Initial model verification and preparation take longer. Models are released after about two minutes of inactivity. Whisper uses CPU.",
+      "engineHelp": "Compatible Macs use MLX GPU for both Whisper and Qwen. Initial model verification and preparation take longer. Models are released after about two minutes of inactivity.",
       "engineUnload": "Release model memory",
       "engineBusy": "Working",
       "modelLabel": "STT model",
       "downloaded": "Downloaded",
       "modelBrowseHint": "Choose a model to view its details. After downloading, select Use this model to switch.",
       "showDownload": "Show progress",
-      "whisperCpuHint": "Whisper currently runs on the CPU. Larger models may take longer; compare the same recording to assess accuracy against Qwen.",
+      "whisperCpuHint": "Whisper uses MLX GPU on compatible Macs. Automatic mode uses CPU elsewhere; larger models can take longer.",
       "qwenEngineHint": "Automatic mode uses MLX GPU on compatible Macs, and the supported CPU engine on other systems."
     }
   }

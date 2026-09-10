@@ -73,10 +73,13 @@ describe('useTauriEvents', () => {
   it('clears preview on cancellation and on the next hotkey recording', async () => {
     render(<HookHarness />)
     await waitFor(() => expect(eventListeners.has('pipeline:state')).toBe(true))
-    for (const phase of ['idle', 'preparing']) {
+    for (const phase of ['transcribing', 'polishing', 'idle', 'preparing']) {
+      act(() => eventListeners.get('pipeline:state')?.({ payload: 'recording' }))
       act(() => eventListeners.get('stt:partial')?.({ payload: '이전 녹음' }))
       expect(useAppStore.getState().partialTranscript).toBe('이전 녹음')
       act(() => eventListeners.get('pipeline:state')?.({ payload: phase }))
+      expect(useAppStore.getState().partialTranscript).toBe('')
+      act(() => eventListeners.get('stt:partial')?.({ payload: '늦게 도착한 결과' }))
       expect(useAppStore.getState().partialTranscript).toBe('')
     }
   })

@@ -1,2 +1,5 @@
+# Compile for macOS 14+: MACOSX_DEPLOYMENT_TARGET=14.0 uv pip compile ...
 mlx-qwen3-asr==0.4.0
 mlx==0.31.1
+
+mlx-whisper==0.4.3
