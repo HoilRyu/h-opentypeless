@@ -581,7 +581,7 @@ mod platform {
         let flags = unsafe { CGEventGetFlags(event) };
         if keycode == FN_KEYCODE {
             let source_pid = unsafe { CGEventGetIntegerValueField(event, 41) };
-            if crate::extensions::fn_event::is_synthetic_fn(keycode, source_pid) {
+            if crate::extensions::fn_event::should_ignore_fn(keycode, source_pid) {
                 return;
             }
             let pressed = (flags & FLAG_MASK_SECONDARY_FN) != 0;

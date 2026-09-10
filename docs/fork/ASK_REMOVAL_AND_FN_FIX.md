@@ -1,5 +1,7 @@
 # Ask 제거와 방향키 재매핑의 Fn 오작동
 
+후속 수정: [Stream Deck Fn 입력 복구](STREAM_DECK_FN_FIX.md)에서 Stream Deck 발신 Fn을 허용한다. 아래는 최초 필터 도입 당시 기록이다.
+
 2026-09-10.
 
 ## 원인 확인
