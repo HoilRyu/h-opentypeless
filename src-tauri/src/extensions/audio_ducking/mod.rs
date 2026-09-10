@@ -27,6 +27,7 @@ pub struct Status {
     volume_percent: u8,
     active: bool,
     warning: Option<String>,
+    recovery_pending: bool,
 }
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -52,6 +53,9 @@ pub struct Service {
 fn update_status(status: &Mutex<Status>, active: bool, result: Result<(), String>) {
     let mut status = status.lock().unwrap_or_else(|e| e.into_inner());
     status.active = active;
+    if result.is_ok() {
+        status.warning = None;
+    }
     if let Err(error) = result {
         if status.warning.as_ref() != Some(&error) {
             tracing::warn!("Audio attenuation: {error}");
@@ -76,6 +80,7 @@ impl Service {
             volume_percent: loaded.volume_percent.min(100),
             active: false,
             warning: None,
+            recovery_pending: false,
         }));
         let state = status.clone();
         let (tx, rx) = mpsc::sync_channel(64);
@@ -89,6 +94,10 @@ impl Service {
                 }
                 let mut owners = std::collections::HashSet::new();
                 loop {
+                    state
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .recovery_pending = engine.recovery_pending();
                     match rx.recv_timeout(Duration::from_millis(250)) {
                         Ok(Message::Begin(owner, mode, volume_percent, done)) => {
                             if done.is_closed() {
@@ -96,13 +105,10 @@ impl Service {
                             }
                             let first = owners.is_empty();
                             owners.insert(owner);
-                            state.lock().unwrap_or_else(|e| e.into_inner()).warning = None;
-                            let result = if first {
-                                engine.begin(mode, volume_percent)
-                            } else {
-                                Ok(())
-                            };
-                            update_status(&state, mode != Mode::Off && result.is_ok(), result);
+                            if first {
+                                let result = engine.begin(mode, volume_percent);
+                                update_status(&state, mode != Mode::Off && result.is_ok(), result);
+                            }
                             let _ = done.send(());
                         }
                         Ok(Message::Disable) => {
@@ -120,9 +126,13 @@ impl Service {
                             break;
                         }
                         Err(mpsc::RecvTimeoutError::Timeout) => {
-                            let active = state.lock().unwrap_or_else(|e| e.into_inner()).active;
-                            let result = engine.tick();
-                            update_status(&state, active && result.is_ok(), result);
+                            // An idle tick is not a successful recovery. Keep the
+                            // failure visible after the bounded retries expire.
+                            if engine.has_tick_work() {
+                                let active = state.lock().unwrap_or_else(|e| e.into_inner()).active;
+                                let result = engine.tick();
+                                update_status(&state, active && result.is_ok(), result);
+                            }
                         }
                         Err(mpsc::RecvTimeoutError::Disconnected) => {
                             let _ = engine.end();
@@ -283,5 +293,24 @@ mod config_tests {
         let config: Config = serde_json::from_str(r#"{"mode":"reduce"}"#).unwrap();
         assert_eq!(config.volume_percent, 20);
         assert_eq!(config.mode, Mode::Reduce);
+    }
+}
+
+#[cfg(test)]
+mod status_tests {
+    use super::*;
+    #[test]
+    fn confirmed_success_clears_previous_warning() {
+        let status = Mutex::new(Status {
+            mode: Mode::Reduce,
+            volume_percent: 20,
+            active: false,
+            warning: None,
+            recovery_pending: false,
+        });
+        update_status(&status, false, Err("device disconnected".into()));
+        assert!(status.lock().unwrap().warning.is_some());
+        update_status(&status, false, Ok(()));
+        assert!(status.lock().unwrap().warning.is_none());
     }
 }

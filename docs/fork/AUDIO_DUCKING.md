@@ -72,3 +72,25 @@ CoreAudio 변경 알림 직후 이전 값이 읽히는 경우를 성공으로 �
 검증: 관련 Rust30개 통과. 실제 EDIFIER 출력에서 가짜 미완료 타 장치 기록이 있는 상태로 감소5%/35% 및 음소거 검사 통과. 음량 scalar 0.44444448 → 0.02126736 / 0.15668404 / 0.0 → 0.44444448로 각각 복원 확인. Bluetooth 재연결 및 사용자의 실제 가청 결과는 이 검사에 포함하지 않는다. 로그 /tmp/h-duck-fix-{tests,native,build}.log.
 
 설치 완료: 기존 자체서명 및 credential helper 유지, deep/strict 서명 검증 후 /Applications/H-OpenTypeless.app 교체·실행. 설정에서 음소거 유지 및 오류 문구 제거 확인. 실제 이전 Bluetooth 기록의 내용이 바뀌지 않은 채 장치별 파일로 이관된 것을 확인했다. 이전 앱 백업은 ~/.local/share/h-opentypeless/app-backups/before-audio-device-recovery-20260910-235613.app. 설치 기록은 ~/.local/share/h-opentypeless/audio-ducking-fix/install.json. 빌드 원본은 기존 capsule-whisper-build 통합 소스이며 오디오 모듈 3파일만 동기화하여 Stream Deck 수정과 기존 앱 기능을 보존했다. 작업 워크트리에서는 이번 수정만 미커밋 상태다.
+
+## 2026-09-11 복구 경고 수명 보완
+
+기존 워크트리의 장치별 복구 수정과 설치 기록을 별도 기준 커밋으로 보존했다.
+이후 실제 성공한 조절/복구는 이전 warning을 해제하도록 수정했다. 단순 idle tick은
+성공으로 취급하지 않는다. 재시도 4회 소진 후에는 오류와 recovery_pending을 유지한다.
+중복 Begin 소유자 추가도 기존 오류를 지우지 않는다. 설정 화면은 백엔드 오류 이유와
+복구 기록 대기 안내를 표시하며, 성공한 상태 갱신 후 경고를 제거한다.
+
+관련 Rust 32개 통과/실제 음량 조절 1개 생략, UI 4개 통과, TypeScript 검사 통과.
+이 변경에서는 장치 음량을 다시 강제 변경하지 않았다. 앞선 실제 EDIFIER 복원 검사는
+이전 절의 검증이며 Bluetooth 재연결/실제 가청 여부 확인은 여전히 별도다.
+기본 출력이 돌아온 뒤 다음 녹음 시작/앱 시작에서 보류 기록을 다시 확인한다.
+모든 연결 장치의 복구를 백그라운드에서 자동 실행하는 기능은 포함하지 않는다.
+
+설치: 기존 서명으로 debug 번들을 빌드하고 deep/strict 검증 후 실행 파일과 서명 리소스를
+교체했다. credential helper와 기존 리소스는 유지했다. 설치 전 녹음 Idle을 확인했고
+새 프로세스 및 audio_service_started를 확인했다. 백업:
+`~/.local/share/h-opentypeless/app-backups/before-recovery-status-20260911.app`.
+빌드 로그: `/tmp/h-recovery-status-build-integrated.log`.
+이 워크트리에 기존 Stream Deck Fn 커밋도 반영했으며 src 및 src-tauri/src 제품 소스가
+실제 통합 빌드 소스와 일치하는 것을 파일 비교로 확인했다.
