@@ -8,6 +8,7 @@ import { addCorrectionRule, clearHistory, getCorrectionRules } from '../../lib/t
 import { toast } from '../toast-service'
 import { AppContextMeta } from './AppContextMeta'
 import { CreateCorrectionDialog } from './CreateCorrectionDialog'
+import { RepolishDialog } from './RepolishDialog'
 
 export function History() {
   const history = useAppStore((s) => s.history)
@@ -18,6 +19,7 @@ export function History() {
   const [copiedId, setCopiedId] = useState<number | null>(null)
   const [menuEntryId, setMenuEntryId] = useState<number | null>(null)
   const [correctionEntry, setCorrectionEntry] = useState<HistoryEntry | null>(null)
+  const [repolishEntry, setRepolishEntry] = useState<HistoryEntry | null>(null)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const menuTriggerEntryId = useRef<number | null>(null)
 
@@ -227,6 +229,17 @@ export function History() {
                                   role="menuitem"
                                   onClick={() => {
                                     setMenuEntryId(null)
+                                    setRepolishEntry(entry)
+                                  }}
+                                  className="h-8 w-full bg-transparent px-3 text-left text-[12px] text-text-primary hover:bg-bg-secondary"
+                                >
+                                  {t('history.repolish')}
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setMenuEntryId(null)
                                     setCorrectionEntry(entry)
                                   }}
                                   className="h-8 w-full bg-transparent px-3 text-left text-[12px] text-text-primary hover:bg-bg-secondary"
@@ -289,6 +302,15 @@ export function History() {
             {t('history.clearAll')}
           </motion.button>
         </div>
+      )}
+      {repolishEntry && (
+        <RepolishDialog
+          entry={repolishEntry}
+          onClose={() => {
+            setRepolishEntry(null)
+            closeEntryMenu()
+          }}
+        />
       )}
       {correctionEntry && (
         <CreateCorrectionDialog

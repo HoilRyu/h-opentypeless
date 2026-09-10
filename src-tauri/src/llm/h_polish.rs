@@ -155,7 +155,7 @@ pub(super) fn example(style: &str) -> &'static str {
 
 // Add the relevant example only when a Korean hope/request marker is present.
 // This selects examples; it never edits transcript text or makes another API call.
-pub(super) fn with_relevant_examples(prompt: String, style: &str, raw: &str) -> String {
+pub(crate) fn with_relevant_examples(prompt: String, style: &str, raw: &str) -> String {
     if style != "structured" || !raw.contains("좋겠") || !prompt.contains(STRUCTURED_EXAMPLES) {
         return prompt;
     }

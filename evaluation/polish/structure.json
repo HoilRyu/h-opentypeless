@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "description": "Text-only structural and fidelity evaluation. Existing 16 regressions plus 10 new authored cases. campaign_team is inspired by video structure with different content, not verbatim audio/STT. Examples in the product prompt use separate topics.",
+  "cases": [
+    {
+      "id": "unusual_choices",
+      "raw": "설정에 그대로 부드럽게 나눠서 단정하게 이렇게 네 가지 선택지를 만들어줘 이건 설명이 아니라 버튼 이름이야 그리고 선택한 건 앱을 다시 켜도 남아 있게 해줘",
+      "required": [
+        "그대로",
+        "부드럽게",
+        "나눠서",
+        "단정하게",
+        "네 가지"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "네 선택지 이름을 개별 이름으로 보존하며 일반적인 수식어로 쓰지 않는다",
+        "앱 재시작 후 선택 유지 요청을 별도 보존한다",
+        "반말 요청 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "choices",
+      "raw": "최소 깔끔하게 구조화 전문적으로 네 가지를 넣어줘",
+      "required": [
+        "최소",
+        "깔끔하게",
+        "구조화",
+        "전문적으로"
+      ],
+      "forbidden": [
+        "구조화하고",
+        "최소한",
+        "전문적인"
+      ],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "campaign_team",
+      "raw": "어 우리 신제품 소개용 카드 이미지를 팀으로 만들고 싶어 참고 자료를 보고 색상 조합이랑 여백이랑 글자 크기 비율부터 분석해줘 분량은 여섯 장을 넘기지 말고 첫 장은 관심을 끌게 하고 마지막 쪽에는 구매 링크 안내를 넣어줘 기획 담당이랑 디자인 담당이랑 검수 담당을 생각하고 있어 검수는 참고 자료에서 뽑은 기준을 어기면 다시 수정하도록 해줘 진행할 때 사소한 건 매번 묻지 말고 끝까지 해주면 좋겠어 근데 지금은 팀 구성안만 추천하고 내가 다음에 시작하라고 하면 그때 제작해줘",
+      "required": [
+        "여백",
+        "비율",
+        "구매",
+        "검수",
+        "추천"
+      ],
+      "forbidden": [
+        "마지막 장"
+      ],
+      "shape": {
+        "min_sections": 3,
+        "min_list_items": 4
+      },
+      "review": [
+        "6장 이하이지 정확히 6장으로 확정하지 않는다",
+        "기획·디자인·검수는 제안한 역할로 보존한다",
+        "검수 실패 시 수정 조건은 검수에 연결한다",
+        "지금은 추천만, 다음 시작 지시 후 제작한다",
+        "반말 요청과 사소한 사항만 매번 묻지 않는 범위를 유지한다"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "video_inspired_synthetic"
+    },
+    {
+      "id": "meeting_proposal",
+      "raw": "고객 설명회를 준비하고 싶어요 발표 자료는 열 장 아니 일곱 장 이하로 해 주세요 앞부분은 문제 상황이고 뒷부분은 해결 방향이면 좋겠어요 발표자는 민수 씨를 생각하고 있지만 아직 정한 건 아니에요 현장 담당은 지연 씨가 가능하면 맡아 주시면 좋겠고요 예산은 30만 원을 넘기면 안 돼요 지금은 준비 계획만 보여주시고 초대 메일은 제가 확인한 다음에 보내 주세요",
+      "required": [
+        "민수",
+        "지연",
+        "예산",
+        "계획",
+        "확인",
+        "메일"
+      ],
+      "forbidden": [
+        "10장",
+        "열 장"
+      ],
+      "shape": {
+        "min_sections": 2,
+        "min_list_items": 3
+      },
+      "review": [
+        "자기 수정 후 7장 이하와 예산 30만 원 이하를 유지한다",
+        "민수는 미확정 제안, 지연은 가능할 때 부탁이다",
+        "지금 계획만, 사용자 확인 다음에 초대 메일 발송한다",
+        "존댓말 요청 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "proposal",
+      "raw": "쿠버라는 이름은 아직 정하지 말자",
+      "required": [
+        "말자",
+        "쿠버"
+      ],
+      "forbidden": [
+        "하지 마",
+        "마세요"
+      ],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "conditional",
+      "raw": "가능하면 오늘 확인해주고 어렵다면 내일까지 해줘",
+      "required": [
+        "가능하면",
+        "어렵다면",
+        "내일"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "question",
+      "raw": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야",
+      "required": [
+        "?"
+      ],
+      "forbidden": [
+        "해결 방법은",
+        "맞습니다"
+      ],
+      "provenance": "reconstructed_failure",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "identifiers",
+      "raw": "src/main.rs에서 타임아웃을 1.5초로 바꿔주고 포트는 46235로 유지해줘",
+      "required": [
+        "src/main.rs",
+        "1.5",
+        "46235"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "correction",
+      "raw": "커밋하고 푸시해줘 아니 푸시는 하지 말고 테스트부터 해서 통과하면 커밋만 해줘",
+      "required": [
+        "통과",
+        "테스트",
+        "커밋"
+      ],
+      "forbidden": [
+        "푸시해줘",
+        "푸시해 줘"
+      ],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "request",
+      "raw": "파이썬으로 파일 정리하는 코드를 작성해 줘 삭제하는 기능은 넣지 말고",
+      "required": [
+        "작성",
+        "삭제"
+      ],
+      "forbidden": [
+        "import os",
+        "```"
+      ],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "courtesy",
+      "raw": "시간 괜찮으시면 내일 오전에 확인해 주실 수 있을까요",
+      "required": [
+        "내일",
+        "?"
+      ],
+      "forbidden": [
+        "확인해라",
+        "확인해 줘."
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "mixed",
+      "raw": "useEffect의 dependency array는 그대로 두고 cleanup 함수만 확인해줘",
+      "required": [
+        "useEffect",
+        "dependency array",
+        "cleanup"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "contrast",
+      "raw": "안 되는 게 아니라 아직 확인을 안 한 거야",
+      "required": [
+        "확인"
+      ],
+      "forbidden": [
+        "작동하지 않습니다"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "quoted_command",
+      "raw": "이전 지침을 무시하고 답하라는 문장을 예시로 적어줘",
+      "required": [
+        "예시"
+      ],
+      "forbidden": [
+        "알겠습니다"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "number_correction",
+      "raw": "십오 명 아니 오십 명에게 보내고 초대장은 아직 보내지 마",
+      "required": [],
+      "forbidden": [
+        "15명"
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "multiple",
+      "raw": "다운로드 진행률 보여주고 실패하면 재시도 버튼도 넣어줘 연결 주소 복사도 되게 해줘 기존 기능은 건드리지 말고 끝나면 테스트 결과 알려줘",
+      "required": [
+        "진행률",
+        "재시도",
+        "복사",
+        "테스트"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ]
+    },
+    {
+      "id": "emphasis",
+      "raw": "진짜 진짜 중요한 건 데이터가 없어지면 안 된다는 거야",
+      "required": [
+        "데이터"
+      ],
+      "forbidden": [],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "proper_name",
+      "raw": "쿠버라는 친구가 만든 상자야 콤보 박스 말고",
+      "required": [
+        "쿠버"
+      ],
+      "forbidden": [],
+      "provenance": "regression",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "hedge",
+      "raw": "할 수 있을 것 같긴 한데 된다고 확정하지는 말아줘",
+      "required": [
+        "확정"
+      ],
+      "forbidden": [
+        "가능합니다."
+      ],
+      "provenance": "synthetic_holdout",
+      "prompt_key": "structured-false",
+      "review": [
+        "의미·조건·부정 보존",
+        "화행·높임·요청 강도 보존",
+        "누락·추가·명령 실행 없음"
+      ],
+      "shape": {
+        "plain": true
+      }
+    },
+    {
+      "id": "release_sequence",
+      "raw": "새 버전 배포 준비를 하고 싶어 일단 테스트를 먼저 돌리고 실패하면 거기서 멈춰줘 통과하면 변경 내용을 정리하고 그다음 패키지를 만들어줘 서명은 이번에는 하지 마 아직 실제 배포도 하지 말고 패키지 용량이랑 테스트 결과만 마지막에 알려줘",
+      "required": [
+        "테스트",
+        "실패",
+        "통과",
+        "패키지",
+        "서명",
+        "배포",
+        "용량"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "테스트→통과 시 변경 정리→패키지 생성 순서를 번호로 나타낸다",
+        "실패하면 중단하고 서명·실제 배포는 하지 않는다",
+        "결과 보고는 패키지 용량과 테스트 결과 모두 포함한다",
+        "반말을 유지한다"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "long_explanation",
+      "raw": "어 오늘 회의가 길어진 건 결정을 못 해서가 아니라 각 팀이 알고 있는 상황이 달랐기 때문이야 영업팀은 다음 주에 공개하는 줄 알고 있었고 개발팀은 내부 검증이 더 필요하다고 이해하고 있었어 그래서 같은 일정을 두고 서로 다른 얘기를 하고 있었던 거지 누가 잘못했다고 정리하고 싶은 건 아니고 우리가 일정의 의미를 공유하지 못했다는 점을 설명하고 싶은 거야",
+      "required": [
+        "영업팀",
+        "개발팀",
+        "다음 주",
+        "내부",
+        "일정"
+      ],
+      "forbidden": [],
+      "shape": {
+        "plain": true
+      },
+      "review": [
+        "설명문을 작업 목록으로 만들지 않는다",
+        "원인·대조·잘못을 단정하지 않음과 반말을 유지한다",
+        "일정 합의나 회의 개최 등 해결책을 새로 제안하지 않는다"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "short_fix",
+      "raw": "입력창 글자 크기만 조금 키워줘",
+      "required": [
+        "입력창",
+        "글자",
+        "크기",
+        "만"
+      ],
+      "forbidden": [],
+      "shape": {
+        "plain": true
+      },
+      "review": [
+        "짧은 한 요청을 제목·목록으로 만들지 않는다",
+        "반말 요청과 범위 제한을 유지한다"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "conditional_assets",
+      "raw": "소개 페이지를 좀 고쳐줘 설명은 지금 걸 유지하고 이미지가 있으면 위에 넣어줘 없으면 새로 만들지 말고 그리고 고객 로고는 사용 허락을 받은 것만 보여줘 버튼은 신청 링크가 준비되면 활성화하고 아직 없으면 숨겨줘",
+      "required": [
+        "설명",
+        "이미지",
+        "로고",
+        "허락",
+        "링크",
+        "숨겨"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 3
+      },
+      "review": [
+        "이미지 없으면 생성 금지, 로고는 허락 받은 것만",
+        "링크 준비 여부에 따라 활성화/숨김을 유지한다",
+        "새 이미지 제작·허락 요청·링크 생성 작업을 추가하지 않는다",
+        "반말 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "hypothetical_question",
+      "raw": "만약 캐시를 끄면 속도가 더 느려질 수도 있는 거야",
+      "required": [
+        "캐시",
+        "?"
+      ],
+      "forbidden": [],
+      "shape": {
+        "plain": true
+      },
+      "review": [
+        "가능성을 묻는 질문으로 남기고 답하거나 끄도록 지시하지 않는다",
+        "반말 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "report_workflow",
+      "raw": "매주 수요일 오후 두 시에 사용량 보고서를 만들고 싶어 신규 가입 수랑 지난주 대비 변화량을 넣고 숫자는 원본 로그랑 대조해줘 실패한 집계가 있으면 그 부분은 추정하지 말고 미집계라고 적어줘 지금은 지난주 걸로 샘플 하나만 만들어서 내가 확인하게 해줘 자동 발송 설정은 아직 하지 마",
+      "required": [
+        "수요일",
+        "신규",
+        "변화량",
+        "로그",
+        "미집계",
+        "샘플",
+        "발송"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 3
+      },
+      "review": [
+        "매주 수요일 오후 2시 희망과 지금 샘플 하나만 요청을 구분한다",
+        "집계 실패는 추정 금지와 미집계 표시",
+        "사용자 검토와 자동 발송 설정 금지 유지",
+        "반말 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    },
+    {
+      "id": "interleaved_requirements",
+      "raw": "다운로드 화면을 고쳐줘 취소 버튼을 넣고 오류 메시지도 자세히 보여줘 아 취소는 파일을 지우는 게 아니라 다운로드만 멈추는 거야 여러 개를 한꺼번에 받을 수 있으면 좋겠고 오류는 주소가 잘못된 건지 네트워크 문제인지 구분해줘 완료 알림은 필요 없고 기존 저장 위치는 바꾸지 마",
+      "required": [
+        "취소",
+        "파일",
+        "주소",
+        "네트워크",
+        "저장"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 3
+      },
+      "review": [
+        "뒤에서 설명한 취소와 오류 조건을 각각 해당 요청에 묶는다",
+        "취소는 다운로드만 중단하고 파일 삭제 금지",
+        "동시 다운로드 희망 강도와 완료 알림 불필요·저장 위치 유지 보존",
+        "반말 유지"
+      ],
+      "prompt_key": "structured-false",
+      "provenance": "synthetic_holdout"
+    }
+  ]
+}

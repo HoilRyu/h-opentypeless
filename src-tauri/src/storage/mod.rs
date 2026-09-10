@@ -1493,6 +1493,16 @@ impl HistoryStore {
         Ok(entries)
     }
 
+    /// Retrieve the original transcript by identity; never use a frontend-edited candidate.
+    pub async fn raw_text(&self, id: i64) -> Result<String> {
+        let conn = self.conn.lock().unwrap_or_else(|e| e.into_inner());
+        Ok(
+            conn.query_row("SELECT raw_text FROM history WHERE id = ?1", [id], |row| {
+                row.get(0)
+            })?,
+        )
+    }
+
     pub async fn clear(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap_or_else(|e| e.into_inner());
         conn.execute("DELETE FROM history", [])?;
@@ -3691,5 +3701,22 @@ mod tests {
         assert_eq!(updated[0].pattern, "open type less");
         assert_eq!(updated[0].replacement, "OpenTypeless");
         assert!(!updated[0].enabled);
+    }
+}
+
+#[cfg(test)]
+mod replay_source_tests {
+    use super::*;
+    #[tokio::test]
+    async fn replay_reads_only_original_by_id_and_reports_deleted_source() {
+        let store = HistoryStore::new(PathBuf::from(":memory:")).unwrap();
+        {
+            let conn = store.conn.lock().unwrap();
+            conn.execute("INSERT INTO history (id, created_at, raw_text, polished_text) VALUES (7, '2026-09-10', 'original', 'candidate')", []).unwrap();
+        }
+        assert_eq!(store.raw_text(7).await.unwrap(), "original");
+        assert!(store.raw_text(8).await.is_err());
+        store.clear().await.unwrap();
+        assert!(store.raw_text(7).await.is_err());
     }
 }

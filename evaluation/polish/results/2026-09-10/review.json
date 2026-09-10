@@ -1,0 +1,258 @@
+[
+  {
+    "case_id": "proposal",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "proposal",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "conditional",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "fail",
+    "note": "반말 요청을 존댓말로 바꿈. 조건은 보존했지만 말투 보존 실패."
+  },
+  {
+    "case_id": "conditional",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "fail",
+    "note": "반말 요청을 존댓말로 바꿈. 조건은 보존했지만 말투 보존 실패."
+  },
+  {
+    "case_id": "question",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "question",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "choices",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "fail",
+    "note": "선택지 네 이름을 목록 이름으로 유지하지 않고 일반적인 수식/행동으로 바꿈. 단어 포함 검사만으로는 검출할 수 없음."
+  },
+  {
+    "case_id": "choices",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "fail",
+    "note": "선택지 네 이름을 목록 이름으로 유지하지 않고 일반적인 수식/행동으로 바꿈. 단어 포함 검사만으로는 검출할 수 없음."
+  },
+  {
+    "case_id": "identifiers",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "identifiers",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "correction",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "correction",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "request",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "request",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "courtesy",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "courtesy",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "mixed",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "mixed",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "contrast",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "contrast",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "quoted_command",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "quoted_command",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "number_correction",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "number_correction",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "multiple",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "multiple",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "emphasis",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "emphasis",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "ambiguous",
+    "note": "진짜 반복을 제거함. 원음이 없어 강조인지 우발적 반복인지 확정할 수 없음."
+  },
+  {
+    "case_id": "proper_name",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "proper_name",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "hedge",
+    "variant": "candidate",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  },
+  {
+    "case_id": "hedge",
+    "variant": "baseline",
+    "repeat": 1,
+    "reviewer": "Codex text review (not independent human/blind review)",
+    "verdict": "no_obvious_failure",
+    "note": "출력 검토에서 뚜렷한 의미 오류를 발견하지 않음. 원음 없는 텍스트 평가."
+  }
+]

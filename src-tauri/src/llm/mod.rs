@@ -2,6 +2,7 @@ pub mod cloud;
 pub mod context_policy;
 pub mod dictation_guard;
 mod h_polish;
+pub(crate) use h_polish::with_relevant_examples;
 pub mod model_capabilities;
 pub mod openai;
 pub mod prompt;

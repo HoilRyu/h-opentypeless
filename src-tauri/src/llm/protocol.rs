@@ -267,7 +267,30 @@ pub fn response_text(kind: LlmApiKind, body: &Value) -> String {
     text
 }
 
+/// Explicit truncation/filtering is never a finished dictation, even when text is nonempty.
+pub fn completion_error(kind: LlmApiKind, body: &Value) -> Option<String> {
+    let reason = match kind {
+        LlmApiKind::OpenAiCompatible => body["choices"][0]["finish_reason"].as_str(),
+        LlmApiKind::AnthropicMessages => body["stop_reason"]
+            .as_str()
+            .or_else(|| body["delta"]["stop_reason"].as_str()),
+    };
+    match reason {
+        Some(
+            "length" | "max_tokens" | "content_filter" | "refusal" | "tool_calls" | "function_call",
+        ) => Some("LLM output was incomplete; keep the original transcript".to_string()),
+        _ => None,
+    }
+}
+
 pub fn parse_stream_event(kind: LlmApiKind, body: &Value) -> StreamEvent {
+    if let Some(error) = completion_error(kind, body) {
+        return StreamEvent {
+            error: Some(error),
+            ..StreamEvent::default()
+        };
+    }
+
     match kind {
         LlmApiKind::AnthropicMessages => {
             if body["type"].as_str() == Some("error") {
@@ -511,5 +534,38 @@ mod tests {
         );
         assert_eq!(event.text.as_deref(), Some("Hello"));
         assert!(!event.done);
+    }
+}
+
+#[cfg(test)]
+mod incomplete_output_tests {
+    use super::*;
+    #[test]
+    fn detects_nonempty_truncated_and_filtered_responses() {
+        for reason in ["length", "content_filter", "tool_calls"] {
+            let body =
+                json!({"choices":[{"message":{"content":"partial"},"finish_reason":reason}]});
+            assert!(completion_error(LlmApiKind::OpenAiCompatible, &body).is_some());
+            assert!(parse_stream_event(LlmApiKind::OpenAiCompatible, &body)
+                .error
+                .is_some());
+        }
+        assert!(completion_error(
+            LlmApiKind::AnthropicMessages,
+            &json!({"stop_reason":"max_tokens"})
+        )
+        .is_some());
+        assert!(parse_stream_event(
+            LlmApiKind::AnthropicMessages,
+            &json!({"type":"message_delta","delta":{"stop_reason":"max_tokens"}})
+        )
+        .error
+        .is_some());
+    }
+    #[test]
+    fn accepts_completed_and_legacy_unspecified_finish() {
+        for body in [json!({"choices":[{"finish_reason":"stop"}]}), json!({})] {
+            assert!(completion_error(LlmApiKind::OpenAiCompatible, &body).is_none());
+        }
     }
 }
