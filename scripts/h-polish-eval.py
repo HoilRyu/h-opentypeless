@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import re
 import time
 import urllib.request
 from pathlib import Path
@@ -34,6 +35,16 @@ def check(case, output, finish):
     for token in case.get('forbidden', []):
         if ''.join(token.split()) in compact:
             issues.append('forbidden:' + token)
+    # These only measure visible shape; they do not establish semantic fidelity.
+    shape = case.get('shape', {})
+    lists = re.findall(r'^\s*(?:[-*•]|\d+[.)])\s+\S', output, re.MULTILINE)
+    sections = re.findall(r'^\s*(?:#{1,3}\s+[^\n]+|\*\*[^\n]+\*\*:?|[^\n:]{1,40}:)\s*$', output, re.MULTILINE)
+    if len(lists) < shape.get('min_list_items', 0):
+        issues.append('too_few_list_items')
+    if len(sections) < shape.get('min_sections', 0):
+        issues.append('too_few_sections')
+    if shape.get('plain') and (lists or sections):
+        issues.append('unnecessary_structure')
     return issues
 
 
@@ -49,14 +60,23 @@ def main():
     parser.add_argument('--prompts', type=Path, required=True,
                         help='JSON from Rust h_export_polish_fixtures (actual prompt builder)')
     parser.add_argument('--corpus', type=Path, default=Path('evaluation/polish/korean.json'))
-    parser.add_argument('--candidate', type=Path)
+    parser.add_argument('--label', default='baseline', help='Name of the --prompts variant')
+    candidates = parser.add_mutually_exclusive_group()
+    candidates.add_argument('--candidate', type=Path, help='Experimental appended instructions')
+    candidates.add_argument('--candidate-prompts', type=Path,
+                            help='Full JSON exported from the modified Rust prompt builder')
     parser.add_argument('--model', default='gemma4:12b')
     parser.add_argument('--port', type=int, default=11434)
     parser.add_argument('--repeats', type=int, default=1)
+    parser.add_argument('--temperature', type=float, default=0.3)
     parser.add_argument('--output', type=Path, required=True, help='New directory; refuses overwrite')
     args = parser.parse_args()
     if args.repeats < 1 or not 1 <= args.port <= 65535:
         parser.error('repeats must be positive and port must be valid')
+    if not 0 <= args.temperature <= 1:
+        parser.error('temperature must be between 0 and 1')
+    if not args.label.strip() or (args.label == 'candidate' and (args.candidate or args.candidate_prompts)):
+        parser.error('label must be nonempty and must not collide with candidate')
     prompts = json.loads(args.prompts.read_text())
     corpus = json.loads(args.corpus.read_text())
     cases = corpus['cases']
@@ -67,7 +87,13 @@ def main():
             parser.error('each case needs a nonempty raw transcript and known prompt_key')
         if not case['prompt_key'].endswith('-false'):
             parser.error('this first evaluator supports non-translation dictation only')
-    variants = {'baseline': prompts}
+    variants = {args.label: prompts}
+    if args.candidate_prompts:
+        candidate = json.loads(args.candidate_prompts.read_text())
+        for case in cases:
+            if not isinstance(candidate.get(case['prompt_key']), str) or not candidate[case['prompt_key']].strip():
+                parser.error('candidate prompts must contain nonempty strings for all corpus prompt keys')
+        variants['candidate'] = candidate
     if args.candidate:
         addon = args.candidate.read_text().strip()
         if not addon:
@@ -80,7 +106,7 @@ def main():
     if model is None:
         parser.error('model is not installed; this tool never downloads models')
     args.output.mkdir(parents=True, exist_ok=False)
-    settings = dict(model=args.model, temperature=0.3, reasoning_effort='none',
+    settings = dict(model=args.model, temperature=args.temperature, reasoning_effort='none',
                     max_tokens=4096, stream=False)
     manifest = dict(schema_version=1, model=model, settings=settings, prompts=variants,
                     corpus=corpus, corpus_sha256=digest(args.corpus.read_text()),

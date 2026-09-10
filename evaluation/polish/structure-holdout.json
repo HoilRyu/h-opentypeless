@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "description": "Four text-only cases initially evaluated after v6. Register and reference-binding failures led to further revisions; this is a regression corpus, not an unseen final holdout.",
+  "cases": [
+    {
+      "id": "holdout_modes",
+      "raw": "메뉴에 천천히 빠르게 자동으로 세 개의 모드를 넣어줘 이게 각각 모드 이름이야 그리고 마지막에 선택한 모드를 기억해줘",
+      "required": [
+        "천천히",
+        "빠르게",
+        "자동으로",
+        "기억"
+      ],
+      "forbidden": [],
+      "shape": {
+        "min_list_items": 2
+      },
+      "review": [
+        "천천히·빠르게·자동으로를 개별 모드 이름으로 보존한다",
+        "마지막 선택 기억 요청과 반말 유지"
+      ],
+      "provenance": "initial_holdout_now_regression",
+      "prompt_key": "structured-false"
+    },
+    {
+      "id": "holdout_training",
+      "raw": "신입 교육 프로그램을 준비하고 싶어요 강의는 세 시간 이내로 하고 앞부분에서는 보안 수칙을 다뤄 주세요 실습은 후반부 어디쯤 넣으면 좋겠어요 강사는 수진 씨를 생각 중인데 아직 확정은 아니에요 운영 담당은 제가 할게요 실습 환경이 준비 안 되면 강의만 진행하는 안으로 바꿔 주세요 우선 두 가지 안을 비교해서 보여주시고 일정은 제가 고른 다음에 잡아 주세요",
+      "required": [
+        "보안",
+        "실습",
+        "수진",
+        "운영",
+        "두 가지",
+        "일정"
+      ],
+      "forbidden": [
+        "싶어.",
+        "해 줘.",
+        "좋겠어.",
+        "아니야.",
+        "내가 할게.",
+        "일정을 고른",
+        "일정을 선택"
+      ],
+      "shape": {
+        "min_sections": 2,
+        "min_list_items": 3
+      },
+      "review": [
+        "3시간 이내·실습 후반부의 대략적 위치를 보존한다",
+        "수진 미확정과 운영 담당 화자 확정을 구분한다",
+        "환경 미준비 시 강의만 대안, 지금 두 안 비교 후 사용자 선택 다음 일정 확정",
+        "존댓말 유지"
+      ],
+      "provenance": "initial_holdout_now_regression",
+      "prompt_key": "structured-false"
+    },
+    {
+      "id": "holdout_time",
+      "raw": "이건 오늘 오후쯤 보내면 될까",
+      "required": [
+        "오후",
+        "?"
+      ],
+      "forbidden": [
+        "3시"
+      ],
+      "shape": {
+        "plain": true
+      },
+      "review": [
+        "대략적인 시간과 반말 질문을 유지하고 답하지 않는다"
+      ],
+      "provenance": "initial_holdout_now_regression",
+      "prompt_key": "structured-false"
+    },
+    {
+      "id": "holdout_bug_report",
+      "raw": "설정 화면 버그를 고치고 싶어 저장을 누르면 창이 닫히는데 저장에 실패했을 때는 닫히면 안 돼 그리고 이름 변경도 되게 해줘 이름은 스무 자 아니 열여섯 자 이하로 해줘 근데 지금은 원인만 찾아서 설명해줘 수정은 설명을 보고 내가 해달라고 할 때 해줘",
+      "required": [
+        "저장",
+        "실패",
+        "이름",
+        "원인",
+        "설명"
+      ],
+      "forbidden": [
+        "20자",
+        "스무 자"
+      ],
+      "shape": {
+        "min_sections": 2,
+        "min_list_items": 2
+      },
+      "review": [
+        "저장 실패 시 창 유지 조건과 이름 변경 16자 이하를 보존한다",
+        "지금 원인 조사·설명만, 사용자 지시 후 수정이라는 범위 유지",
+        "반말 유지"
+      ],
+      "provenance": "initial_holdout_now_regression",
+      "prompt_key": "structured-false"
+    }
+  ]
+}

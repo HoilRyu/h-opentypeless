@@ -1,0 +1,1 @@
+Stopped after the separate register-v7 regression exposed a changed choice referent. Partial results; no success summary. Final v8 supersedes this run.

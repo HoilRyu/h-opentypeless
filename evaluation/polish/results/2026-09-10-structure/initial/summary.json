@@ -1,0 +1,10 @@
+{
+  "baseline": {
+    "total": 26,
+    "flagged": 5
+  },
+  "candidate": {
+    "total": 26,
+    "flagged": 1
+  }
+}

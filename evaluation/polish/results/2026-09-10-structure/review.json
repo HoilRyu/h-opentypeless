@@ -1,0 +1,583 @@
+{
+  "reviewer": "Codex",
+  "independent_human_review": false,
+  "scope": "Text-only manual review. No original audio or Typeless A/B. Automatic flags are not semantic grades. Main corpus was used to tune the prompt.",
+  "runs": {
+    "initial": {
+      "baseline": {
+        "calls": 26,
+        "rechecked_flagged": 4,
+        "rechecked_issues": [
+          {
+            "id": "choices",
+            "repeat": 1,
+            "issues": [
+              "missing:최소",
+              "missing:전문적으로",
+              "forbidden:구조화하고",
+              "forbidden:전문적인"
+            ]
+          },
+          {
+            "id": "campaign_team",
+            "repeat": 1,
+            "issues": [
+              "forbidden:마지막 장",
+              "too_few_sections"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "missing:그대로",
+              "missing:부드럽게",
+              "missing:나눠서",
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "meeting_proposal",
+            "repeat": 1,
+            "issues": [
+              "too_few_sections"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 5271.0
+      },
+      "candidate": {
+        "calls": 26,
+        "rechecked_flagged": 4,
+        "rechecked_issues": [
+          {
+            "id": "choices",
+            "repeat": 1,
+            "issues": [
+              "forbidden:구조화하고"
+            ]
+          },
+          {
+            "id": "campaign_team",
+            "repeat": 1,
+            "issues": [
+              "forbidden:마지막 장"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "meeting_proposal",
+            "repeat": 1,
+            "issues": [
+              "forbidden:10장"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 7678.0
+      }
+    },
+    "enumeration-v4": {
+      "revised": {
+        "calls": 52,
+        "rechecked_flagged": 2,
+        "rechecked_issues": [
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 1553.5
+      }
+    },
+    "enumeration-v5": {
+      "revised": {
+        "calls": 52,
+        "rechecked_flagged": 2,
+        "rechecked_issues": [
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "missing:그대로",
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 2,
+            "issues": [
+              "missing:그대로",
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 1710.5
+      }
+    },
+    "register-v6": {
+      "revised": {
+        "calls": 52,
+        "rechecked_flagged": 2,
+        "rechecked_issues": [
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 1704.5
+      }
+    },
+    "first-holdout": {
+      "revised": {
+        "calls": 8,
+        "rechecked_flagged": 3,
+        "rechecked_issues": [
+          {
+            "id": "holdout_modes",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_training",
+            "repeat": 2,
+            "issues": [
+              "forbidden:싶어.",
+              "forbidden:해 줘.",
+              "forbidden:좋겠어.",
+              "forbidden:아니야.",
+              "forbidden:내가 할게."
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 4335.0
+      }
+    },
+    "register-v7": {
+      "revised": {
+        "calls": 12,
+        "rechecked_flagged": 4,
+        "rechecked_issues": [
+          {
+            "id": "holdout_modes",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_training",
+            "repeat": 2,
+            "issues": [
+              "forbidden:일정을 고른"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 3,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 4394.0
+      }
+    },
+    "register-v8": {
+      "revised": {
+        "calls": 12,
+        "rechecked_flagged": 3,
+        "rechecked_issues": [
+          {
+            "id": "holdout_modes",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 2,
+            "issues": [
+              "missing:자동으로",
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 3,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 4977.5
+      }
+    },
+    "final": {
+      "revised": {
+        "calls": 52,
+        "rechecked_flagged": 2,
+        "rechecked_issues": [
+          {
+            "id": "unusual_choices",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "unusual_choices",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 1469.0
+      }
+    },
+    "register-regression": {
+      "revised": {
+        "calls": 12,
+        "rechecked_flagged": 3,
+        "rechecked_issues": [
+          {
+            "id": "holdout_modes",
+            "repeat": 1,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 2,
+            "issues": [
+              "too_few_list_items"
+            ]
+          },
+          {
+            "id": "holdout_modes",
+            "repeat": 3,
+            "issues": [
+              "too_few_list_items"
+            ]
+          }
+        ],
+        "all_complete": true,
+        "median_elapsed_ms": 4538.5
+      }
+    }
+  },
+  "initial_findings": {
+    "baseline": [
+      "choices: 선택지 이름을 형용사/설명으로 변경",
+      "unusual_choices: 선택지 이름 누락",
+      "campaign_team: 마지막 쪽을 마지막 장으로 축소하고 역할 제안을 확정 요청으로 변경",
+      "meeting_proposal: 의미별 구획 없이 평탄한 목록",
+      "interleaved_requirements: 희망형 부탁이 직접적인 부탁으로 변경"
+    ],
+    "candidate": [
+      "choices: 이름을 수식어로 변경",
+      "unusual_choices: 이름 경계와 목록 분리가 불명확",
+      "campaign_team: 마지막 쪽을 마지막 장으로 축소",
+      "meeting_proposal: 정정 전 숫자까지 남김"
+    ]
+  },
+  "v6_case_notes": {
+    "unusual_choices": {
+      "status": "format_note",
+      "note": "두 반복 모두 네 이름과 재시작 후 유지 요청을 보존했다. 두 요청을 목록으로 나누지 않아 자동 형식 경고가 남는다."
+    },
+    "choices": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "campaign_team": {
+      "status": "tone_note",
+      "note": "두 반복 모두 상한·대략적 위치·역할 제안·검수 조건·현재 추천만/다음 지시 후 제작을 보존하고 네 구획으로 구조화했다. 진행 방식의 희망형 부탁이 직접적인 해줘로 바뀌어 미세한 요청 강도 차이가 남는다."
+    },
+    "meeting_proposal": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "proposal": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "conditional": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "question": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "identifiers": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "correction": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "request": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "courtesy": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "mixed": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "contrast": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "quoted_command": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "number_correction": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "multiple": {
+      "status": "format_note",
+      "note": "요청과 공통 제약은 모두 남았지만 일부 요청을 한 항목에 묶고 공통 제약과 결과 보고를 같은 항목에 둔다. 의미 손실은 확인되지 않았다."
+    },
+    "emphasis": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "proper_name": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "hedge": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "release_sequence": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "long_explanation": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "short_fix": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "conditional_assets": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "hypothetical_question": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "report_workflow": {
+      "status": "format_note",
+      "note": "반복 주기·시각·검증·집계 실패 조건·지금 샘플 하나·발송 설정 금지를 보존했다. 금지 사항을 진행 순서의 2번으로 둔 형식은 개선 여지가 있다."
+    },
+    "interleaved_requirements": {
+      "status": "reviewed",
+      "note": "두 반복을 원문과 review 기준으로 읽었다. 요청 실행·요구사항 누락/추가·수량/부정/현재 작업 범위 변경은 발견하지 못했다."
+    }
+  },
+  "final_case_notes": {
+    "unusual_choices": {
+      "status": "format_note",
+      "note": "이름과 선택 유지 요청은 모두 보존했다. 두 요청을 목록으로 나누지 않아 형식 경고가 남는다."
+    },
+    "choices": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "campaign_team": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "meeting_proposal": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "proposal": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "conditional": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "question": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "identifiers": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "correction": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "request": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "courtesy": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "mixed": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "contrast": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "quoted_command": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "number_correction": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "multiple": {
+      "status": "format_note",
+      "note": "요청과 제약은 모두 남지만 일부 요청을 한 항목에 묶고 공통 제약과 결과 보고를 같은 항목에 둔다."
+    },
+    "emphasis": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "proper_name": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "hedge": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "release_sequence": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "long_explanation": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "short_fix": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "conditional_assets": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "hypothetical_question": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "report_workflow": {
+      "status": "format_note",
+      "note": "주기·시각·보고 내용·실패 조건·지금 샘플 하나·발송 설정 금지를 모두 보존했다. 금지 사항을 진행 순서의 2번으로 두는 형식은 개선 여지가 있다."
+    },
+    "interleaved_requirements": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "holdout_modes": {
+      "status": "format_note",
+      "note": "이름과 선택 유지 요청은 모두 보존했다. 두 요청을 목록으로 나누지 않아 형식 경고가 남는다."
+    },
+    "holdout_training": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "holdout_time": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    },
+    "holdout_bug_report": {
+      "status": "reviewed",
+      "note": "최종 반복 출력을 원문·review 기준과 대조했다. 요청 실행, 요구사항 누락/추가, 이름·수량·부정·현재 작업 범위 변경은 발견하지 못했다."
+    }
+  },
+  "additional_findings": {
+    "first-holdout": "holdout_training 반복 2에서 존댓말을 반말로 변경. 이를 수정했으므로 이후 평가에서 이 자료는 회귀 자료다.",
+    "register-v7": "holdout_training 반복 2에서 생략된 선택 대상을 일정으로 바꿔 채움.",
+    "register-v8": "온도 0.3의 holdout_modes 반복 2에서 이름 ‘자동으로’를 ‘자동’으로 줄였다.",
+    "final": "온도 0으로 낮춘 Ollama 일반 구조화 받아쓰기. 30문장 64회(26×2 + 4×3). 형식 경고 5회, 요청/조건/이름/말투 변경은 이 표본의 검토에서 발견하지 못했다. 형식 경고는 통과로 숨기지 않았다."
+  },
+  "validation": {
+    "rust": "648 passed, 7 ignored",
+    "python": "5 passed",
+    "prompt_export": "Shipping export equals evaluated v8 JSON; only structured-false and structured-true differ from baseline.",
+    "request_body": "Mock HTTP integration verifies temperature 0 is serialized for Ollama/Gemma structured dictation before validated streaming output.",
+    "limitations": [
+      "One local model, text-only, no live voice/STT or external chat insertion test",
+      "Development data and initially separate cases were used for refinement; no final unseen/blind score",
+      "Default style stays clean; scenes still override structure; remote providers and GLM-specific temperature overrides differ",
+      "Whole-repository cargo fmt --check has pre-existing unrelated differences; changed h_polish/openai files and git diff whitespace checks passed"
+    ]
+  }
+}

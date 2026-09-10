@@ -23,3 +23,19 @@ python3 -m unittest discover -s scripts/tests -p test_polish_eval.py
 - 후보의 기본 적용은 보류했다. `speech-act-candidate.txt`는 실험용 추가 규칙이며 제품 프롬프트에 들어가지 않았다. 기존 예시가 포함된 소표본 1회 결과로 통계적인 개선을 주장하지 않는다.
 
 다음 평가에서는 실제 실패 발화를 수집하고, 높임·화행·선택지 이름을 각각 구분한 미사용 문장과 반복 실행을 추가한다. 실험용 규칙을 제품에 적용하려면 실제 빌더에서 같은 조합이 생성되는지도 확인해야 한다.
+
+## 긴 발화 구조화 평가
+
+`structure.json`은 기존 16개와 새로 작성한 10개를 합친 텍스트 평가 자료다. 카드뉴스 사례는 [영상](https://www.youtube.com/watch?v=8yCyUD3Nsuk&t=580s)의 입력 구조를 참고해 다른 내용으로 작성했다. 영상의 실제 음성 인식 결과나 Typeless 출력 복제본이 아니다. 제품의 few-shot 예시는 다른 주제로 작성했다. 개발 중 이 평가를 보고 수정했으므로 최종 결과는 미사용 자료의 블라인드 평가가 아니다.
+
+`--candidate-prompts`로 **변경된 Rust 빌더에서 내보낸 완전한 프롬프트**를 비교할 수 있다. 규칙을 뒤에 덧붙이는 `--candidate`와 동시에 사용할 수 없다. 단독 반복 검증에는 `--label revised --repeats 2`를 사용한다.
+
+```sh
+# 변경 전과 변경 후 각각 같은 exporter를 실행해 before.json / after.json을 준비한다.
+python3 scripts/h-polish-eval.py --prompts before.json --candidate-prompts after.json --corpus evaluation/polish/structure.json --output /tmp/structure-comparison
+python3 scripts/h-polish-eval.py --prompts after.json --label revised --corpus evaluation/polish/structure.json --repeats 2 --output /tmp/structure-repeat
+```
+
+`shape`는 최소 목록·구획 수와 평문 여부의 보조 검사다. 관계가 올바른지, 조건이 맞는 요청에 붙었는지, 선택지가 이름으로 보존됐는지는 자동 판정하지 않는다. 제목 감지는 휴리스틱이며 다른 유효한 형식을 놓칠 수 있다. 원문과 `review` 기준을 함께 읽어 검토해야 한다. 반복 출력이 같은 경우도 독립적인 성공 확률로 해석하지 않는다.
+
+최종 구현의 Ollama 일반 구조화 받아쓰기를 재현할 때는 `--temperature 0`을 지정한다. 기본 `0.3`은 이전 비교를 재현하기 위해 남겼다. `structure-holdout.json`은 처음에는 별도 자료였지만 발견한 오류를 보완하는 데 사용했으므로 최종 시점에는 회귀 자료다. 결과와 한계는 [구현 기록](../../docs/fork/STRUCTURED_DICTATION_IMPLEMENTATION.md)과 [검토 기록](results/2026-09-10-structure/review.json)에 남긴다.

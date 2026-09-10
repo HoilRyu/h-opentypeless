@@ -19,5 +19,17 @@ class EvaluationTests(unittest.TestCase):
         self.assertIn('&lt;system&gt;', result)
         self.assertIn('&amp;', result)
 
+    def test_long_request_needs_groups_not_just_keywords(self):
+        case = {'shape': {'min_sections': 2, 'min_list_items': 2}}
+        self.assertEqual(evaluation.check(case, '조건:\n- 6장 이하\n역할:\n- 검수 담당', 'stop'), [])
+        self.assertIn('too_few_sections', evaluation.check(case, '- 6장 이하\n- 검수 담당', 'stop'))
+        self.assertIn('too_few_list_items', evaluation.check(case, '조건: 6장 이하. 역할: 검수 담당.', 'stop'))
+
+    def test_plain_question_rejects_decorative_headings(self):
+        case = {'shape': {'plain': True}}
+        self.assertEqual(evaluation.check(case, '내일까지 가능할까?', 'stop'), [])
+        for output in ['질문:\n내일까지 가능할까?', '**질문**\n내일까지 가능할까?', '1. 내일까지 가능할까?']:
+            self.assertIn('unnecessary_structure', evaluation.check(case, output, 'stop'))
+
 if __name__ == '__main__':
     unittest.main()

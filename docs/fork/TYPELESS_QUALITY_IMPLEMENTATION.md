@@ -27,3 +27,7 @@
 - TypeScript/Vite 빌드, ESLint, Rust 라이브러리 Clippy `-D warnings`, diff 공백 검사 통과. Vite의 기존 청크 크기·혼합 import 경고는 남아 있다.
 - 로컬 Gemma 평가 **32회** 완료. 모델 변경·다운로드 없음.
 - 새 UI의 실제 설치 앱/OS 클립보드 실사용 및 Windows/Linux 실기기는 이번에 검증하지 않았다. 설치·병합·푸시는 하지 않았다.
+
+## 후속 구조화 개선
+
+영상의 입력/출력 사례를 확인한 뒤 `structured` 지침과 예시, 로컬 Ollama의 구조화 받아쓰기 생성 설정을 개선했다. 위에서 보류한 `speech-act-candidate.txt`를 그대로 적용한 변경은 아니다. 최종 30개 사례의 모델 평가와 남은 형식 차이는 [구현 기록](STRUCTURED_DICTATION_IMPLEMENTATION.md)에 정리했다.
