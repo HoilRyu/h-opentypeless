@@ -54,6 +54,8 @@ pub enum TranscriptEvent {
 
 #[async_trait]
 pub trait SttProvider: Send + Sync {
+    /// Enable advisory live preview for interactive desktop dictation.
+    fn enable_preview(&mut self) {}
     async fn connect(&mut self, config: &SttConfig) -> Result<(), AppError>;
     async fn send_audio(&mut self, chunk: &[u8]) -> Result<(), AppError>;
     async fn recv_transcript(&mut self) -> Result<Option<TranscriptEvent>, AppError>;
@@ -74,7 +76,9 @@ pub fn create_provider(
     client: Option<reqwest::Client>,
 ) -> Result<Box<dyn SttProvider>, AppError> {
     match provider_name {
-        crate::extensions::local_stt::ID => Ok(Box::new(crate::extensions::local_stt::Provider::new()?)),
+        crate::extensions::local_stt::ID => {
+            Ok(Box::new(crate::extensions::local_stt::Provider::new()?))
+        }
         "cloud" => {
             let api_base_url = crate::api_base_url();
             Ok(match client {

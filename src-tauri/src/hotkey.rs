@@ -395,6 +395,9 @@ fn push_registered_hotkey(
 
     let shortcut = shortcut_from_binding(binding)
         .ok_or_else(|| invalid_binding_error(role, index, binding))?;
+    if crate::extensions::escape_cancel::matches(&shortcut) {
+        return Err(invalid_binding_error(role, index, binding));
+    }
     if let Some(conflict) = global_conflict(plan, &shortcut) {
         return Err(conflict_error(role, index, conflict.role, conflict.index));
     }
@@ -523,7 +526,10 @@ pub(crate) fn hotkey_registration_plan_from_config_for_platform(
     )?;
 
     push_optional_registered_hotkey(
-        &mut plan, HotkeyRole::CopyResult, config.copy_result.as_ref(), platform,
+        &mut plan,
+        HotkeyRole::CopyResult,
+        config.copy_result.as_ref(),
+        platform,
     )?;
 
     Ok(plan)
@@ -993,6 +999,10 @@ pub fn build_shortcut_handler(
        + 'static {
     move |_app, shortcut, event| {
         let handle = app_handle.clone();
+        if crate::extensions::escape_cancel::matches(shortcut) {
+            crate::extensions::escape_cancel::dispatch(&handle, event.state);
+            return;
+        }
         let role = hotkey_role_for_shortcut(&handle, shortcut);
         handle_hotkey_role_event(handle, role, event.state);
     }
@@ -1244,7 +1254,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
-        copy_result: None,
+            copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1275,7 +1285,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
-        copy_result: None,
+            copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1316,7 +1326,7 @@ mod tests {
             edit_selection: None,
             switch_scene: None,
             open_app: None,
-        copy_result: None,
+            copy_result: None,
             dictation_mode: "toggle".to_string(),
         };
 
@@ -1385,12 +1395,21 @@ mod tests {
     fn copy_result_shortcut_is_optional_and_conflicts_are_rejected() {
         let mut config = storage::HotkeyConfig::default();
         let plan = hotkey_registration_plan_from_config(&config).unwrap();
-        assert!(!plan.global.iter().any(|key| key.role == HotkeyRole::CopyResult));
+        assert!(!plan
+            .global
+            .iter()
+            .any(|key| key.role == HotkeyRole::CopyResult));
         config.copy_result = storage::ShortcutBinding::from_hotkey("Ctrl+Shift+C");
         let plan = hotkey_registration_plan_from_config(&config).unwrap();
-        assert!(plan.global.iter().any(|key| key.role == HotkeyRole::CopyResult));
+        assert!(plan
+            .global
+            .iter()
+            .any(|key| key.role == HotkeyRole::CopyResult));
         let persisted = serde_json::to_string(&config).unwrap();
-        assert_eq!(serde_json::from_str::<storage::HotkeyConfig>(&persisted).unwrap(), config);
+        assert_eq!(
+            serde_json::from_str::<storage::HotkeyConfig>(&persisted).unwrap(),
+            config
+        );
         config.copy_result = Some(config.dictation.clone());
         assert!(hotkey_registration_plan_from_config(&config).is_err());
     }

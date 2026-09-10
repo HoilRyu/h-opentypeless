@@ -92,6 +92,10 @@ export function useTauriEvents() {
     addListener<string>('stt:final', setFinalTranscript)
     addListener<string>('llm:chunk', appendPolishedChunk)
     addListener<PipelineState>('pipeline:state', (state) => {
+      if (state === 'preparing' || state === 'idle') {
+        setPartialTranscript('')
+        if (state === 'preparing') setFinalTranscript('')
+      }
       setPipelineState(state)
       if (state === 'preparing' || state === 'recording' || state === 'ask_recording') {
         const config = useAppStore.getState().config

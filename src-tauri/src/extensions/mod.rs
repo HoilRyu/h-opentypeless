@@ -1,7 +1,7 @@
 pub mod audio_ducking;
+pub mod local_stt;
 pub mod mac_window;
 pub mod mobile;
-pub mod local_stt;
 
 use tauri_plugin_store::StoreExt;
 
@@ -19,3 +19,8 @@ pub mod voice_feedback;
 pub mod result_window;
 
 pub mod tutorial;
+
+pub mod escape_cancel;
+
+pub mod product_scope;
+pub mod fn_event;

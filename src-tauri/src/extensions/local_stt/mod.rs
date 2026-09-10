@@ -1,5 +1,6 @@
 //! H-owned native STT: opt-in pinned models and short-lived engine processes.
 mod mlx;
+mod preview;
 mod provider;
 mod verification;
 pub use provider::Provider;
@@ -77,6 +78,7 @@ pub struct Status {
     progress: Progress,
     busy: bool,
     engine: mlx::EngineStatus,
+    preview_enabled: bool,
 }
 pub struct Service {
     next_mlx_request: std::sync::atomic::AtomicU64,
@@ -151,6 +153,12 @@ impl Service {
         // Let cancellation drop/kill the worker before the desktop runtime exits.
         let _ = tokio::time::timeout(Duration::from_secs(2), self.gate.lock()).await;
         mlx::stop(self).await;
+    }
+    fn preview_enabled(&self) -> bool {
+        std::fs::read_to_string(self.root.join("preview"))
+            .ok()
+            .as_deref()
+            != Some("off")
     }
     fn engine_preference(&self) -> String {
         std::fs::read_to_string(self.root.join("engine"))
@@ -242,6 +250,7 @@ impl Service {
             progress: self.progress.lock().unwrap().clone(),
             busy: self.gate.try_lock().is_err(),
             engine,
+            preview_enabled: self.preview_enabled(),
         }
     }
     pub fn cancel(&self) {
@@ -449,6 +458,15 @@ pub async fn set_local_stt_engine(id: String) -> Result<(), String> {
     fs::write(s.root.join("engine"), id).await.map_err(err)
 }
 #[tauri::command]
+pub async fn set_local_stt_preview(id: String) -> Result<(), String> {
+    if !matches!(id.as_str(), "on" | "off") {
+        return Err("Unknown preview setting".into());
+    }
+    let s = service()?;
+    let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
+    fs::write(s.root.join("preview"), id).await.map_err(err)
+}
+#[tauri::command]
 pub async fn unload_local_stt_engine() -> Result<(), String> {
     let s = service()?;
     let _lease = s.gate.try_lock().map_err(|_| "STT is busy")?;
@@ -493,7 +511,7 @@ mod tests {
     fn catalog_has_pinned_safe_files() {
         assert!(model("../../selected").is_err());
         let models = catalog();
-        assert_eq!(models.len(), 5);
+        assert_eq!(models.len(), 6);
         for m in models {
             assert!(m.files.iter().all(|f| f.sha256.len() == 64
                 && f.sha256.bytes().all(|b| b.is_ascii_hexdigit())

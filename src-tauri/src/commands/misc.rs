@@ -210,6 +210,7 @@ fn register_configured_shortcuts_guarded(
     if let Some(role_cache) = app.try_state::<HotkeyRoleCache>() {
         *role_cache.0.lock().unwrap_or_else(|e| e.into_inner()) = plan;
     }
+    crate::extensions::escape_cancel::refresh(app);
 
     Ok(())
 }
@@ -511,7 +512,9 @@ fn hotkey_status_for_with_capability_and_supervisor(
         ),
     ]);
     role_bindings.push((
-        crate::hotkey::HotkeyRole::CopyResult.as_str(), 0, hotkeys.copy_result.as_ref(),
+        crate::hotkey::HotkeyRole::CopyResult.as_str(),
+        0,
+        hotkeys.copy_result.as_ref(),
     ));
     let roles = role_bindings
         .iter()

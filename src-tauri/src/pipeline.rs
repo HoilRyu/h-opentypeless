@@ -505,12 +505,18 @@ struct StreamingInsertWorker {
 
 struct CancelTaskOnDrop(tokio::task::AbortHandle);
 impl Drop for CancelTaskOnDrop {
-    fn drop(&mut self) { self.0.abort(); }
+    fn drop(&mut self) {
+        self.0.abort();
+    }
 }
 
 impl StreamingInsertWorker {
     async fn finish(self) -> Option<StreamingInsertReport> {
-        let Self { sender, handle, cancel_on_drop } = self;
+        let Self {
+            sender,
+            handle,
+            cancel_on_drop,
+        } = self;
         drop(sender);
         let result = handle.await;
         drop(cancel_on_drop);
@@ -547,7 +553,11 @@ fn spawn_streaming_insert_worker(
         receiver,
     ));
     let cancel_on_drop = CancelTaskOnDrop(handle.abort_handle());
-    StreamingInsertWorker { sender, handle, cancel_on_drop }
+    StreamingInsertWorker {
+        sender,
+        handle,
+        cancel_on_drop,
+    }
 }
 
 struct StreamingInsertWorkerContext {
@@ -1008,6 +1018,38 @@ impl PipelineHandle {
         PipelineState::from_u8(self.state.load(Ordering::SeqCst))
     }
 
+    /// Change only this recording's snapshot; never overwrite saved settings.
+    pub(crate) fn switch_recording_polish_style(
+        &self,
+        style: &str,
+    ) -> std::result::Result<(), String> {
+        if !matches!(style, "minimal" | "clean" | "structured" | "professional") {
+            return Err("invalid_polish_style".into());
+        }
+        let mut snapshot = self
+            .preloaded_config
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        if self.current_state() != PipelineState::Recording {
+            return Err("recording_already_finished".into());
+        }
+        let config = snapshot.as_mut().ok_or("recording_not_ready")?;
+        if !config.polish_enabled || config.active_scene.is_some() {
+            return Err("polish_style_unavailable".into());
+        }
+        config.polish_style = style.to_string();
+        config.family_scene_assignments.clear();
+        if let Some(context) = self
+            .preloaded_app_ctx
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_mut()
+        {
+            context.mapped_scene_id = None;
+        }
+        Ok(())
+    }
+
     pub(crate) fn switch_active_translation_target(
         &self,
         target: String,
@@ -1038,7 +1080,8 @@ impl PipelineHandle {
 
         // Set abort flag so any running stop() exits early
         self.abort_flag.store(true, Ordering::SeqCst);
-        self.operation_cancellation.send_modify(|epoch| *epoch = epoch.wrapping_add(1));
+        self.operation_cancellation
+            .send_modify(|epoch| *epoch = epoch.wrapping_add(1));
         self.active_stt_session_id.fetch_add(1, Ordering::SeqCst);
         self.active_deadline_session_id.store(0, Ordering::SeqCst);
 
@@ -1106,7 +1149,9 @@ impl PipelineHandle {
         until_operation_cancelled(
             self.operation_cancellation.subscribe(),
             self.start_inner(options),
-        ).await.unwrap_or(Ok(()))
+        )
+        .await
+        .unwrap_or(Ok(()))
     }
 
     async fn start_inner(&self, options: PipelineStartOptions) -> Result<()> {
@@ -1410,6 +1455,7 @@ impl PipelineHandle {
                 return Ok(());
             }
         };
+        provider.enable_preview();
         let startup_result = crate::audio::await_recording_startup(
             handle.wait_until_ready(),
             provider.connect(&stt_config),
@@ -1833,10 +1879,9 @@ impl PipelineHandle {
     }
 
     pub async fn stop(&self) -> Result<()> {
-        until_operation_cancelled(
-            self.operation_cancellation.subscribe(),
-            self.stop_inner(),
-        ).await.unwrap_or(Ok(()))
+        until_operation_cancelled(self.operation_cancellation.subscribe(), self.stop_inner())
+            .await
+            .unwrap_or(Ok(()))
     }
 
     async fn stop_inner(&self) -> Result<()> {
@@ -3125,7 +3170,9 @@ mod tests {
         let mutated = AtomicBool::new(false);
         assert!(until_operation_cancelled(old, async {
             mutated.store(true, Ordering::SeqCst);
-        }).await.is_none());
+        })
+        .await
+        .is_none());
         assert!(!mutated.load(Ordering::SeqCst));
         assert_eq!(until_operation_cancelled(new, async { 42 }).await, Some(42));
     }

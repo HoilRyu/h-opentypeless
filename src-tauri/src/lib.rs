@@ -1,8 +1,8 @@
-#[cfg(target_os = "macos")]
-mod credential_helper;
 pub mod app_detector;
 pub mod audio;
 pub mod commands;
+#[cfg(target_os = "macos")]
+mod credential_helper;
 pub mod credentials;
 pub mod dictionary_io;
 pub mod error;
@@ -185,8 +185,10 @@ fn attach_ask_window_close_handler(handle: &tauri::AppHandle, ask_window: &tauri
                 api.prevent_close();
                 if let Some(w) = handle.get_webview_window("ask") {
                     let _ = w.hide();
-                    let main_visible = handle.get_webview_window("main")
-                        .and_then(|main| main.is_visible().ok()).unwrap_or(false);
+                    let main_visible = handle
+                        .get_webview_window("main")
+                        .and_then(|main| main.is_visible().ok())
+                        .unwrap_or(false);
                     extensions::mac_window::visible(&handle, main_visible);
                 }
             }
@@ -914,7 +916,10 @@ pub fn run() {
                 .map_err(|e| anyhow::anyhow!("Failed to init dictionary store: {}", e))?;
 
             let shared_client = build_shared_http_client();
-            if let Err(error) = extensions::local_stt::Service::install(data_dir.join("local-stt"), app.path().resource_dir()?.join("local-stt")) {
+            if let Err(error) = extensions::local_stt::Service::install(
+                data_dir.join("local-stt"),
+                app.path().resource_dir()?.join("local-stt"),
+            ) {
                 tracing::warn!("Built-in STT unavailable: {error}");
             }
 
@@ -952,6 +957,7 @@ pub fn run() {
             app.manage(context_detector);
             app.manage(pipeline_handle);
             app.manage(commands::ask::AskDictationState::default());
+            app.manage(extensions::escape_cancel::Service::default());
             app.manage(HotkeyModeCache(Arc::new(Mutex::new(
                 initial_config.hotkey_mode.clone(),
             ))));
@@ -1008,11 +1014,15 @@ pub fn run() {
 
             #[cfg(target_os = "macos")]
             let tray_icon = tauri::image::Image::new_owned(
-                include_bytes!("../icons/tray-template.rgba").to_vec(), 40, 40,
+                include_bytes!("../icons/tray-template.rgba").to_vec(),
+                40,
+                40,
             );
             #[cfg(not(target_os = "macos"))]
-            let tray_icon = app.default_window_icon()
-                .expect("default window icon missing").clone();
+            let tray_icon = app
+                .default_window_icon()
+                .expect("default window icon missing")
+                .clone();
             let tray = TrayIconBuilder::new()
                 .icon(tray_icon)
                 .icon_as_template(cfg!(target_os = "macos"))
@@ -1223,6 +1233,7 @@ pub fn run() {
             extensions::tutorial::control_tutorial_recording,
             extensions::local_stt::get_local_stt_status,
             extensions::local_stt::set_local_stt_engine,
+            extensions::local_stt::set_local_stt_preview,
             extensions::local_stt::unload_local_stt_engine,
             extensions::local_stt::download_local_stt_model,
             extensions::local_stt::cancel_local_stt_download,
@@ -1325,8 +1336,10 @@ pub fn run() {
                 ..
             } = _event
             {
-                let has_result_window = _app.get_webview_window("ask")
-                    .and_then(|w| w.is_visible().ok()).unwrap_or(false);
+                let has_result_window = _app
+                    .get_webview_window("ask")
+                    .and_then(|w| w.is_visible().ok())
+                    .unwrap_or(false);
                 let _ = has_visible_windows;
                 if should_restore_main_window_on_reopen(has_result_window) {
                     restore_main_window(_app);

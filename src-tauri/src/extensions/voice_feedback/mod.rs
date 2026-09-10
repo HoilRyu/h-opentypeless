@@ -206,6 +206,7 @@ pub fn set_voice_feedback(app: tauri::AppHandle, settings: Settings) -> Result<S
     Ok(get_voice_feedback(app))
 }
 pub fn transition(app: &tauri::AppHandle, state: crate::pipeline::PipelineState) {
+    crate::extensions::escape_cancel::transition(app, state);
     #[cfg(target_os = "macos")]
     {
         let Some(service) = app.try_state::<Service>() else {
@@ -229,7 +230,10 @@ pub fn transition(app: &tauri::AppHandle, state: crate::pipeline::PipelineState)
                     if service.generation.load(Ordering::SeqCst) != generation {
                         return;
                     }
-                    tracing::debug!("Voice feedback anchor resolved (input_area={})", input.is_some());
+                    tracing::debug!(
+                        "Voice feedback anchor resolved (input_area={})",
+                        input.is_some()
+                    );
                     inner.anchor = Some(native::anchor(input));
                     drop(inner);
                     render_now(&handle);

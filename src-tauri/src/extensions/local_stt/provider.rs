@@ -14,6 +14,8 @@ pub struct Provider {
     warmup: Option<tokio::task::JoinHandle<Result<(), String>>>,
     pcm: Vec<u8>,
     language: Option<String>,
+    preview_requested: bool,
+    preview: Option<super::preview::Preview>,
 }
 impl Provider {
     pub fn new() -> Result<Self, AppError> {
@@ -27,11 +29,14 @@ impl Provider {
             warmup: None,
             pcm: Vec::new(),
             language: None,
+            preview_requested: false,
+            preview: None,
         }
     }
 }
 impl Drop for Provider {
     fn drop(&mut self) {
+        self.preview.take();
         if let Some(task) = self.warmup.take() {
             task.abort();
         }
@@ -46,6 +51,9 @@ impl Drop for Provider {
 }
 #[async_trait]
 impl SttProvider for Provider {
+    fn enable_preview(&mut self) {
+        self.preview_requested = true;
+    }
     async fn connect(&mut self, config: &SttConfig) -> Result<(), AppError> {
         if config.sample_rate != 16000 {
             return Err(AppError::Config(
@@ -68,6 +76,7 @@ impl SttProvider for Provider {
                 "Download a supported STT model first".into(),
             ));
         }
+        self.preview_requested &= self.service.preview_enabled();
         let lease = Arc::new(lease);
         if m.engine == "qwen"
             && self.service.engine_preference() != "cpu"
@@ -103,14 +112,37 @@ impl SttProvider for Provider {
             ));
         }
         self.pcm.extend_from_slice(chunk);
+        if self.preview_requested
+            && self.preview.is_none()
+            && self.warmup.as_ref().is_none_or(|task| task.is_finished())
+        {
+            // Join/propagate warmup failures at finalization. It no longer owns an active worker.
+            self.preview = Some(super::preview::Preview::start(
+                self.service.clone(),
+                self.model.as_ref().unwrap().clone(),
+                self.language.clone(),
+                self.lease.as_ref().unwrap().clone(),
+            ));
+        }
+        if let Some(preview) = self.preview.as_mut() {
+            preview.feed(&self.pcm);
+        }
         Ok(())
     }
     async fn recv_transcript(&mut self) -> Result<Option<TranscriptEvent>, AppError> {
-        // File-based transcription happens at disconnect; never spin the recorder loop.
+        if let Some(preview) = self.preview.as_mut() {
+            return Ok(Some(TranscriptEvent::Partial {
+                text: preview.recv().await,
+            }));
+        }
         std::future::pending().await
     }
     async fn disconnect(&mut self) -> Result<Option<String>, AppError> {
         let _lease = self.lease.take();
+        if let Some(preview) = self.preview.as_mut() {
+            preview.finish().await;
+        }
+        self.preview.take();
         // Keep the JoinHandle owned by Provider while awaiting: cancellation of
         // disconnect must still abort preparation in Drop.
         if let Some(warmup) = self.warmup.as_mut() {
@@ -128,7 +160,7 @@ impl SttProvider for Provider {
         if pcm.is_empty() {
             return Ok(None);
         }
-        if pcm.len() % 2 != 0 {
+        if !pcm.len().is_multiple_of(2) {
             return Err(AppError::Config("Invalid PCM16 input".into()));
         }
         if pcm.iter().all(|v| *v == 0) {
@@ -161,7 +193,7 @@ async fn read_bounded(input: impl tokio::io::AsyncRead + Unpin) -> Result<Vec<u8
     }
     Ok(bytes)
 }
-async fn transcribe(
+pub(super) async fn transcribe(
     s: &Service,
     m: &Model,
     pcm: &[u8],
@@ -260,6 +292,61 @@ fn qwen_language(lang: &str) -> Result<&str, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    #[ignore = "real local models; H_LOCAL_STT_TEST_ROOT, H_LOCAL_STT_ENGINE_DIR, H_LOCAL_STT_TEST_PCM"]
+    async fn real_utterance_preview_and_final() {
+        let s = Service::new(
+            PathBuf::from(std::env::var("H_LOCAL_STT_TEST_ROOT").unwrap()),
+            PathBuf::from(std::env::var("H_LOCAL_STT_ENGINE_DIR").unwrap()),
+        )
+        .unwrap();
+        let pcm = fs::read(std::env::var("H_LOCAL_STT_TEST_PCM").unwrap())
+            .await
+            .unwrap();
+        let mut p = Provider::with_service(s.clone());
+        p.enable_preview();
+        p.connect(&SttConfig {
+            language: Some("ko".into()),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        if let Some(warmup) = p.warmup.as_mut() {
+            warmup.await.unwrap().unwrap();
+        }
+        p.warmup.take();
+        for round in 0..std::env::var("H_PREVIEW_TEST_ROUNDS")
+            .ok()
+            .and_then(|n| n.parse::<usize>().ok())
+            .unwrap_or(3)
+        {
+            p.send_audio(&pcm).await.unwrap();
+            let started = std::time::Instant::now();
+            p.send_audio(&vec![0; 32000]).await.unwrap();
+            let event = tokio::time::timeout(Duration::from_secs(20), p.recv_transcript())
+                .await
+                .unwrap()
+                .unwrap()
+                .unwrap();
+            let TranscriptEvent::Partial { text } = event else {
+                panic!("expected preview");
+            };
+            eprintln!(
+                "preview round={round} after_silence_ms={} synthetic_text={text}",
+                started.elapsed().as_millis()
+            );
+            assert!(text.contains("설정"));
+        }
+        let started = std::time::Instant::now();
+        let final_text = p.disconnect().await.unwrap().unwrap();
+        eprintln!(
+            "final_ms={} synthetic_text={final_text}",
+            started.elapsed().as_millis()
+        );
+        assert!(final_text.contains("설정") && final_text.contains("버튼"));
+        mlx::stop(&s).await;
+        assert!(s.gate.try_lock().is_ok());
+    }
     #[tokio::test]
     async fn recording_does_not_busy_spin() {
         let dir = tempfile::tempdir().unwrap();

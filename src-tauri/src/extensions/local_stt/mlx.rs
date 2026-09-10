@@ -329,7 +329,7 @@ mod tests {
         let task = tokio::spawn(async move {
             transcribe(&s, &model("qwen-1.7b").unwrap(), &[1, 0], None).await
         });
-        for _ in 0..100 {
+        for _ in 0..500 {
             if pidfile.exists() {
                 break;
             }

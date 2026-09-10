@@ -5,7 +5,7 @@ description = "AI-powered speech-to-text and text polishing desktop app"
 authors = ["OpenTypeless Contributors"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.82"
+rust-version = "1.87"
 
 [lib]
 name = "opentypeless_lib"
@@ -55,6 +55,7 @@ url = "2"
 flate2 = "1"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+earshot = "=1.2.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.61", features = ["Win32_Media_Audio_Endpoints", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
@@ -95,3 +96,7 @@ opt-level = 3
 # retains the software fallback. Keep other platforms' build dependencies unchanged.
 [target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies]
 sha2 = { version = "0.10", features = ["asm"] }
+
+# Keep live VAD fast in locally installed debug builds.
+[profile.dev.package.earshot]
+opt-level = 3
