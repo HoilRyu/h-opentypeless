@@ -1,0 +1,142 @@
+[
+  {
+    "id": "multi",
+    "variant": "baseline",
+    "seconds": 8.8,
+    "output": "설정 화면을 수정해줘.\n\n- 모델 다운로드 진행률을 보여줘.\n- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 모바일 연결 주소도 복사할 수 있게 해줘.\n\n기존 기능은 변경하지 말고, 작업이 끝나면 테스트 결과를 알려줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "multi",
+    "variant": "candidate",
+    "seconds": 9.14,
+    "output": "설정 화면을 수정해줘.\n- 모델 다운로드 진행률을 표시해줘.\n- 다운로드 실패 시 재시도 버튼을 추가해줘.\n- 모바일 연결 주소를 복사할 수 있게 해줘.\n\n기존 기능은 변경하지 마.\n작업이 끝나면 테스트 결과를 알려줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "single",
+    "variant": "baseline",
+    "seconds": 6.66,
+    "output": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야?",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "single",
+    "variant": "candidate",
+    "seconds": 4.92,
+    "output": "이게 메모리 부족 때문에 멈추는 걸 수도 있어?",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "correction",
+    "variant": "baseline",
+    "seconds": 7.22,
+    "output": "테스트를 먼저 진행하고, 통과하면 커밋만 해줘. 푸시는 하지 말고.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "correction",
+    "variant": "candidate",
+    "seconds": 5.75,
+    "output": "테스트를 먼저 진행하고, 통과하면 커밋만 해줘.\n\n푸시는 하지 마.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "identifiers",
+    "variant": "baseline",
+    "seconds": 8.26,
+    "output": "src/main.rs에서 타임아웃을 1.5초로 바꿔주고, 포트는 46235로 유지해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "identifiers",
+    "variant": "candidate",
+    "seconds": 6.21,
+    "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "choices",
+    "variant": "baseline",
+    "seconds": 7.25,
+    "output": "듣는 중에 최소, 깔끔하게, 구조화, 전문적으로 중에서 선택하게 해줘. 그리고 선택해도 녹음이 끊기면 안 돼.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "choices",
+    "variant": "candidate",
+    "seconds": 6.06,
+    "output": "듣는 중에 선택할 수 있는 옵션을 '깔끔하게', '구조화', '전문적으로' 중에서 선택할 수 있게 해줘.\n\n이때 선택을 하더라도 녹음이 끊기지 않아야 해.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "layout",
+    "variant": "baseline",
+    "seconds": 6.17,
+    "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 보여줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "layout",
+    "variant": "candidate",
+    "seconds": 5.21,
+    "output": "닫기 버튼 왼쪽에 스타일을 배치하고, 그 왼쪽에 시간을 표시해줘. 남는 공간에는 음량 게이지를 길게 배치해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "deferred",
+    "variant": "baseline",
+    "seconds": 6.59,
+    "output": "윈도우와 리눅스에서도 실행되도록 만들어야 해. 다만 실제 기기에서 검증하는 건 마지막에 하고, 지금은 맥에서 먼저 확인해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "deferred",
+    "variant": "candidate",
+    "seconds": 5.95,
+    "output": "윈도우와 리눅스에서도 실행 가능하도록 만들어줘.\n- 지금은 맥에서 먼저 확인해줘.\n\n실제 기기에서 검증하는 것은 나중에 진행해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "stt_error",
+    "variant": "baseline",
+    "seconds": 6.19,
+    "output": "다운로드에 실패하면 재시도 버튼을 넣어줘.\n\n그리고 항목을 나눠서 요구사항을 보기 좋게 정리해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "stt_error",
+    "variant": "candidate",
+    "seconds": 5.34,
+    "output": "다운로드에 실패할 경우를 대비해 재시도 버튼을 추가해줘.\n또한, 요구사항을 보기 좋게 정리해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "unknown",
+    "variant": "baseline",
+    "seconds": 6.41,
+    "output": "'쿠버'라는 이름의 상자를 추가해줘. 이름은 '쿠버'로 유지하고, 크기는 아직 정하지 말자.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "unknown",
+    "variant": "candidate",
+    "seconds": 5.21,
+    "output": "'쿠버'라는 이름의 상자를 추가해줘. 이름은 '쿠버'로 유지하고, 크기는 아직 정하지 마.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "scope",
+    "variant": "baseline",
+    "seconds": 6.25,
+    "output": "일단 계획만 세워줘. 코드는 아직 수정하지 말고, 가능한 방법 두 가지와 각각의 장단점을 설명해줘.",
+    "finish_reason": "stop"
+  },
+  {
+    "id": "scope",
+    "variant": "candidate",
+    "seconds": 5.44,
+    "output": "코드를 수정하지 말고 계획만 세워줘.\n- 가능한 방법 두 가지를 제시해줘.\n- 각 방법의 장단점을 설명해줘.",
+    "finish_reason": "stop"
+  }
+]

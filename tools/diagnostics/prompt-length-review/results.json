@@ -1,0 +1,1170 @@
+{
+  "model": "gemma4:12b",
+  "temperature": 0.3,
+  "reasoning_effort": "none",
+  "repeats": 3,
+  "prompts": {
+    "current": {
+      "characters": 3405,
+      "sha256": "45b7daa345423a1506362ec491962d3216d2d665b95a7fbbd606ac5b592e3c96"
+    },
+    "short": {
+      "characters": 502,
+      "sha256": "4ed21764e23a5c8a4474dd3b5c082dbfe4a99c5dd57f01c72129c020036c5706"
+    }
+  },
+  "results": [
+    {
+      "id": "multi",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 8.075,
+      "output": "설정 화면을 수정해줘.\n- 모델 다운로드 진행률을 보여줘.\n- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 모바일 연결 주소를 복사할 수 있게 해줘.\n- 작업이 끝나면 테스트 결과를 알려줘.\n\n기존 기능은 변경하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1645,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 70,
+        "total_tokens": 1715
+      }
+    },
+    {
+      "id": "multi",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 4.558,
+      "output": "설정 화면 수정 요청:\n* 모델 다운로드 진행률 표시 및 다운로드 실패 시 재시도 버튼 추가\n* 모바일 연결 주소 복사 기능 추가\n* 기존 기능은 변경하지 말 것\n* 작업 완료 후 테스트 결과 보고 포함",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 407,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 54,
+        "total_tokens": 461
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 2.389,
+      "output": "이게 메모리 부족 때문에 멈추는 것일 수도 있는 거야.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 367,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 17,
+        "total_tokens": 384
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 6.811,
+      "output": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1605,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 16,
+        "total_tokens": 1621
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 1.566,
+      "output": "테스트를 먼저 진행하고, 통과하면 커밋만 해줘. 푸시는 하지 말고.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1614,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 22,
+        "total_tokens": 1636
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 2.873,
+      "output": "테스트를 먼저 진행하여 통과하면 커밋만 해주세요. (푸시는 하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 376,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 23,
+        "total_tokens": 399
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.531,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 384,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 34,
+        "total_tokens": 418
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 6.252,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1622,
+        "prompt_tokens_details": {
+          "cached_tokens": 620
+        },
+        "completion_tokens": 34,
+        "total_tokens": 1656
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 2.151,
+      "output": "듣는 중에 최소, 깔끔하게, 구조화, 전문적으로 중에서 선택하게 해줘. 그리고 선택해도 녹음이 끊기면 안 돼.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 33,
+        "total_tokens": 1651
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.366,
+      "output": "- 최소 깔끔하게 구조화된 전문적인 옵션 중에서 선택하게 할 것 (선택 시에도 녹음이 끊기지 않아야 함)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 33,
+        "total_tokens": 413
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.299,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 배치해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 32,
+        "total_tokens": 412
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 2.042,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 보여줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 7.632,
+      "output": "윈도우와 리눅스에서도 실행되도록 만들어야 해. 다만 실제 기기에서 검증하는 건 마지막에 하고, 지금은 맥에서 먼저 확인해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1625,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 38,
+        "total_tokens": 1663
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.795,
+      "output": "윈도우와 리눅스에서도 실행 가능하도록 제작해야 하며, 실제 기기 검증은 마지막에 수행한다. 현재는 맥에서 먼저 확인해달라.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 387,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 37,
+        "total_tokens": 424
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.603,
+      "output": "* 다운로드에 실패하면 제시도 버튼을 넣어줘\n* 하모글을 나눠서 요구사항을 보기 좋게 정리해줘",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 30,
+        "total_tokens": 410
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 3.038,
+      "output": "- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 요구사항을 보기 좋게 항목을 나누어 정리해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 7.611,
+      "output": "'쿠버'라는 이름의 상자를 추가해줘. 이름은 '쿠버'로 유지하고, 크기는 아직 정하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1615,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1646
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.234,
+      "output": "- 쿠버라는 이름의 상자를 추가해줘 (이름은 쿠버로 유지하고 크기는 아직 정하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 377,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 29,
+        "total_tokens": 406
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 3.264,
+      "output": "일단 계획만 세워줘. 코드는 아직 수정하지 말고 가능한 방법 두 가지랑 각각의 장단점을 설명해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 379,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 29,
+        "total_tokens": 408
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 6.246,
+      "output": "일단 계획만 세워줘. 코드는 아직 수정하지 말고, 가능한 방법 두 가지와 각각의 장단점을 설명해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1617,
+        "prompt_tokens_details": {
+          "cached_tokens": 600
+        },
+        "completion_tokens": 30,
+        "total_tokens": 1647
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 3.044,
+      "output": "우리 설정에 '에스카이니팅'이라는 항목이 있는데, 이게 질문을 하면 답변을 해주는 모드야? 이거 기본 오픈 타임리스에 있는 기능이야, 아니면 우리가 구현한 기능이야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1636,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 47,
+        "total_tokens": 1683
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 4.81,
+      "output": "우리 설정에 에스카이니팅이라는 항목이 있는데, 이 기능은 질문을 하면 답변을 해주는 모드인가요? 이 기능이 기본 오픈 타임리스에 포함된 기능인지, 아니면 우리가 직접 구현한 기능인지 확인해 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 398,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 55,
+        "total_tokens": 453
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 1,
+      "variant": "short",
+      "seconds": 4.333,
+      "output": "* 설정 화면 수정: 다운로드 진행률 표시 및 실패 시 재시도 버튼 추가.\n* 결과 보고: 작업 완료 후 결과 알림.\n\n공통 제약: 기존 기능은 변경하지 말아 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 392,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 47,
+        "total_tokens": 439
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 1,
+      "variant": "current",
+      "seconds": 7.604,
+      "output": "설정 화면을 수정해 주세요.\n- 다운로드 진행률을 보여주고, 실패하면 재시도 버튼을 넣어 주세요.\n- 작업이 끝나면 결과를 알려 주세요.\n\n기존 기능은 변경하지 말아 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1630,
+        "prompt_tokens_details": {
+          "cached_tokens": 590
+        },
+        "completion_tokens": 50,
+        "total_tokens": 1680
+      }
+    },
+    {
+      "id": "multi",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 4.811,
+      "output": "설정 화면 수정 요청:\n* 모델 다운로드 진행률 표시 및 다운로드 실패 시 재시도 버튼 추가\n* 모바일 연결 주소 복사 기능 추가\n* 기존 기능은 변경하지 말 것\n* 작업 완료 후 테스트 결과 보고 포함",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 407,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 54,
+        "total_tokens": 461
+      }
+    },
+    {
+      "id": "multi",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 8.805,
+      "output": "설정 화면을 수정해줘.\n- 모델 다운로드 진행률을 보여줘.\n- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 모바일 연결 주소를 복사할 수 있게 해줘.\n- 작업이 끝나면 테스트 결과를 알려줘.\n\n기존 기능은 변경하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1645,
+        "prompt_tokens_details": {
+          "cached_tokens": 605
+        },
+        "completion_tokens": 70,
+        "total_tokens": 1715
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 1.135,
+      "output": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1605,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 16,
+        "total_tokens": 1621
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 2.605,
+      "output": "이게 메모리 부족 때문에 멈추는 것일 수도 있는 거야.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 367,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 17,
+        "total_tokens": 384
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 2.927,
+      "output": "테스트를 먼저 수행하여 통과하면 커밋만 해주세요. (푸시는 하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 376,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 23,
+        "total_tokens": 399
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 1.624,
+      "output": "테스트를 먼저 진행하고, 통과하면 커밋만 해줘. 푸시는 하지 말고.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1614,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 22,
+        "total_tokens": 1636
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 7.457,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1622,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 34,
+        "total_tokens": 1656
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 3.569,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지할 것.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 384,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 34,
+        "total_tokens": 418
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 3.521,
+      "output": "- 최소 깔끔하게 구조화된 전문적인 옵션 중에서 선택하게 할 것.\n- 선택 시에도 녹음이 끊기지 않아야 함.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 34,
+        "total_tokens": 414
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 2.478,
+      "output": "듣는 중에 최소, 깔끔하게, 구조화, 전문적으로 중에서 선택하게 해줘. 그리고 선택해도 녹음이 끊기면 안 돼.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 33,
+        "total_tokens": 1651
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 8.371,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 보여줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 3.636,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 배치해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 32,
+        "total_tokens": 412
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 4.184,
+      "output": "윈도우와 리눅스에서도 실행되도록 제작해야 하며, 실제 기기 검증은 마지막에 수행한다. 현재는 맥에서 먼저 확인해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 387,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 36,
+        "total_tokens": 423
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 7.067,
+      "output": "윈도우와 리눅스에서도 구동되도록 만들어야 해. 다만 실제 기기에서 검증하는 건 마지막에 하고, 지금은 맥에서 먼저 확인해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1625,
+        "prompt_tokens_details": {
+          "cached_tokens": 597
+        },
+        "completion_tokens": 39,
+        "total_tokens": 1664
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 2.712,
+      "output": "- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 요구사항을 보기 좋게 항목을 나누어 정리해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 3.592,
+      "output": "* 다운로드에 실패하면 제시도 버튼을 넣어줘.\n* 하모글을 나눠서 요구사항을 보기 좋게 정리해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 32,
+        "total_tokens": 412
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 3.288,
+      "output": "쿠버라는 이름의 상자를 추가해줘. (이름은 쿠버로 유지하고, 크기는 아직 정하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 377,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 30,
+        "total_tokens": 407
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 6.433,
+      "output": "'쿠버'라는 이름의 상자를 추가해줘. 이름은 '쿠버'로 유지하고, 크기는 아직 정하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1615,
+        "prompt_tokens_details": {
+          "cached_tokens": 593
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1646
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 2.051,
+      "output": "일단 계획만 세워줘. 코드는 아직 수정하지 말고, 가능한 방법 두 가지와 각각의 장단점을 설명해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1617,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 30,
+        "total_tokens": 1647
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 2.927,
+      "output": "코드를 수정하지 말고 가능한 방법 두 가지와 각각의 장단점을 설명하는 계획을 세워줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 379,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 24,
+        "total_tokens": 403
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 4.79,
+      "output": "우리 설정에 에스카이니팅이라는 항목이 있는데, 이 기능은 질문을 하면 답변을 해주는 모드인가요? 이 기능이 기본 오픈 타임리스에 포함된 기능인지, 아니면 우리가 직접 구현한 기능인지 확인해 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 398,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 55,
+        "total_tokens": 453
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 2.987,
+      "output": "우리 설정에 '에스카이니팅'이라는 항목이 있는데, 이게 질문을 하면 답변을 해주는 모드야? 이거 기본 오픈 타임리스에 있는 기능이야, 아니면 우리가 구현한 기능이야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1636,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 47,
+        "total_tokens": 1683
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 2,
+      "variant": "current",
+      "seconds": 8.479,
+      "output": "설정 화면을 수정해 주세요.\n- 다운로드 진행률을 보여주고, 실패 시 재시도 버튼을 추가해 주세요.\n- 작업이 끝나면 결과를 알려 주세요.\n\n기존 기능은 변경하지 말아 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1630,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 51,
+        "total_tokens": 1681
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 2,
+      "variant": "short",
+      "seconds": 4.779,
+      "output": "* 설정 화면 수정: 다운로드 진행률 표시 및 실패 시 재시도 버튼 추가 (기존 기능 변경 금지)\n* 결과 보고: 작업 완료 후 결과 알림",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 392,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 38,
+        "total_tokens": 430
+      }
+    },
+    {
+      "id": "multi",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 4.697,
+      "output": "설정 화면을 수정해줘.\n- 모델 다운로드 진행률을 보여줘.\n- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 모바일 연결 주소를 복사할 수 있게 해줘.\n- 작업이 끝나면 테스트 결과를 알려줘.\n\n기존 기능은 변경하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1645,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 70,
+        "total_tokens": 1715
+      }
+    },
+    {
+      "id": "multi",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 5.614,
+      "output": "설정 화면 수정 요청:\n* 모델 다운로드 진행률 표시 및 다운로드 실패 시 재시도 버튼 추가\n* 모바일 연결 주소 복사 기능 추가\n* 기존 기능은 변경하지 말 것\n* 작업 완료 후 테스트 결과 보고 포함",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 407,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 54,
+        "total_tokens": 461
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 2.664,
+      "output": "이게 메모리 부족 때문에 멈추는 것일 수도 있는 거야.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 367,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 17,
+        "total_tokens": 384
+      }
+    },
+    {
+      "id": "single",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 5.364,
+      "output": "이게 메모리 부족 때문에 멈추는 걸 수도 있는 거야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1605,
+        "prompt_tokens_details": {
+          "cached_tokens": 605
+        },
+        "completion_tokens": 16,
+        "total_tokens": 1621
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 1.651,
+      "output": "테스트를 먼저 진행하고, 통과하면 커밋만 해줘. 푸시는 하지 말고.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1614,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 22,
+        "total_tokens": 1636
+      }
+    },
+    {
+      "id": "correction",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.268,
+      "output": "테스트를 먼저 수행하여 통과하면 커밋만 해줘. (푸시는 하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 376,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 23,
+        "total_tokens": 399
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.92,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 384,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 34,
+        "total_tokens": 418
+      }
+    },
+    {
+      "id": "identifiers",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 7.628,
+      "output": "src/main.rs에서 타임아웃을 1.5초로 변경하고, 포트는 46235로 유지해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1622,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 34,
+        "total_tokens": 1656
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 3.014,
+      "output": "듣는 중에 최소, 깔끔하게, 구조화, 전문적으로 중에서 선택하게 해줘. 그리고 선택해도 녹음이 끊기면 안 돼.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 33,
+        "total_tokens": 1651
+      }
+    },
+    {
+      "id": "choices",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.834,
+      "output": "듣는 중에 최소 깔끔하게 구조화 전문적으로 중에서 선택하게 해줘. 그리고 선택해도 녹음이 끊기면 안 돼.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 30,
+        "total_tokens": 410
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.362,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 배치해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 32,
+        "total_tokens": 412
+      }
+    },
+    {
+      "id": "layout",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 2.074,
+      "output": "닫기 버튼 왼쪽에는 스타일을 두고, 그 왼쪽에는 시간을 넣고, 남는 공간에는 음량 게이지를 길게 보여줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 8.261,
+      "output": "윈도우와 리눅스에서도 실행되도록 만들어야 해. 다만 실제 기기 검증은 마지막에 진행하고, 지금은 맥에서 먼저 확인해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1625,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 37,
+        "total_tokens": 1662
+      }
+    },
+    {
+      "id": "deferred",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.698,
+      "output": "윈도우와 리눅스에서도 실행 가능하도록 제작해야 하며, 실제 기기 검증은 마지막에 수행한다. 현재는 맥에서 먼저 확인해달라.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 387,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 37,
+        "total_tokens": 424
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.7,
+      "output": "* 다운로드에 실패하면 제시도 버튼을 넣어줘.\n* 하모글을 나눠서 요구사항을 보기 좋게 정리해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 32,
+        "total_tokens": 412
+      }
+    },
+    {
+      "id": "stt_error",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 1.995,
+      "output": "- 다운로드에 실패하면 재시도 버튼을 넣어줘.\n- 요구사항을 보기 좋게 항목을 나누어 정리해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1618,
+        "prompt_tokens_details": {
+          "cached_tokens": 1576
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1649
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 9.281,
+      "output": "'쿠버'라는 이름의 상자를 추가해줘. 이름은 '쿠버'로 유지하고, 크기는 아직 정하지 마.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1615,
+        "prompt_tokens_details": {
+          "cached_tokens": 346
+        },
+        "completion_tokens": 31,
+        "total_tokens": 1646
+      }
+    },
+    {
+      "id": "unknown",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 4.427,
+      "output": "- 쿠버라는 이름의 상자를 추가해줘. (이름은 쿠버로 유지하고, 크기는 아직 정하지 말 것)",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 377,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 31,
+        "total_tokens": 408
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 3.984,
+      "output": "코드를 수정하지 말고 가능한 방법 두 가지와 각각의 장단점을 설명하는 계획을 세워줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 379,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 24,
+        "total_tokens": 403
+      }
+    },
+    {
+      "id": "scope",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 7.471,
+      "output": "일단 계획만 세워줘. 코드는 아직 수정하지 말고, 가능한 방법 두 가지와 각각의 장단점을 설명해줘.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1617,
+        "prompt_tokens_details": {
+          "cached_tokens": 600
+        },
+        "completion_tokens": 30,
+        "total_tokens": 1647
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 2.819,
+      "output": "우리 설정에 '에스카이니팅'이라는 항목이 있는데, 이게 질문을 하면 답변을 해주는 모드야? 이거 기본 오픈 타임리스에 있는 기능이야, 아니면 우리가 구현한 기능이야?",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1636,
+        "prompt_tokens_details": {
+          "cached_tokens": 1577
+        },
+        "completion_tokens": 47,
+        "total_tokens": 1683
+      }
+    },
+    {
+      "id": "casual_question",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 4.73,
+      "output": "우리 설정에 에스카이니팅이라는 항목이 있는데, 이 기능은 질문을 하면 답변을 해주는 모드인가요? 이 기능이 기본 오픈 타임리스에 포함된 기능인지, 아니면 우리가 구현한 기능인지 확인해 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 398,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 54,
+        "total_tokens": 452
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 3,
+      "variant": "short",
+      "seconds": 4.323,
+      "output": "* 설정 화면 수정: 다운로드 진행률 표시 및 실패 시 재시도 버튼 추가.\n* 결과 보고: 작업 완료 후 결과 알림.\n\n공통 제약: 기존 기능은 변경하지 말아 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 392,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 47,
+        "total_tokens": 439
+      }
+    },
+    {
+      "id": "polite_request",
+      "repeat": 3,
+      "variant": "current",
+      "seconds": 7.756,
+      "output": "설정 화면을 수정해 주세요.\n- 다운로드 진행률을 보여주고, 실패하면 재시도 버튼을 넣어 주세요.\n- 작업이 끝나면 결과를 알려 주세요.\n\n기존 기능은 변경하지 말아 주세요.",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 1630,
+        "prompt_tokens_details": {
+          "cached_tokens": 590
+        },
+        "completion_tokens": 50,
+        "total_tokens": 1680
+      }
+    }
+  ]
+}

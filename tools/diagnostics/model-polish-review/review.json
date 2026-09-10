@@ -1,0 +1,50 @@
+{
+  "note": "Human reviewed small fixed sample; preceding Gemma baseline reused.",
+  "casual_to_polite": {
+    "gemma": 0,
+    "qwen": 5,
+    "denominator": 33
+  },
+  "four_choices_preserved": {
+    "gemma": 3,
+    "qwen": 0,
+    "denominator": 3
+  },
+  "both_synthetic_errors_corrected": {
+    "gemma": 3,
+    "qwen": 0,
+    "denominator": 3
+  },
+  "identifiers_and_numbers_preserved": {
+    "gemma": 3,
+    "qwen": 3,
+    "denominator": 3
+  },
+  "unknown_name_and_let_us_tone_preserved": {
+    "gemma": 0,
+    "qwen": 3,
+    "denominator": 3
+  },
+  "qwen_formal_shifts": [
+    {
+      "id": "casual_question",
+      "repeat": 1
+    },
+    {
+      "id": "deferred",
+      "repeat": 2
+    },
+    {
+      "id": "casual_question",
+      "repeat": 2
+    },
+    {
+      "id": "deferred",
+      "repeat": 3
+    },
+    {
+      "id": "casual_question",
+      "repeat": 3
+    }
+  ]
+}

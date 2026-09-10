@@ -1,6 +1,7 @@
 pub mod cloud;
 pub mod context_policy;
 pub mod dictation_guard;
+mod h_polish;
 pub mod model_capabilities;
 pub mod openai;
 pub mod prompt;
@@ -206,7 +207,7 @@ mod context_prompt_contract_tests {
     }
 
     #[test]
-    fn context_prompt_families_are_distinct_without_app_labels_or_raw_signals() {
+    fn explicit_style_is_not_overridden_by_app_families_or_raw_signals() {
         let email = prompt_for(&context(ContextFamily::Email, Some("gmail")));
         let chat = prompt_for(&context(ContextFamily::WorkChat, Some("slack")));
         let code = prompt_for(&context(
@@ -214,9 +215,8 @@ mod context_prompt_contract_tests {
             Some("github"),
         ));
 
-        assert!(email.contains("email body"));
-        assert!(chat.contains("concise"));
-        assert!(code.contains("technical identifiers"));
+        assert_eq!(email, chat);
+        assert_eq!(chat, code);
         for prompt in [email, chat, code] {
             for forbidden in [
                 "Safe label",
@@ -233,11 +233,11 @@ mod context_prompt_contract_tests {
     #[test]
     fn thought_aware_policy_preserves_uncertain_and_intentional_content() {
         let prompt = prompt_for(&context(ContextFamily::General, None));
-        assert!(prompt.contains("intentional repetition"));
-        assert!(prompt.contains("explicit correction"));
-        assert!(prompt.contains("keep the original order"));
-        assert!(prompt.contains("uncertain names"));
-        assert!(prompt.contains("Do not search"));
+        assert!(prompt.contains("강조, 망설임"));
+        assert!(prompt.contains("마지막 의도"));
+        assert!(prompt.contains("작업 순서와 범위"));
+        assert!(prompt.contains("불확실한 이름"));
+        assert!(prompt.contains("추측해서 바꾸지 않는다"));
     }
 
     #[test]

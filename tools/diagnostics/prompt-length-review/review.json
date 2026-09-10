@@ -1,0 +1,60 @@
+{
+  "note": "Human-reviewed outputs; counts apply only to these cases, not estimated population accuracy.",
+  "casual_to_polite": {
+    "current": 0,
+    "short": 5,
+    "per_variant_denominator": 33
+  },
+  "choices_preserved": {
+    "current": 3,
+    "short": 1,
+    "per_variant_denominator": 3
+  },
+  "multi_four_tasks_separated": {
+    "current": 3,
+    "short": 0,
+    "per_variant_denominator": 3
+  },
+  "polite_request_sentences_preserved": {
+    "current": 3,
+    "short": 0,
+    "per_variant_denominator": 3
+  },
+  "identifiers_preserved": {
+    "current": 3,
+    "short": 3,
+    "per_variant_denominator": 3
+  },
+  "synthetic_errors_corrected": {
+    "current": 3,
+    "short": 0,
+    "per_variant_denominator": 3
+  },
+  "formal_shift_cases": [
+    [
+      "short",
+      "correction",
+      1
+    ],
+    [
+      "short",
+      "casual_question",
+      1
+    ],
+    [
+      "short",
+      "correction",
+      2
+    ],
+    [
+      "short",
+      "casual_question",
+      2
+    ],
+    [
+      "short",
+      "casual_question",
+      3
+    ]
+  ]
+}
