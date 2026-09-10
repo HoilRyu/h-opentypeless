@@ -222,7 +222,19 @@ mod native_tests {
         let before = native.read(&id).unwrap().levels;
         let path =
             std::env::temp_dir().join(format!("h-native-audio-{}.json", uuid::Uuid::new_v4()));
-        let mut engine = Engine::new(native, path);
+        // Reproduce the user's stale, unconfirmed Bluetooth record while
+        // the actual default output is a different device.
+        engine::save_json(
+            &path,
+            &serde_json::json!({
+                "id": "h-test-disconnected-output",
+                "before": { "volume": [0.007874, 0.007874], "muted": false },
+                "applied": { "volume": [0.000157, 0.000157], "muted": false },
+                "confirmed": false
+            }),
+        )
+        .unwrap();
+        let mut engine = Engine::new(native, path.clone());
         for (mode, percent) in [(Mode::Reduce, 5), (Mode::Reduce, 35), (Mode::Mute, 35)] {
             let can_mute = engine.backend.read(&id).unwrap().can_mute
                 && !engine.backend.prefer_volume_for_mute();
@@ -233,6 +245,7 @@ mod native_tests {
             stop.unwrap();
             let during = during.unwrap();
             let after = engine.backend.read(&id).unwrap().levels;
+            eprintln!("mode={mode:?} before={before:?} during={during:?} after={after:?}");
             assert_eq!(before.muted, after.muted);
             for ((before, during), after) in
                 before.volume.iter().zip(during.volume).zip(after.volume)
@@ -242,7 +255,7 @@ mod native_tests {
                 if mode == Mode::Reduce {
                     assert!(during <= *before && during >= 0.0);
                 } else if !can_mute {
-                    assert!(during.abs() < 0.002);
+                    assert_eq!(during, 0.0);
                 }
                 assert!((after - before).abs() < 0.002);
             }
@@ -252,6 +265,13 @@ mod native_tests {
                 assert_eq!(during.muted, before.muted);
             }
         }
+        use sha2::{Digest, Sha256};
+        let deferred = path.with_extension(format!(
+            "{:x}.json",
+            Sha256::digest(b"h-test-disconnected-output")
+        ));
+        assert!(deferred.exists());
+        std::fs::remove_file(deferred).unwrap();
     }
 }
 
