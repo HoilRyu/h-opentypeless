@@ -1,3 +1,4 @@
+import { TutorialLink } from '../HTutorial'
 import { useTranslation } from 'react-i18next'
 import { invoke } from '@tauri-apps/api/core'
 import i18n from '../../i18n'
@@ -30,6 +31,7 @@ export function AboutPane() {
 
       <p className="text-text-secondary leading-relaxed">{t('settings.aboutDescription')}</p>
 
+      <TutorialLink />
       {/* Language */}
       <SectionCard title={t('settings.language')}>
         <div className="grid grid-cols-2 gap-3 p-3">

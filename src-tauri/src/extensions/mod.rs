@@ -17,3 +17,5 @@ pub fn enabled(app: &tauri::AppHandle, key: &str) -> bool {
 pub mod voice_feedback;
 
 pub mod result_window;
+
+pub mod tutorial;

@@ -1,5 +1,5 @@
 //! Optional mobile endpoint owned by the desktop process. No Python runtime.
-mod processing;
+pub(crate) mod processing;
 mod server;
 mod wav;
 use serde::{Deserialize, Serialize};

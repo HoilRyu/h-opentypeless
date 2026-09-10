@@ -1,3 +1,4 @@
+import { TutorialLink } from '../HTutorial'
 import { Mic, Settings, History, Crown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -46,6 +47,7 @@ export function HomePage() {
 
   return (
     <div className="p-6 space-y-6">
+      <TutorialLink />
       {/* Welcome */}
       <div className="rounded-[18px] p-5 jelly-card">
         <div className="flex items-center gap-3 mb-2">

@@ -1219,6 +1219,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            extensions::tutorial::run_tutorial_recording,
+            extensions::tutorial::control_tutorial_recording,
             extensions::local_stt::get_local_stt_status,
             extensions::local_stt::set_local_stt_engine,
             extensions::local_stt::unload_local_stt_engine,

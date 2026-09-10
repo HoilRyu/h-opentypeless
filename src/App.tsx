@@ -28,6 +28,7 @@ import { shouldRefreshSubscriptionOnFocus } from './lib/subscription-refresh-pol
 import { Capsule } from './components/Capsule'
 import { Settings } from './components/Settings'
 import { History } from './components/History'
+import { HTutorial } from './components/HTutorial'
 import { Onboarding } from './components/Onboarding'
 import { MainLayout } from './components/MainLayout'
 import { MobileConnection } from './components/MobileConnection'
@@ -141,7 +142,7 @@ function MainApp() {
   useEffect(() => {
     loadOnboardingCompleted().then(async (done) => {
       setOnboardingCompleted(done)
-      if (done) {
+      if (done || !H_MANAGED_CLOUD_ENABLED) {
         try {
           const [
             config,
@@ -252,6 +253,8 @@ function MainApp() {
         </button>
       </div>
     )
+  if (!H_MANAGED_CLOUD_ENABLED && (!onboardingCompleted || route === 'tutorial'))
+    return <HTutorial review={onboardingCompleted} onClose={() => navigate('home')} />
   if (!onboardingCompleted) return <Onboarding />
 
   return (
