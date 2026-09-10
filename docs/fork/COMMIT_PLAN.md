@@ -1,3 +1,94 @@
+# 커밋 정리 — 내장 MLX와 시작 가이드 (2026-09-10)
+
+기준 커밋은 내장 STT `8b46610`이다. 내장 MLX는 `9561332`, 시작 가이드는 `d4bf270`으로 커밋했다. 현재 버전은 `0.1.45-beta.2`이며 이 문서와 사용자 안내를 마지막 문서 커밋으로 묶는다. 원격 푸시는 아직 수행하지 않았다.
+
+## 1. 내장 MLX 기능과 배포 통합
+
+제안 제목: `feat: run built-in Qwen STT with managed MLX on Apple Silicon`
+
+환경 감지와 자동/MLX/CPU 선택, 녹음 중 준비와 모델 재사용, 취소/종료/유휴 회수, 파일 검증 캐시와 ARM SHA 가속을 포함한다. 전용 Python/MLX 번들·고정 의존성·서명·tokenizer 파일, 설정 UI와 테스트, 버전 변경, 실제 검증 문서도 함께 기록한다. 실행 코드가 번들 리소스와 빌드 설정에 의존하므로 이들을 독립 커밋으로 나누지 않는다.
+
+포함 파일:
+
+- `docs/fork/LOCAL_STT.md`
+- `docs/fork/LOCAL_STT_NOTICES.md`
+- `docs/fork/MLX_STT_PLAN.md`
+- `docs/fork/MLX_STT_VERIFICATION.md`
+- `native/mlx-stt/tokenizers.json`
+- `native/mlx-stt/tokenizers/qwen-0.6b.json`
+- `native/mlx-stt/tokenizers/qwen-1.7b.json`
+- `native/mlx-stt/worker.py`
+- `package-lock.json`
+- `package.json`
+- `scripts/h-prepare-local-stt.py`
+- `scripts/h-prepare-mlx.py`
+- `scripts/h-sign-macos.sh`
+- `scripts/h-sign-mlx.py`
+- `scripts/mlx/requirements.in`
+- `scripts/mlx/requirements.lock`
+- `src-tauri/Cargo.lock`
+- `src-tauri/Cargo.toml`
+- `src-tauri/src/extensions/local_stt/mlx.rs`
+- `src-tauri/src/extensions/local_stt/mod.rs`
+- `src-tauri/src/extensions/local_stt/provider.rs`
+- `src-tauri/src/extensions/local_stt/verification.rs`
+- `src-tauri/src/lib.rs`
+- `src-tauri/tauri.conf.json`
+- `src/components/Settings/LocalSttSetting.tsx`
+- `src/components/Settings/__tests__/LocalSttSetting.test.tsx`
+- `src/i18n/locales/de.json`
+- `src/i18n/locales/en.json`
+- `src/i18n/locales/es.json`
+- `src/i18n/locales/fr.json`
+- `src/i18n/locales/it.json`
+- `src/i18n/locales/ja.json`
+- `src/i18n/locales/ko.json`
+- `src/i18n/locales/pt.json`
+- `src/i18n/locales/ru.json`
+- `src/i18n/locales/zh.json`
+- `tools/diagnostics/check_mlx_parent_exit.py`
+- `tools/diagnostics/check_mlx_stt.py`
+
+## 2. 인계와 튜토리얼 후속 계획
+
+제안 제목: `docs: record MLX handoff and prepare first-run onboarding`
+
+- `docs/fork/HANDOFF.md`: 실제 설치·검증 결과와 남은 작업.
+- `docs/fork/ONBOARDING_PLAN.md`: 첫 실행 튜토리얼 계획. 선행 MLX 작업과 현재 상태를 구분한다.
+- `docs/fork/COMMIT_PLAN.md`: 이 준비 목록과 기존 커밋 이력.
+
+## 3. 사용자 README 간소화 (후속 요청)
+
+제안 제목: `docs: simplify H setup and voice typing guide`
+
+- `README.md`: H 기준의 설치 → STT → 선택적 AI 다듬기 → 단축키/입력 안내. Android 연결과 상세 문서 링크.
+- `README_ko.md`: 중복된 원본 안내 대신 메인 한국어 사용 안내로 연결.
+- `android/README.md`: 현재 모바일 연결 메뉴 위치 반영.
+
+튜토리얼 구현은 포함하지 않는다. README 변경은 문서 링크와 표기만 검사하며 앱 재빌드/재설치를 하지 않는다.
+
+## 4. H 첫 실행 튜토리얼 (후속 구현)
+
+제안 제목: `feat: add a guided H setup and native voice practice`
+
+- `src/components/HTutorial/`: 한국어/영어 3단계 안내 + 완료 화면, 설정 재사용, 진행 재개, 실제 녹음 미리보기, 오류/취소 회귀 검사.
+- `src/App.tsx`, `src/lib/router.ts`, HomePage, AboutPane: H 전용 최초 진입과 다시 보기. 원본 Onboarding은 보존.
+- `src-tauri/src/extensions/tutorial.rs`, extensions/mod.rs, lib.rs, mobile/mod.rs: main 창 전용 녹음 명령, 세션 취소/시간·메모리 제한, 기존 제공자 경로 재사용. 모바일 리스너를 요구하지 않는다.
+- 앱 버전 `0.1.45-beta.2`, README 가이드 진입 안내, TUTORIAL/TUTORIAL_REDESIGN/HANDOFF/ONBOARDING 문서.
+- 이전 MLX 변경과 공유하는 `lib.rs`는 기능별 hunk로 나눠 커밋했다. Cargo/package 버전은 MLX 커밋에서 `0.1.45-beta.2`로 올렸다.
+
+## 검사와 제외 대상
+
+- 직전 구현 검증: UI 472개, Rust 643개 통과. Rust 기본 실행의 ignored 5개 중 실제 MLX 제공자는 별도 실행해 통과했다. Clippy와 릴리즈 스크립트 테스트 10개 통과.
+- Qwen 0.6B/1.7B 반복 전사, 120초 입력, 취소·부모 사망·유휴 회수, 설치본 모바일 API→MLX→Ollama와 서명된 DMG 검사 완료. 실제 마이크/Android 실기기 및 Windows/Linux 실기기를 이번에 다시 검증했다는 뜻은 아니다.
+- 이번 준비에서는 변경 목록, 파일 크기, 명백한 개인키/토큰 패턴과 `git diff --check`를 확인했다. 기능 코드를 변경하지 않아 전체 테스트는 반복 실행하지 않았다. 패턴 검사는 모든 비밀 정보의 부재를 보증하는 검사는 아니다.
+- 모델 가중치, Python 설치본, DMG/앱, 개인 인증서·개인키, 사용자 설정, 실행 로그와 벤치마크 결과 JSON은 포함하지 않는다. 저장소의 tokenizer JSON과 의존성 잠금 파일은 재현 가능한 빌드에 필요한 고정 공개 자료라 포함한다.
+- 2026-09-10 원격 갱신 기준 브랜치는 원격보다 앞서 있으며, 이번에 만든 `9561332`와 `d4bf270`을 포함한 로컬 커밋은 문서 커밋 후 함께 푸시해야 한다.
+
+아래는 이전 작업의 기록이며 현재 커밋 대상 목록은 위 네 묶음이다.
+
+---
+
 # 커밋 정리 결과 — 2026-09-09
 
 기준 b371c84 이후 변경을 아래와 같이 기록했다. 원래 10개 제안에서 컴파일 의존성과 공유 파일을 고려해 Android 기능/UI, 데스크톱 녹음/표시/결과 창을 각각 묶었다. 푸시는 수행하지 않았다.

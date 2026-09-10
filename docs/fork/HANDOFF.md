@@ -1,5 +1,39 @@
 # H-OpenTypeless 인계
 
+## 2026-09-10 튜토리얼 디자인 간소화 (0.1.45-beta.2)
+
+- 사용자 피드백에 따라 Superwhisper/Raycast/Linear 공식 시작 안내를 조사했다. [TUTORIAL_REDESIGN.md](TUTORIAL_REDESIGN.md)에 출처·설계 판단·검증 범위를 기록.
+- 필수 흐름을 사용 방법 → 준비 → 연습으로 줄이고 마지막 완료 화면을 둠. 준비는 STT/AI/단축키·권한 세 줄이며 변경할 항목만 펼친다. 단색 버튼, 입력창 예시, 실제 단축키, 작은 진행 점으로 구성.
+- 기존 polish/controls 진행 위치는 준비로 변환. 기존 외부 API 설정 다시 보기의 재시험 강제를 없앴으며 모델/프롬프트/키를 초기화하지 않음. 연습 결과는 최종 문장이 먼저, 원문/부가 설명은 펼쳐 확인.
+- `/Applications/H-OpenTypeless.app`에 최종 자체 서명본 설치, 빌드 실행 파일 일치와 기존 키체인 helper 유지 확인. 최종 버튼 강조까지 실제 화면으로 확인하고 첫 화면을 열어 두었다.
+- UI 487개, TypeScript/Vite 및 ESLint 통과. 실제 설치본 다크 테마 900×700에서 기본 화면과 설정 열기/닫기, 녹음 연습/완료 화면 확인. 네이티브 녹음 코드는 변경하지 않아 Rust 전체 검사는 반복하지 않았다. 시작 가이드 코드는 `d4bf270`으로 커밋했고 원격 푸시는 아직 수행하지 않았다.
+
+## 2026-09-10 시작 가이드 초기 구현 (0.1.45-beta.1, 이후 beta.2로 간소화)
+
+- H 전용 6단계 튜토리얼: 소개, STT 모델/API 준비, 선택적 AI, 권한·실제 단축키, 최대 15초 네이티브 녹음 연습, 일상 사용. 한국어/영어와 테마 대응 도식. 기존 Onboarding 소스는 보존.
+- 최초 실행/단계 재개, 홈 및 설정→정보에서 다시 보기, 기존 설정 보존. 설정/완료 플래그 저장 실패를 표시하고 진행을 막는다. 연습은 외부 앱 입력·클립보드·기록 저장 없이 원문/교정문을 보여 준다.
+- UI 484, Rust 644 통과(5 ignored), TypeScript/Vite·ESLint·Clippy 통과. 설치본 0.1.45-beta.1 자체 서명 검증, 기존 키체인 helper 해시 유지. 이전 앱은 `app-backups/before-tutorial-20260910-090921.app`에 보존.
+- 설치본 실제 UI에서 초기 6단계 이동, Ollama 연결 시험, 완료 저장/홈 복귀/재진입을 확인했다. 이 화면은 beta.2의 간소화된 흐름으로 대체됐다. 실제 녹음 연습의 사용자 확인과 Windows/Linux 실기기 검증은 별도다. 구현과 범위는 [TUTORIAL.md](TUTORIAL.md)를 참고한다.
+
+## 2026-09-10 내장 MLX 구현·설치 완료 (0.1.44-beta.1)
+
+- 호환 Mac의 Qwen 자동 선택을 MLX GPU로 연결했다. 전용 Python/MLX를 앱에 포함하고 stdin/stdout으로 제어한다. 별도 STT 서버나 사용자 Python 설치를 요구하지 않는다. 기존 Qwen 1.7B 가중치/선택, LLM/Ollama, 키체인 도우미를 유지했다.
+- 녹음 중 준비, 단일 Session 재사용, 약 2분 유휴/메모리 압박 해제, 취소·부모 사망·앱 종료 회수. 파일 검증 캐시와 Mac arm64 SHA 가속을 추가했다. 자동/MLX/CPU 및 현재 엔진/메모리 해제를 설정에 표시한다.
+- `/Applications/H-OpenTypeless.app`에 최종 서명된 버전 설치. 실제 UI에서 자동 → MLX, Qwen 1.7B 유지와 메모리 해제 확인. 기존 helper SHA-256 `03ddf7a45a52a90ee92a25e9c576a41175e1e44523b12b5dd73bebecb4a9ef99` 유지.
+- 설치본 모바일 `/api/dictate → MLX → Ollama`: 합성 음성 첫 요청 4.805초, 후속 0.907/0.917초, warning 없음. 최초 파일 검증/엔진 준비와 LLM을 포함하며 일반 성능 보장은 아니다.
+- UI 472, Rust 643 통과(5 ignored 중 MLX 실제 제공자 별도 실행 통과), Clippy -D warnings, 릴리즈 테스트 10 통과. Qwen 0.6B/1.7B 실제 반복 전사·120초 입력·부모 사망/유휴 회수도 검증했다. 자세한 범위/한계는 [MLX_STT_VERIFICATION.md](MLX_STT_VERIFICATION.md).
+- 검증용 DMG: `~/.local/share/h-opentypeless/mlx-build/H-OpenTypeless_0.1.44-beta.1_mlx-validation.dmg`. GitHub 공개 릴리즈는 아니다. MLX 통합은 `9561332`로 커밋했고 이전 앱은 `app-backups/before-mlx-20260910-014350.app`에 보존했다.
+- 이후 [첫 실행 튜토리얼](ONBOARDING_PLAN.md)을 구현하고 간소화했다. Windows/Linux 실기기는 예정대로 추후 검증한다. 실패 음성을 별도 창에 보관해 즉시 재전사하는 UI는 이번 변경에 포함하지 않았다.
+
+## 2026-09-10 내장 MLX 계획
+
+[MLX_STT_PLAN.md](MLX_STT_PLAN.md)에 환경 감지, macOS arm64 전용 런타임 번들, 기존 Qwen 가중치 재사용, 단일 워커/유휴 해제, 성능·안정성 검증 순서를 작성했다. 호환 Mac은 자동 모드에서 MLX GPU를 선택하며 실패를 숨겨 CPU로 전환하지 않는다. 현재는 계획만 작성했고 앱·모델·실행 설정은 변경하지 않았다. 다음 작업은 실제 CPU 기준 계측과 MLX 번들 시제품 검증이다. 튜토리얼은 이 작업 이후 진행한다.
+
+## 2026-09-10 튜토리얼 준비와 지연 점검
+
+내장 STT 기능 커밋: `8b46610` (푸시 미실시). 사용자는 내장 Qwen 1.7B 정상 작동을 확인했으나 체감 지연을 보고했다. 현재 CPU 엔진·매회 전체 파일 검증·모델 로드가 기존 MLX GPU 서버와 다르다. 약 3초 합성 음성의 독립 측정에서 SHA-256 검증 2.14초, 엔진 로드/전사 1.91초였다(앱 전체 지연/LLM 시간 아님).
+[ONBOARDING_PLAN.md](ONBOARDING_PLAN.md)에 튜토리얼 흐름과 선행 성능 측정/개선 순서를 기록했다. 아직 튜토리얼이나 성능 동작 변경은 구현하지 않았다.
+
 ## 2026-09-10 외부 Qwen STT 서버 제거
 
 사용자 요청으로 `local.opentypeless.qwen3-asr` launchd 작업을 bootout하고 외부 서버 Python 환경·모델·키·전용 로그·plist를 제거했다. 8765 포트 종료 확인. `~/.local/share/opentypeless-local`에는 Ollama plist와 Ollama 관련 로그만 유지했다. Ollama 11434 정상 응답 확인.
@@ -13,7 +47,7 @@
 - Base와 Qwen 0.6B는 검증한 파일을 `~/Library/Application Support/dev.hoilryu.hopentypeless/local-stt`에 준비했다. 기존 MLX 1.7B 원본 모델/서버/주소는 유지했다.
 - frontend 471, Rust 639 통과(명시적 다운로드/실제 모델 테스트 등 4 ignored); 실제 모델 다운로드와 한국어 전사(Base/Qwen 0.6B/1.7B) 별도 통과. Clippy -D warnings 통과. 릴리즈 스크립트 테스트 10 통과.
 - 자세한 사용법/구조/플랫폼 제한: [LOCAL_STT.md](LOCAL_STT.md). Windows Qwen은 비활성화. Windows/Linux 실기기 검증은 아직 미실시.
-- 현재 수정은 미커밋. 기존 f59e7f1 릴리즈 후보 DMG에는 이번 STT 기능이 포함되지 않는다. 릴리즈할 때 새 커밋 기준으로 패키지를 다시 생성해야 한다.
+- 내장 STT 기능은 8b46610으로 커밋했다. 기존 f59e7f1 릴리즈 후보 DMG에는 이번 STT 기능이 포함되지 않는다. 릴리즈할 때 새 커밋 기준으로 패키지를 다시 생성해야 한다.
 - **사용자 요청: STT 작업이 끝나면 첫 실행 튜토리얼을 다음 작업으로 안내할 것. 튜토리얼은 아직 구현하지 않았음.**
 
 2026-09-08. 작업 소스: /Users/ryuhoil/syncthing/workspace/h-opentypeless.

@@ -1,451 +1,61 @@
-> H fork: optional built-in Whisper / Qwen speech recognition, native mobile connectivity, and H desktop extensions are documented in [the H handoff](docs/fork/HANDOFF.md) and [the local STT guide](docs/fork/LOCAL_STT.md).
-
 <p align="center">
-  <strong>English</strong> | <a href="README_zh.md">中文</a> | <a href="README_ja.md">日本語</a> | <a href="README_ko.md">한국어</a> | <a href="README_es.md">Español</a> | <a href="README_fr.md">Français</a> | <a href="README_de.md">Deutsch</a> | <a href="README_pt.md">Português</a> | <a href="README_ru.md">Русский</a> | <a href="README_ar.md">العربية</a> | <a href="README_hi.md">हिन्दी</a> | <a href="README_it.md">Italiano</a> | <a href="README_tr.md">Türkçe</a> | <a href="README_vi.md">Tiếng Việt</a> | <a href="README_th.md">ภาษาไทย</a> | <a href="README_id.md">Bahasa Indonesia</a> | <a href="README_pl.md">Polski</a> | <a href="README_nl.md">Nederlands</a>
+  <img src="src-tauri/icons/128x128@2x.png" width="88" height="88" alt="H-OpenTypeless 아이콘" />
 </p>
 
-<p align="center">
-  <img src="src-tauri/icons/128x128@2x.png" width="128" height="128" alt="OpenTypeless Logo" />
-</p>
+# H-OpenTypeless
 
-<h1 align="center">OpenTypeless</h1>
+**말하면 글로 입력하고, 원하면 AI로 문장까지 다듬는 음성 입력 앱입니다.**
 
-<p align="center">
-  Open-source alternative to Wispr Flow and Superwhisper for AI voice input, rewriting, and voice Q&A on macOS, Windows, and Linux.
-</p>
+메신저 답장, 개발 요청, 문서 작성에 사용할 수 있습니다. 컴퓨터에서 직접 음성을 인식하거나 외부 API를 선택하고, Android 음성 키보드에서도 사용할 수 있습니다.
 
-<p align="center">
-  Press a hotkey, speak naturally, and get clean text in the app you are already using.<br/>
-  Or ask a one-shot voice question and get a concise AI answer without opening a chat app.
-</p>
+| 기능 | 사용 방식 |
+| --- | --- |
+| 음성 → 텍스트 | 내장 Whisper·Qwen 모델을 다운로드하거나 외부 STT API 연결 |
+| AI 문장 다듬기 | 선택 기능. Ollama 또는 LLM API 연결 |
+| Android 키보드 | 내 컴퓨터에 연결하거나 지원되는 온디바이스 모드 사용 |
 
-<p align="center">
-  <a href="https://github.com/tover0314-w/opentypeless/actions/workflows/ci.yml"><img src="https://github.com/tover0314-w/opentypeless/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="https://github.com/tover0314-w/opentypeless/releases"><img src="https://img.shields.io/github/v/release/tover0314-w/opentypeless?color=2ABBA7" alt="Release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/tover0314-w/opentypeless" alt="License" /></a>
-  <a href="https://github.com/tover0314-w/opentypeless/stargazers"><img src="https://img.shields.io/github/stars/tover0314-w/opentypeless?style=social" alt="Stars" /></a>
-  <a href="https://discord.gg/V6rRpJ4RGD"><img src="https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
-</p>
+## 처음 시작하기
 
-<p align="center">
-  <a href="https://www.opentypeless.com"><strong>Website</strong></a> ·
-  <a href="https://github.com/tover0314-w/opentypeless/releases"><strong>Download</strong></a> ·
-  <a href="#getting-started"><strong>Run locally</strong></a> ·
-  <a href="https://github.com/tover0314-w/opentypeless/discussions"><strong>Discussions</strong></a>
-</p>
+현재 **Apple Silicon Mac과 Android를 중심으로 검증**하고 있습니다. Windows·Linux는 개발 대상이며 실기기 검증 전입니다. 공개 릴리즈를 준비 중이고, 배포 파일은 [이 저장소의 Releases](https://github.com/HoilRyu/h-opentypeless/releases)에 제공합니다.
 
-<p align="center">
-  If OpenTypeless helps your workflow, a GitHub star helps more people discover the project.
-</p>
+처음 실행하면 **시작 가이드**가 설정과 짧은 녹음 연습을 안내합니다. **홈 → 사용 방법 다시 보기**에서 언제든 다시 열 수 있습니다.
 
-<p align="center">
-  <img src="docs/images/website-hero.png" width="860" alt="OpenTypeless website hero" />
-</p>
-
-<p align="center">
-  <strong>Dictate anywhere</strong> · <strong>Rewrite selected text</strong> · <strong>Ask one-shot voice questions</strong> · <strong>Bring your own keys or use managed cloud words</strong>
-</p>
+1. **설치하고 권한 허용**
 
-## What's New in v1.1.55
+   Mac용 DMG를 열어 **H-OpenTypeless → Applications**로 드래그한 뒤 앱을 실행합니다. 요청되는 **마이크·손쉬운 사용** 권한을 허용합니다.
+2. **음성 인식 준비**
 
-- **Stripe checkout for new purchases** with existing Creem subscriptions kept valid.
-- **More reliable cloud sign-in and billing** with secure session storage, clearer service-status messages, and stronger account-state recovery.
-- **Faster and more reliable providers** through connection reuse and warm-up, complete Deepgram and AssemblyAI final transcripts, and preserved Custom Whisper URL queries.
-- **Modern model support** for GPT-5/o-series requests and the native Anthropic Claude Messages API, while Claude through OpenRouter remains supported.
-- **More STT choices and safer recording limits** including regional Qwen3 ASR Realtime, provider-aware duration controls, and preserved audio while providers connect.
-- **Better platform support** including Linux ARM64 packages, Wayland direct typing with compositor-specific helpers, and safer Windows modifier-key output.
-
-See the complete notes and verified installers on the [latest release page](https://github.com/tover0314-w/opentypeless/releases/latest).
-
-## Product Highlights
-
-OpenTypeless understands more of the workflow around your voice, not only the words you said:
-
-- **App-aware writing** detects the active application locally and adapts structure and tone for email, chat, documents, issue trackers, coding tools, and more.
-- **Voice intent routing** distinguishes dictation, selected-text editing, translation, Ask Anything, and supported voice actions in English, Simplified Chinese, and Traditional Chinese.
-- **Multiple shortcuts per workflow** let you assign and reorder more than one binding for Dictation, Ask Anything, and Translation.
-- **Switchable translation targets** make it faster to move between the languages you use instead of keeping one fixed output language.
-- **A stronger local dictionary** adds correction rules plus dictionary import/export, so recurring names, terminology, and transcription mistakes stay under your control.
-- **Per-app style mappings** let you override the built-in app category when a detected app needs a different writing style.
-
-All application detection, mappings, dictionary entries, and correction rules are stored locally. App-aware polish sends only the internal app category and approved style metadata to the configured LLM path; raw window titles and document contents are not sent to the LLM or stored in history.
-
-## Ask Anything
-
-Ask Anything is a shortcut-first voice Q&A flow, not a chat tab. Press the Ask Anything hotkey, speak a question, stop recording, and OpenTypeless transcribes it, sends a one-shot request to the LLM, then shows only the final answer in a small floating note.
-
-It is designed for quick answers with no chat history, no input box, and no extra send step. If selected-text context is enabled, Ask can also answer questions about the text currently selected in another app.
-
-Default shortcuts now follow the Typeless-style flow:
-
-| Platform | Dictation | Ask Anything | Translate selected text |
-| -------- | --------- | ------------ | ----------------------- |
-| macOS    | `Fn`      | `Fn+Space`   | `Fn+LeftShift`          |
-| Windows  | `Right Alt` | `Right Alt+Space` | `Right Alt+LeftShift` |
-| Linux    | `Ctrl+/`  | `Ctrl+.`     | configurable            |
-
-Linux keeps conservative Ctrl-based defaults because global Right Alt handling is less reliable across desktop environments, especially on Wayland.
-
-## Visual Tour
-
-<p align="center">
-  <img src="docs/images/v1.1.49-app-context-showcase.jpg" width="820" alt="OpenTypeless app-aware voice typing across Gmail, Slack, Google Docs, Cursor, Zendesk, and LinkedIn" />
-</p>
-
-<p align="center">
-  <img src="docs/images/voice-flow-demo.gif" width="760" alt="OpenTypeless voice workflow demo" />
-</p>
-
-| App-aware AI polish                                                                                                  | Local dictionary and corrections                                                                                     |
-| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| <img src="docs/images/v1.1.49-app-aware-polish.jpg" width="420" alt="OpenTypeless v1.1.49 app-aware AI polish" /> | <img src="docs/images/v1.1.49-dictionary.jpg" width="420" alt="OpenTypeless v1.1.49 dictionary and corrections" /> |
-
-<details>
-<summary>Onboarding and voice workspace</summary>
-
-| Onboarding                                                                             | Voice workspace                                                                                                 |
-| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| <img src="docs/images/onboarding-stt.png" width="360" alt="OpenTypeless onboarding" /> | <img src="docs/images/app-main-light.png" width="360" alt="OpenTypeless home dashboard with recording stats" /> |
-
-</details>
-
----
-
-## What OpenTypeless Does
-
-OpenTypeless gives you four voice-first desktop workflows:
-
-| Workflow              | What happens                                                                                                           |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Dictation             | Hold a hotkey, speak, transcribe, optionally polish with an LLM, then type or copy the result into the active app      |
-| Ask Anything          | Start a one-shot voice question, transcribe it, send it to the LLM, and show only the final answer in a small panel    |
-| Selected-text editing | Select text in another app, speak an instruction, and let the LLM rewrite, summarize, translate, or fix that selection |
-| Translation           | Use a dedicated shortcut, speak or select text, and send the result to one of your configured target languages         |
-
-Use it for emails, chat replies, meeting notes, issue comments, prompts, documentation drafts, quick answers, multilingual translation, and any workflow where speaking is faster than typing.
-
-```mermaid
-flowchart LR
-  Hotkey["Global hotkey"] --> Capture["Audio capture"]
-  Capture --> Mode{"Voice mode"}
-  Mode -->|"Dictation"| STT["Speech-to-text"]
-  STT --> Polish{"AI polish?"}
-  Polish -->|"Yes"| Context["Local app category + style mapping"]
-  Context --> LLM["Context-aware LLM rewrite"]
-  Polish -->|"No"| Output["Keyboard / clipboard output"]
-  LLM --> Output
-  Mode -->|"Ask Anything"| AskSTT["Transcribe question"]
-  AskSTT --> AskLLM["One-shot LLM answer"]
-  AskLLM --> Panel["Answer-only panel"]
-  Mode -->|"Selected text"| Selection["Capture selected text"]
-  Selection --> EditLLM["Apply spoken instruction"]
-  EditLLM --> Output
-```
-
-## Why OpenTypeless?
-
-Most desktop dictation tools stop at transcription. OpenTypeless adds the AI rewrite layer, provider choice, and open-source control that power users need.
-
-|                        | OpenTypeless                                                         | macOS Dictation | Windows Voice Typing | Whisper Desktop |
-| ---------------------- | -------------------------------------------------------------------- | --------------- | -------------------- | --------------- |
-| AI text polishing      | ✅ Multiple LLMs                                                     | ❌              | ❌                   | ❌              |
-| Ask Anything voice Q&A | ✅                                                                   | ❌              | ❌                   | ❌              |
-| STT provider choice    | ✅ Cloud, Deepgram, AssemblyAI, Whisper-compatible, Doubao, and more | ❌ Apple only   | ❌ Microsoft only    | ❌ Whisper only |
-| Works in any app       | ✅                                                                   | ✅              | ✅                   | ❌ Copy-paste   |
-| Translation mode       | ✅                                                                   | ❌              | ❌                   | ❌              |
-| Selected-text rewrite  | ✅                                                                   | ❌              | ❌                   | ❌              |
-| App-aware writing      | ✅ Local detection and mappings                                      | ❌              | ❌                   | ❌              |
-| Multiple shortcuts     | ✅ Per voice workflow                                                 | ❌              | ❌                   | ❌              |
-| Open source            | ✅ MIT                                                               | ❌              | ❌                   | ✅              |
-| Cross-platform         | ✅ Win/Mac/Linux                                                     | ❌ Mac only     | ❌ Windows only      | ✅              |
-| Custom dictionary      | ✅                                                                   | ❌              | ❌                   | ❌              |
-| Self-hostable          | ✅ BYOK                                                              | ❌              | ❌                   | ✅              |
-
-## Features
-
-| Area              | Highlights                                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Voice capture     | Native Fn / Right Alt hotkeys on macOS/Windows, Linux Ctrl defaults, multiple bindings per workflow, hold or toggle mode, floating capsule states, idle auto-hide |
-| AI rewriting      | App-aware writing, local per-app style mappings, polish styles, streaming polish, selected-text context, and custom instructions             |
-| Ask Anything      | One-shot voice question flow: record in the capsule, think, then show a small answer note with copy support                                 |
-| Voice actions     | Deterministic English, Simplified Chinese, and Traditional Chinese routing for editing, translation, Ask, and supported actions              |
-| STT providers     | Cloud STT, Apple Speech on macOS, Deepgram, AssemblyAI, GLM-ASR, OpenAI Whisper, Groq Whisper, SiliconFlow, Volcengine Doubao, custom endpoints |
-| LLM providers     | Cloud LLM or OpenAI-compatible APIs including OpenAI, DeepSeek, Claude via OpenRouter, Gemini, Groq, Qwen, Moonshot, Ollama, and more       |
-| Output            | Keyboard simulation, clipboard paste/copy-only, Windows SendInput, clipboard restore, and output-failure diagnostics                       |
-| Language          | Auto-detect speech, dedicated translation shortcut, switchable target languages, and 20+ translation targets                                |
-| Dictionary        | Custom terms, import/export, and local correction rules for recurring transcription mistakes                                                 |
-| Scenes            | Built-in scenes, local custom scenes, active scene metadata, import/export for reusable writing styles                                      |
-| Privacy           | Local app detection and mappings, provider keys in the OS credential vault where available, plus BYOK and local/self-hosted paths            |
-| Account and quota | Optional Pro and Lifetime Starter plans with shared cloud words for voice and AI                                                            |
-| Desktop polish    | Dark/light/system theme, onboarding, local history search, auto-start, auto-update, cross-platform Tauri app                                |
-
-UI localization currently ships with complete English and Chinese copy, plus additional locale files that may still fall back to English for newer advanced features.
-
-## How The App Thinks
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant Desktop as OpenTypeless Desktop
-  participant STT as STT Provider
-  participant LLM as LLM Provider
-  participant App as Active App
-
-  User->>Desktop: Hold dictation hotkey and speak
-  Desktop->>Desktop: Detect local app category and style
-  Desktop->>STT: Send audio via BYOK or Cloud
-  STT-->>Desktop: Raw transcript
-  Desktop->>LLM: Optional context-aware polish / translate / rewrite
-  LLM-->>Desktop: Final text
-  Desktop->>App: Type or copy result
-```
+   **설정 → 음성 인식 → 내장 STT · Whisper / Qwen**을 선택합니다. 모델을 다운로드하고 **이 모델 사용**을 누릅니다. 가볍게 시작하려면 Whisper Base, Qwen을 쓰려면 메모리 여유에 따라 0.6B 또는 1.7B를 선택하세요. 호환 Mac에서는 **자동** 설정이 MLX GPU를 사용합니다.
+3. **AI 다듬기 선택**
 
-> [!TIP]
-> **Recommended Configuration for Best Experience**
->
-> |              | Provider | Model                    |
-> | ------------ | -------- | ------------------------ |
-> | 🗣️ STT       | Groq     | `whisper-large-v3-turbo` |
-> | 🤖 AI Polish | Google   | `gemini-2.5-flash`       |
->
-> This combo delivers fast, accurate transcription with high-quality text polishing — and both offer generous free tiers.
+   **설정 → AI 다듬기**에서 제공자와 모델을 설정합니다. Ollama를 선택했다면 Ollama와 사용할 모델도 준비해야 합니다. 받아쓰기만 사용하려면 **AI 다듬기 활성화**를 끄세요.
+4. **단축키 확인**
 
-## Try It in 5 Minutes
+   **설정 → 일반**에서 받아쓰기 단축키와 **누른 채 말하기 / 토글 켜기·끄기** 방식을 선택합니다. 변경한 설정은 화면 하단의 **저장** 버튼으로 저장합니다.
 
-1. Download the latest build for your platform from [Releases](https://github.com/tover0314-w/opentypeless/releases).
-2. Choose **BYOK** for full provider control or **Cloud** if you want managed quota without API keys.
-3. Pick speech recognition and AI polish providers in Settings.
-4. Set one or more shortcuts for Dictation, Ask Anything, and Translation.
-5. Open any desktop app, press the hotkey, speak, and let OpenTypeless type the polished result.
+내장 STT는 모델 다운로드 후 인터넷 없이 사용할 수 있으며, **별도 STT 서버를 실행할 필요가 없습니다.** AI 다듬기는 선택한 Ollama 또는 API의 연결 상태에 따라 동작합니다.
 
-## Download
+## 평소에는 이렇게 사용하세요
 
-Download the latest version for your platform:
+1. 글을 넣을 **입력칸을 클릭**합니다.
+2. 설정한 **받아쓰기 단축키로 녹음**하고 말합니다.
+3. 누른 채 말하기는 키를 놓고, 토글 방식은 같은 키를 다시 눌러 종료합니다. 처리가 끝나면 텍스트가 입력됩니다.
 
-**[Download the latest release](https://github.com/tover0314-w/opentypeless/releases/latest)**
+입력할 앱의 포커스를 잃으면 **복사 창**에서 결과를 복사해 붙여 넣을 수 있습니다. 복사 창 전용 단축키도 설정할 수 있습니다. Mac에서는 메인 창을 닫아도 메뉴 막대에서 계속 사용할 수 있습니다.
 
-| Platform | File                                         |
-| -------- | -------------------------------------------- |
-| Windows  | `.msi` installer or `.exe` setup             |
-| macOS    | Universal `.dmg` for Apple Silicon and Intel |
-| Linux    | `.AppImage` / `.deb` / `.rpm`                |
+내장 STT의 녹음은 한 번에 최대 **2분**입니다. 최초 모델 준비는 더 오래 걸릴 수 있고, MLX는 반복 입력을 위해 모델을 잠시 유지한 뒤 약 2분간 사용하지 않으면 메모리를 해제합니다.
 
-## Installation Notes
+## Android에서 사용하기
 
-Release signing differs by platform while distribution is being improved. Always download from the official [GitHub Releases](https://github.com/tover0314-w/opentypeless/releases) page.
+1. 컴퓨터의 H-OpenTypeless에서 **모바일 연결** 메뉴를 열고 연결을 켭니다.
+2. 휴대폰과 컴퓨터를 같은 내부 Wi-Fi 또는 WireGuard 네트워크에 연결합니다.
+3. Android 앱에서 **내 컴퓨터에서 처리**를 선택하고, 컴퓨터에 표시된 주소를 입력해 연결을 확인합니다.
+4. 마이크 권한을 허용하고 **H-OpenTypeless 음성 키보드**를 활성화·선택합니다. 키보드에서 녹음한 뒤 결과를 확인하고 **삽입**합니다.
 
-### Windows
+연결키 입력은 필요 없습니다. 컴퓨터에서 처리하는 동안 데스크톱 앱을 켜 두세요. 휴대폰만 사용하려면 **이 기기에서 처리**를 선택하고 지원 모델을 준비합니다. 자세한 내용은 [Android 안내](android/README.md)와 [로컬 모드 안내](android/LOCAL_MODE.md)를 참고하세요.
 
-Windows SmartScreen may show "Windows protected your PC":
+## 더 알아보기
 
-1. Click **More info**
-2. Click **Run anyway**
+[내장 STT·모델 안내](docs/fork/LOCAL_STT.md) · [개발 환경](docs/fork/DEVELOPMENT.md) · [빌드·배포](docs/fork/RELEASING.md) · [문제 제보](https://github.com/HoilRyu/h-opentypeless/issues)
 
-If the installer shows a publisher validation warning:
-
-1. Right-click the `.msi` file → **Properties**
-2. Check **Unblock** at the bottom → **Apply**
-3. Run the installer again
-
-### macOS
-
-macOS builds are Developer ID signed. If Gatekeeper still blocks first launch while notarization/stapling catches up, remove the quarantine attribute:
-
-```bash
-xattr -cr /Applications/OpenTypeless.app
-```
-
-Then open the app normally.
-
-### Linux
-
-**Ubuntu/Debian** — install the `.deb` package:
-
-```bash
-sudo apt install ./OpenTypeless_x.x.x_amd64.deb
-```
-
-**AppImage** — make it executable and run:
-
-```bash
-chmod +x OpenTypeless_x.x.x_amd64.AppImage
-./OpenTypeless_x.x.x_amd64.AppImage
-```
-
-**NVIDIA + Wayland users:** The app auto-detects this configuration and applies a workaround. If it still crashes on startup, run:
-
-```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./OpenTypeless
-```
-
-**Wayland users:** the required helper depends on the compositor:
-
-- KDE Plasma/KWin Wayland uses [`kwtype`](https://github.com/Sporif/KWtype), which must currently be built and installed using the upstream instructions.
-- Other Wayland compositors use `wtype`. On Ubuntu/Debian run `sudo apt install wtype`; on Arch/Manjaro run `sudo pacman -S wtype`.
-
-Global hotkeys can still depend on the desktop environment. If the matching helper is unavailable or fails, OpenTypeless keeps the result in the clipboard instead of running an untrusted user script.
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) 20+
-- [Rust](https://rustup.rs/) (stable toolchain)
-- Platform-specific dependencies for Tauri: see [Tauri Prerequisites](https://v2.tauri.app/start/prerequisites/)
-
-## Getting Started
-
-```bash
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run tauri dev
-
-# Build for production
-npm run tauri build
-```
-
-The built application will be in `src-tauri/target/release/bundle/`.
-
-## Configuration
-
-All settings are accessible from the in-app Settings panel:
-
-- **Speech Recognition** — choose STT provider and enter your API key
-- **AI Polish** — choose an LLM provider and model, enable app-aware writing, manage per-app style mappings, and configure selected-text context
-- **General** — manage multiple Dictation, Ask Anything, and Translation shortcuts, output mode, auto-start, and idle capsule visibility
-- **Dictionary** — add or import custom terms, export your dictionary, and create local correction rules for recurring transcription mistakes
-- **Scenes** — built-in and local prompt templates with import/export for reusable writing styles
-- **Account / Upgrade** — sign in, check cloud words, manage Pro or Lifetime Starter access
-
-API keys are stored locally in the OS credential vault where available, with a local fallback for unsupported environments. No BYOK keys are sent to OpenTypeless servers — STT/LLM requests go directly to the provider you configure.
-
-### Cloud Option
-
-OpenTypeless also offers optional managed cloud access so you do not need your own provider keys. Pro and Lifetime Starter plans include shared cloud words for speech recognition and AI rewriting. BYOK remains fully supported.
-
-[Learn more about Pro](https://www.opentypeless.com)
-
-### BYOK vs Cloud
-
-|                  | BYOK Mode                                        | Cloud (Pro) Mode                            |
-| ---------------- | ------------------------------------------------ | ------------------------------------------- |
-| STT              | Your own API key or local endpoint               | Managed cloud words                         |
-| LLM              | Your own API key or local endpoint               | Managed cloud words                         |
-| Cloud dependency | None — all requests go directly to your provider | Requires connection to www.opentypeless.com |
-| Cost             | Pay your provider directly                       | Optional Pro or Lifetime Starter            |
-
-All core features — recording, transcription, AI polish, keyboard/clipboard output, dictionary, history — work entirely offline from OpenTypeless servers in BYOK mode.
-
-### Self-Hosting / No Cloud
-
-To run OpenTypeless without any cloud dependency:
-
-1. Choose any non-Cloud STT and LLM provider in Settings
-2. Enter your own API keys
-3. That's it — no account or internet connection to www.opentypeless.com is needed
-
-If you want to point the optional cloud features at your own backend, set these environment variables before building:
-
-| Variable            | Default                        | Description                     |
-| ------------------- | ------------------------------ | ------------------------------- |
-| `VITE_API_BASE_URL` | `https://www.opentypeless.com` | Frontend cloud API base URL     |
-| `API_BASE_URL`      | `https://www.opentypeless.com` | Rust backend cloud API base URL |
-
-```bash
-# Example: build with a custom backend
-VITE_API_BASE_URL=https://my-server.example.com API_BASE_URL=https://my-server.example.com npm run tauri build
-```
-
-## Architecture
-
-**Desktop pipeline:**
-
-```mermaid
-flowchart TB
-  UI["React + TypeScript UI"] --> Tauri["Tauri commands"]
-  Hotkeys["Global shortcuts"] --> Tauri
-  Tauri --> Audio["Rust audio capture"]
-  Audio --> Providers["STT providers"]
-  Providers --> Pipeline["Pipeline orchestration"]
-  Pipeline --> LLMs["LLM providers"]
-  Pipeline --> Storage["SQLite history + dictionary"]
-  Pipeline --> Output["Keyboard / clipboard output"]
-  Account["Account + updater + cloud quota"] --> UI
-  Account --> Tauri
-```
-
-```
-src/                  # React frontend (TypeScript)
-├── components/       # UI components (Settings, History, Capsule, etc.)
-├── hooks/            # React hooks (recording, theme, Tauri events)
-├── lib/              # Utilities (API client, router, constants)
-└── stores/           # Zustand state management
-
-src-tauri/src/        # Rust backend
-├── audio/            # Audio capture via cpal
-├── stt/              # STT providers (Deepgram, AssemblyAI, Whisper-compat, Cloud)
-├── llm/              # LLM providers (OpenAI-compat, Cloud)
-├── output/           # Text output (keyboard simulation, clipboard paste)
-├── storage/          # Config (tauri-plugin-store) + history/dictionary (SQLite)
-├── app_detector/     # Detect active application for context
-├── pipeline.rs       # Recording → STT → LLM → Output orchestration
-└── lib.rs            # Tauri app setup, commands, hotkey handling
-```
-
-## Roadmap
-
-- [ ] Usage summary UI for aggregate audio time and word counts
-- [ ] More provider-specific setup diagnostics
-- [ ] Better Linux desktop-environment guidance
-- [ ] More workflow presets for writing, coding, and support replies
-- [ ] Plugin-style provider extensions
-
-## FAQ
-
-**Is my audio sent to the cloud?**
-In BYOK mode, audio goes directly to your chosen STT provider or local endpoint. Nothing passes through OpenTypeless servers. In Cloud mode, audio is sent to the managed proxy for transcription and quota accounting.
-
-**Can I use it offline?**
-With a local Whisper-compatible STT endpoint and a local OpenAI-compatible LLM such as Ollama, the app can run without OpenTypeless cloud services.
-
-**Which languages are supported?**
-STT supports 99+ languages depending on the provider. AI polish and translation support 20+ target languages.
-
-**Is the app free?**
-Yes. The app is fully functional with your own API keys (BYOK). Cloud plans are optional.
-
-## Community
-
-- 💬 [Discord](https://discord.gg/V6rRpJ4RGD) — Chat, get help, share feedback
-- 🗣️ [GitHub Discussions](https://github.com/tover0314-w/opentypeless/discussions) — Feature proposals, Q&A
-- 🐛 [Issue Tracker](https://github.com/tover0314-w/opentypeless/issues) — Bug reports and feature requests
-- 📖 [Contributing Guide](CONTRIBUTING.md) — Development setup and guidelines
-- 🔒 [Security Policy](SECURITY.md) — Report vulnerabilities responsibly
-- 🧭 [Vision](VISION.md) — Project principles and roadmap direction
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
-
-Looking for a place to start? Check out issues labeled [`good first issue`](https://github.com/tover0314-w/opentypeless/labels/good%20first%20issue).
-
-## Star History
-
-<a href="https://star-history.com/#tover0314-w/opentypeless&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tover0314-w/opentypeless&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tover0314-w/opentypeless&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tover0314-w/opentypeless&type=Date" />
-  </picture>
-</a>
-
-## Built With
-
-- [Tauri](https://tauri.app/) for the desktop shell
-- [React](https://react.dev/) and [TypeScript](https://www.typescriptlang.org/) for the UI
-- [Rust](https://www.rust-lang.org/) for audio capture, providers, hotkeys, output, and local storage
-- [i18next](https://www.i18next.com/) for multilingual UI
-
-## License
-
-[MIT](LICENSE)
+H-OpenTypeless는 [OpenTypeless](https://github.com/tover0314-w/opentypeless)를 기반으로 한 포크입니다. 원본의 [MIT 라이선스](LICENSE)를 유지하며, 내장 엔진과 모델에는 [각 구성 요소의 라이선스](docs/fork/LOCAL_STT_NOTICES.md)가 적용됩니다.
