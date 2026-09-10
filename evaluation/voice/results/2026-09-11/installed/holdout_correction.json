@@ -1,0 +1,26 @@
+{
+  "id": "holdout_correction",
+  "reference": "파일은 세 개, 아니 네 개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+  "review": [
+    "숫자·이름·조건·부정·정정·요청의 말투를 원문과 대조한다.",
+    "말하지 않은 내용을 추가하거나 요청에 답하지 않았는지 확인한다.",
+    "항목 순서와 줄바꿈이 발화 의도에 맞는지 확인한다."
+  ],
+  "semantic_verdict": "reviewed_with_notes",
+  "insertion_verdict": "not_tested",
+  "stt": " 파일은 3개, 아니 4개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+  "stt_ms": 686,
+  "audio_ms": 5381,
+  "cer": 0.07407407407407407,
+  "polished": "파일은 3개, 아니 4개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+  "finish_reason": "stop",
+  "llm_ms": 2063,
+  "flags": [],
+  "reference_polished": "파일은 세 개, 아니 네 개야. 전부 옮기지 말고 마지막 파일만 복사해줘.",
+  "reference_finish": "stop",
+  "reference_flags": [],
+  "reference_llm_ms": 1925,
+  "manual_notes": [
+    "음성 경로에서 이전 수량과 정정을 그대로 남김; 최종 네 개 의도는 읽을 수 있으나 정리 미흡"
+  ]
+}

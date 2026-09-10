@@ -1,0 +1,26 @@
+{
+  "id": "numbers",
+  "reference": "예산은 십오만 원이고 인원은 여덟 명이야. 추가 비용은 이만 원을 넘기면 안 돼.",
+  "review": [
+    "숫자·이름·조건·부정·정정·요청의 말투를 원문과 대조한다.",
+    "말하지 않은 내용을 추가하거나 요청에 답하지 않았는지 확인한다.",
+    "항목 순서와 줄바꿈이 발화 의도에 맞는지 확인한다."
+  ],
+  "semantic_verdict": "reviewed_with_notes",
+  "insertion_verdict": "not_tested",
+  "stt": " 예산은 15만원이고 인원은 8명이야. 추가 비용은 2만원을 넘기면 안괴.",
+  "stt_ms": 671,
+  "audio_ms": 5337,
+  "cer": 0.1935483870967742,
+  "polished": "예산은 15만 원이고 인원은 8명이야. 추가 비용은 2만 원을 넘기면 안 돼.",
+  "finish_reason": "stop",
+  "llm_ms": 2049,
+  "flags": [],
+  "reference_polished": "예산은 15만 원이고 인원은 8명이야. 추가 비용은 2만 원을 넘기면 안 돼.",
+  "reference_finish": "stop",
+  "reference_flags": [],
+  "reference_llm_ms": 2076,
+  "manual_notes": [
+    "검토한 결과에서 조건·숫자·이름·부정·말투의 중요한 변형을 발견하지 못함; 일반적 정확도를 보장하지 않음"
+  ]
+}
