@@ -16,7 +16,7 @@ class ReleaseManifestTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = pathlib.Path(self.temp.name)
-        for platform, extension in [('macos-arm64', 'dmg'), ('android-arm64', 'apk')]:
+        for platform, extension in [('macos-arm64', 'dmg')]:
             package = self.root / ('H_' + platform + '.' + extension)
             package.write_bytes(b'package fixture')
             data = dict(file=package.name, sha256=manifest.digest(package), platform=platform,
@@ -37,6 +37,20 @@ class ReleaseManifestTests(unittest.TestCase):
     def test_valid_packages(self):
         with contextlib.redirect_stdout(io.StringIO()): manifest.verify(self.root, 'abc')
 
+    def test_android_package_rejected(self):
+        self.edit_record(platform='android-arm64')
+        with self.assertRaisesRegex(ValueError, 'unexpected package format'):
+            manifest.verify(self.root, 'abc')
+
+    def test_additional_package_rejected(self):
+        (self.root / 'extra.json').write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'requires exactly one'):
+            manifest.verify(self.root, 'abc')
+
+    def test_wrong_version_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'version mismatch'):
+            manifest.verify(self.root, 'abc', '2.0.0')
+
     def test_dirty_build_rejected(self):
         self.edit_record(source_dirty=True)
         with self.assertRaisesRegex(ValueError, 'clean release commit'): manifest.verify(self.root, 'abc')
@@ -45,7 +59,7 @@ class ReleaseManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'clean release commit'): manifest.verify(self.root, 'def')
 
     def test_modified_package_rejected(self):
-        next(self.root.glob('*.apk')).write_bytes(b'tampered')
+        next(self.root.glob('*.dmg')).write_bytes(b'tampered')
         with self.assertRaisesRegex(ValueError, 'checksum mismatch'): manifest.verify(self.root, 'abc')
 
     def test_path_traversal_rejected(self):
@@ -53,7 +67,7 @@ class ReleaseManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unsafe'): manifest.verify(self.root, 'abc')
 
     def test_missing_platform_rejected(self):
-        next(self.root.glob('*.apk.json')).unlink(); self.update_checksums()
+        next(self.root.glob('*.dmg.json')).unlink(); self.update_checksums()
         with self.assertRaisesRegex(ValueError, 'requires exactly'): manifest.verify(self.root, 'abc')
 
     def test_modified_checksum_list_rejected(self):

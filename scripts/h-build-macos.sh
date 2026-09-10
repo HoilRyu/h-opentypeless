@@ -24,7 +24,7 @@ build_root="$(cd "$build_root" && pwd)"
 case "$build_root/" in
   "$source_root/"*) echo 'Build directory must be outside the source checkout.' >&2; exit 1 ;;
 esac
-rsync -a --delete --exclude=.git --exclude=node_modules --exclude=target --exclude=dist \
+rsync -a --delete --exclude=.git --exclude=node_modules --exclude=target --exclude=dist --exclude=worktrees --exclude=.worktrees \
   "$source_root/" "$build_root/"
 cd "$build_root"
 npm ci

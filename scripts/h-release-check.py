@@ -13,6 +13,7 @@ versions += [re.search(r'name = "opentypeless"\nversion = "([^"]+)"', (root / 's
 assert all(v == version for v in versions), 'Desktop versions differ'
 config = load('src-tauri/tauri.conf.json')
 assert config['identifier'] == 'dev.hoilryu.hopentypeless'
+assert config['bundle']['macOS']['minimumSystemVersion'] == '14.0', 'Apple Silicon MLX release requires macOS 14 or later'
 assert config['plugins']['updater']['endpoints'] == []
 assert config['bundle']['createUpdaterArtifacts'] is False
 for file in ('release.yml', 'release-windows-signpath.yml', 'staple-macos-release.yml', 'release-drafter.yml'):

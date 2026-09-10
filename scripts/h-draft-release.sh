@@ -15,9 +15,9 @@ remote_tags="$(git ls-remote git@github.com:HoilRyu/h-opentypeless.git "refs/tag
 remote_commit="$(printf '%s\n' "$remote_tags" | awk '/\^\{\}$/ {print $1; found=1} END {if (!found) exit 1}')" || remote_commit="$(printf '%s\n' "$remote_tags" | awk 'NR == 1 {print $1}')"
 [[ "$remote_commit" == "$commit" ]] || { echo 'Push the verified H release tag before drafting.' >&2; exit 1; }
 python3 scripts/h-release-check.py
-python3 scripts/h-release-manifest.py verify "$packages" --commit "$commit"
+python3 scripts/h-release-manifest.py verify "$packages" --commit "$commit" --version "$version"
 [[ -f "$packages/VALIDATION.md" ]] || { echo 'Add the completed installation/update validation record as VALIDATION.md.' >&2; exit 1; }
 gh release create "$tag" --repo HoilRyu/h-opentypeless --verify-tag --draft --prerelease \
   --title "H-OpenTypeless $tag" --notes-file docs/fork/RELEASE_NOTES.md \
-  "$packages"/*.dmg "$packages"/*.apk "$packages"/*.json "$packages/SHA256SUMS" "$packages/VALIDATION.md" \
-  LICENSE android/app/src/main/assets/THIRD_PARTY_NOTICES.txt
+  "$packages/H-OpenTypeless_${version}_macos-arm64.dmg" "$packages/H-OpenTypeless_${version}_macos-arm64.dmg.json" "$packages/SHA256SUMS" "$packages/VALIDATION.md" \
+  LICENSE THIRD_PARTY_NOTICES.md docs/fork/LOCAL_STT_NOTICES.md
