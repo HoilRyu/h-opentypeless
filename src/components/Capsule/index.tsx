@@ -126,10 +126,9 @@ export function Capsule() {
       style={{ background: 'transparent' }}
       onContextMenu={handleContextMenu}
     >
-      {/* Persistent outer shell — jelly capsule */}
-      <motion.div
-        layout
-        transition={{ layout: { duration: 0.2, ease: [0.2, 0, 0, 1] } }}
+      {/* Native window size changes immediately. A layout/scale animation here
+          stretches newly mounted status text and clips it in the smaller window. */}
+      <div
         className={`absolute left-3 ${capsuleState === 'recording' && (preview || styleMenu) ? 'rounded-2xl' : 'rounded-full'} pointer-events-auto shrink-0 ${
           capsuleState === 'error'
             ? 'jelly-capsule-error'
@@ -162,7 +161,7 @@ export function Capsule() {
           {capsuleState === 'ask_thinking' && <CapsuleAskThinking />}
           {capsuleState === 'error' && <CapsuleError />}
         </motion.div>
-      </motion.div>
+      </div>
 
       {/* Context menu appears to the right of capsule */}
       {contextMenuOpen && contextMenuReady && (
