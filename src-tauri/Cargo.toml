@@ -100,3 +100,6 @@ sha2 = { version = "0.10", features = ["asm"] }
 # Keep live VAD fast in locally installed debug builds.
 [profile.dev.package.earshot]
 opt-level = 3
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

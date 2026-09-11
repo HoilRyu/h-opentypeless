@@ -35,6 +35,7 @@ done
 # Sign every Mach-O in the private Python runtime, inside out. Never touch the
 # independent credential helper. Python extension modules are executable code too.
 python3 "$source_root/scripts/h-sign-mlx.py" "$bundle/Contents/Resources/local-stt/mlx" "$identity"
+python3 "$source_root/scripts/h-sign-mlx.py" "$bundle/Contents/Resources/local-llm" "$identity"
 codesign --force --sign "$identity" --timestamp=none \
   --identifier "$identifier" --requirements "=$requirement" \
   --entitlements "$source_root/src-tauri/Entitlements.plist" "$bundle"

@@ -1127,9 +1127,7 @@ describe('LlmPane provider 切换清空 models', () => {
     renderSettings()
     clickSidebarItem('settings.aiPolish')
 
-    // provider select 是当前 pane 中的第一个 combobox
-    const selects = screen.getAllByRole('combobox')
-    const providerSelect = selects[0]
+    const providerSelect = screen.getByRole('combobox', { name: 'settings.provider' })
 
     await act(async () => {
       fireEvent.change(providerSelect, { target: { value: 'openai' } })

@@ -5,6 +5,9 @@ import * as tauri from '../../../lib/tauri'
 
 // Mock Tauri
 vi.mock('../../../lib/tauri')
+vi.mock('../../ForkSettings/LocalLlmSetting', () => ({
+  LocalLlmSetting: () => <div>Built-in model controls</div>,
+}))
 
 // Mock i18n
 vi.mock('react-i18next', () => ({
@@ -87,6 +90,7 @@ vi.mock('react-i18next', () => ({
 const mockAppStore = {
   config: {
     llm_provider: 'openai' as string,
+    llm_external_provider: undefined as string | undefined,
     llm_api_key: '',
     llm_base_url: 'https://api.openai.com/v1',
     llm_model: 'gpt-4o-mini',
@@ -154,6 +158,7 @@ describe('LlmPane', () => {
     // Reset mock store state
     mockAppStore.config = {
       llm_provider: 'openai',
+      llm_external_provider: undefined,
       llm_api_key: '',
       llm_base_url: 'https://api.openai.com/v1',
       llm_model: 'gpt-4o-mini',
@@ -194,17 +199,42 @@ describe('LlmPane', () => {
   })
 
   describe('Provider selection', () => {
+    it('switches to local and restores the external provider without overwriting connection fields', () => {
+      mockAppStore.config.llm_api_key = 'existing-key'
+      const original = { ...mockAppStore.config }
+      const { rerender } = render(<LlmPane />)
+      fireEvent.change(screen.getByRole('combobox', { name: 'LLM execution' }), {
+        target: { value: 'local' },
+      })
+      expect(mockAppStore.updateConfig).toHaveBeenLastCalledWith({
+        llm_provider: 'builtin-llm',
+        llm_external_provider: 'openai',
+      })
+      mockAppStore.config = {
+        ...original,
+        ...mockAppStore.updateConfig.mock.calls[mockAppStore.updateConfig.mock.calls.length - 1][0],
+      }
+      rerender(<LlmPane />)
+      expect(screen.getByText('Built-in model controls')).toBeInTheDocument()
+      expect(screen.queryByRole('combobox', { name: 'Provider' })).not.toBeInTheDocument()
+      fireEvent.change(screen.getByRole('combobox', { name: 'LLM execution' }), {
+        target: { value: 'api' },
+      })
+      expect(mockAppStore.updateConfig).toHaveBeenLastCalledWith({ llm_provider: 'openai' })
+      expect(mockAppStore.config.llm_base_url).toBe(original.llm_base_url)
+      expect(mockAppStore.config.llm_model).toBe(original.llm_model)
+      expect(mockAppStore.config.llm_api_key).toBe(original.llm_api_key)
+    })
+
     it('renders provider dropdown with current value', () => {
       render(<LlmPane />)
-      const selects = screen.getAllByRole('combobox')
-      const providerSelect = selects[0] // First select is provider
+      const providerSelect = screen.getByRole('combobox', { name: 'Provider' })
       expect(providerSelect).toHaveValue('openai')
     })
 
     it('updates config and resets state when provider changes', () => {
       render(<LlmPane />)
-      const selects = screen.getAllByRole('combobox')
-      const providerSelect = selects[0]
+      const providerSelect = screen.getByRole('combobox', { name: 'Provider' })
 
       fireEvent.change(providerSelect, { target: { value: 'anthropic' } })
 
@@ -216,8 +246,7 @@ describe('LlmPane', () => {
 
     it('applies Doubao defaults when provider changes to Doubao', () => {
       render(<LlmPane />)
-      const selects = screen.getAllByRole('combobox')
-      const providerSelect = selects[0]
+      const providerSelect = screen.getByRole('combobox', { name: 'Provider' })
 
       fireEvent.change(providerSelect, { target: { value: 'doubao' } })
 
@@ -240,15 +269,17 @@ describe('LlmPane', () => {
       expect(screen.queryByText('Voice question')).not.toBeInTheDocument()
     })
 
-    it.each(['signed-out', 'free', 'pro'])('requires a direct provider instead of managed cloud for %s users', (plan) => {
-      mockAppStore.config.llm_provider = 'cloud'
-      mockAuthStore.user = plan === 'signed-out' ? null : { id: '1', email: 'test@example.com' }
-      mockAuthStore.plan = plan === 'pro' ? 'pro' : 'free'
-      render(<LlmPane />)
-      expect(screen.getByRole('status')).toHaveTextContent('h.directProviderRequired')
-      expect(screen.queryByRole('button', { name: 'Upgrade' })).not.toBeInTheDocument()
-    })
-
+    it.each(['signed-out', 'free', 'pro'])(
+      'requires a direct provider instead of managed cloud for %s users',
+      (plan) => {
+        mockAppStore.config.llm_provider = 'cloud'
+        mockAuthStore.user = plan === 'signed-out' ? null : { id: '1', email: 'test@example.com' }
+        mockAuthStore.plan = plan === 'pro' ? 'pro' : 'free'
+        render(<LlmPane />)
+        expect(screen.getByRole('status')).toHaveTextContent('h.directProviderRequired')
+        expect(screen.queryByRole('button', { name: 'Upgrade' })).not.toBeInTheDocument()
+      },
+    )
   })
 
   describe('API Key input', () => {

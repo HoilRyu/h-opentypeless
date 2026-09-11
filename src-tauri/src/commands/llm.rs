@@ -66,6 +66,12 @@ pub async fn test_llm_connection(
     token_store: tauri::State<'_, SessionTokenStore>,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<bool, String> {
+    if provider == crate::extensions::local_llm::ID {
+        return crate::extensions::local_llm::service()?
+            .test()
+            .await
+            .map(|_| true);
+    }
     if provider.is_empty() {
         return Ok(false);
     }
@@ -150,6 +156,12 @@ pub async fn fetch_llm_models(
     base_url: String,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<Vec<String>, String> {
+    if provider == crate::extensions::local_llm::ID {
+        return Ok(crate::extensions::local_llm::catalog()
+            .into_iter()
+            .map(|m| m.tag)
+            .collect());
+    }
     if base_url.is_empty() {
         return Ok(vec![]);
     }
@@ -289,6 +301,9 @@ pub async fn bench_llm_connection(
     token_store: tauri::State<'_, SessionTokenStore>,
     client: tauri::State<'_, reqwest::Client>,
 ) -> Result<u32, String> {
+    if provider == crate::extensions::local_llm::ID {
+        return crate::extensions::local_llm::service()?.test().await;
+    }
     if provider.is_empty() {
         return Err("No provider specified".to_string());
     }

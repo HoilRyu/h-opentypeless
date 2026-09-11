@@ -10,6 +10,7 @@ use super::{
 
 pub struct OpenAiProvider {
     client: Client,
+    local_runtime: bool,
 }
 
 // Local structured dictation edits supplied content; reduce sampling variation.
@@ -42,11 +43,21 @@ impl OpenAiProvider {
     pub fn new() -> Self {
         Self {
             client: Client::new(),
+            local_runtime: false,
         }
     }
 
     pub fn with_client(client: Client) -> Self {
-        Self { client }
+        Self {
+            client,
+            local_runtime: false,
+        }
+    }
+    pub fn with_local_client(client: Client) -> Self {
+        Self {
+            client,
+            local_runtime: true,
+        }
     }
 }
 
@@ -95,6 +106,11 @@ impl LlmProvider for OpenAiProvider {
             "content": prompt::transcription_message(&req.raw_text, req.voice_intent.kind == crate::voice_intent::VoiceIntentKind::DictateInsert)
         }));
 
+        let request_timeout = if self.local_runtime {
+            std::time::Duration::from_secs(120)
+        } else {
+            protocol::request_timeout(&config.provider, &config.base_url, &config.model)
+        };
         let api_kind = protocol::detect_api_kind(&config.provider, &config.base_url);
         let endpoint = protocol::chat_endpoint(&config.provider, &config.base_url)
             .map_err(AppError::Config)?;
@@ -141,11 +157,7 @@ impl LlmProvider for OpenAiProvider {
                 &config.api_key,
             )
             .json(&body)
-            .timeout(protocol::request_timeout(
-                &config.provider,
-                &config.base_url,
-                &config.model,
-            ))
+            .timeout(request_timeout)
             .send()
             .await
             {

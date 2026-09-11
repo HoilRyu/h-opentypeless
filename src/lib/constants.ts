@@ -185,7 +185,7 @@ export const LLM_DEFAULT_CONFIG: Record<string, { baseUrl: string; model: string
 }
 
 export function llmProviderRequiresApiKey(provider: string): boolean {
-  return provider.trim().toLowerCase() !== 'ollama'
+  return !['ollama', 'builtin-llm'].includes(provider.trim().toLowerCase())
 }
 
 export const LANGUAGES: { value: string; label?: string; labelKey?: string }[] = [
