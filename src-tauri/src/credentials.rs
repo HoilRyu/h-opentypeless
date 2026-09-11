@@ -33,7 +33,9 @@ where
 }
 
 pub async fn read_config_secret(config: &AppConfig, stt: bool) -> Result<String> {
-    if stt && config.stt_provider == crate::extensions::local_stt::ID { return Ok(String::new()); }
+    if stt && config.stt_provider == crate::extensions::local_stt::ID {
+        return Ok(String::new());
+    }
     let config = config.clone();
     bounded_secret_read(
         SECRET_GATE.clone(),
@@ -303,7 +305,11 @@ pub fn migrate_legacy_config_secrets<V: CredentialVault + CredentialSecretReader
     if !config.llm_api_key.trim().is_empty() {
         pending.push((
             "llm".to_string(),
-            config.llm_provider.clone(),
+            if config.llm_provider == crate::extensions::local_llm::ID {
+                config.llm_external_provider.clone()
+            } else {
+                config.llm_provider.clone()
+            },
             config.llm_api_key.clone(),
         ));
     }
@@ -369,7 +375,9 @@ pub fn resolve_stt_config_secret<V: CredentialSecretReader>(
     config: &AppConfig,
     vault: &V,
 ) -> Result<String> {
-    if config.stt_provider == crate::extensions::local_stt::ID { return Ok(String::new()); }
+    if config.stt_provider == crate::extensions::local_stt::ID {
+        return Ok(String::new());
+    }
     let provider = stt_credential_provider(config);
     let legacy_secret = if provider == crate::stt::config::CUSTOM_WHISPER_PROVIDER {
         &config.stt_custom_api_key
@@ -384,6 +392,9 @@ pub fn resolve_llm_config_secret<V: CredentialSecretReader>(
     config: &AppConfig,
     vault: &V,
 ) -> Result<String> {
+    if config.llm_provider == crate::extensions::local_llm::ID {
+        return Ok(String::new());
+    }
     resolve_config_secret(&config.llm_api_key, "llm", &config.llm_provider, vault)
 }
 
@@ -633,6 +644,28 @@ mod tests {
         assert_eq!(secret, "custom-secret");
     }
 
+    #[test]
+    fn local_llm_preserves_external_credentials_without_reading_them() {
+        let mut config = AppConfig {
+            llm_provider: crate::extensions::local_llm::ID.into(),
+            llm_external_provider: "openai".into(),
+            llm_api_key: "external-secret".into(),
+            ..Default::default()
+        };
+        let vault = MemoryVault::default();
+        assert_eq!(resolve_llm_config_secret(&config, &vault).unwrap(), "");
+        migrate_legacy_config_secrets(&mut config, &vault).unwrap();
+        assert_eq!(
+            vault.get_secret("llm", "openai").unwrap().as_deref(),
+            Some("external-secret")
+        );
+        assert_eq!(
+            vault
+                .get_secret("llm", crate::extensions::local_llm::ID)
+                .unwrap(),
+            None
+        );
+    }
     #[test]
     fn resolves_llm_secret_from_active_provider() {
         let config = AppConfig {

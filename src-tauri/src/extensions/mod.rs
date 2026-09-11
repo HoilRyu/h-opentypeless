@@ -22,7 +22,9 @@ pub mod tutorial;
 
 pub mod escape_cancel;
 
-pub mod product_scope;
 pub mod fn_event;
+pub mod product_scope;
 
 pub mod auto_start;
+
+pub mod local_llm;

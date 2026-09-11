@@ -1,3 +1,4 @@
+import { LocalLlmSetting } from '../ForkSettings/LocalLlmSetting'
 import { H_MANAGED_CLOUD_ENABLED } from '../../lib/h-features'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,7 +42,9 @@ export function LlmPane() {
   const lastContext = useAppStore((s) => s.lastContext)
   const { user } = useAuthStore()
   const hasCloudAccess = useAuthStore(hasManagedCloudAccess)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const ko = i18n?.language?.startsWith('ko') ?? false
+  const isLocal = config.llm_provider === 'builtin-llm'
 
   const isCloud = config.llm_provider === 'cloud'
   const requiresApiKey = llmProviderRequiresApiKey(config.llm_provider)
@@ -186,6 +189,7 @@ export function LlmPane() {
   // Auto-fetch when API key or base URL changes (debounced); skips if models already cached
   useEffect(() => {
     if (isCloud) return
+    if (isLocal) return
     if ((requiresApiKey && !llmApiKey) || !config.llm_base_url) return
     if (models.length > 0) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -206,6 +210,7 @@ export function LlmPane() {
     llmApiKey,
     models.length,
     requiresApiKey,
+    isLocal,
   ])
 
   const handleTest = async () => {
@@ -256,31 +261,66 @@ export function LlmPane() {
 
   return (
     <div className="space-y-4">
-      <FormField label={t('settings.provider')}>
+      <FormField label={ko ? 'LLM 실행 방식' : 'LLM execution'}>
         <select
-          value={config.llm_provider}
+          className="w-full rounded-lg border border-border bg-bg-secondary p-2"
+          aria-label={ko ? 'LLM 실행 방식' : 'LLM execution'}
+          value={isLocal ? 'local' : 'api'}
           onChange={(e) => {
-            const provider = e.target.value as typeof config.llm_provider
-            const defaults = LLM_DEFAULT_CONFIG[provider]
-            updateConfig({
-              llm_provider: provider,
-              llm_base_url: defaults?.baseUrl ?? config.llm_base_url,
-              llm_model: defaults?.model ?? config.llm_model,
-            })
+            if (e.target.value === 'local') {
+              updateConfig({
+                llm_provider: 'builtin-llm',
+                llm_external_provider: config.llm_provider,
+              })
+            } else {
+              const saved = config.llm_external_provider
+              const provider = LLM_PROVIDERS.find((p) => p.value === saved)?.value ?? 'ollama'
+              updateConfig({ llm_provider: provider as typeof config.llm_provider })
+            }
             setLlmTestStatus('idle')
             setLlmLatencyMs(null)
-            setModels([])
             setTestErrorMessage(null)
           }}
-          className="w-full px-3 py-2.5 bg-bg-secondary border border-border rounded-[10px] text-[13px] text-text-primary outline-none focus:border-border-focus transition-colors"
         >
-          {LLM_PROVIDERS.filter((p) => H_MANAGED_CLOUD_ENABLED || p.value !== 'cloud').map((p) => (
-            <option key={p.value} value={p.value}>
-              {t(p.labelKey)}
-            </option>
-          ))}
+          <option value="local">
+            {ko ? '내장 로컬 LLM · Gemma 4' : 'Built-in local LLM · Gemma 4'}
+          </option>
+          <option value="api">
+            {ko ? '외부 API 연결 · Ollama / 제공자' : 'External API · Ollama / providers'}
+          </option>
         </select>
       </FormField>
+      {isLocal && <LocalLlmSetting />}
+      {!isLocal && (
+        <FormField label={t('settings.provider')}>
+          <select
+            aria-label={t('settings.provider')}
+            value={config.llm_provider}
+            onChange={(e) => {
+              const provider = e.target.value as typeof config.llm_provider
+              const defaults = LLM_DEFAULT_CONFIG[provider]
+              updateConfig({
+                llm_provider: provider,
+                llm_base_url: defaults?.baseUrl ?? config.llm_base_url,
+                llm_model: defaults?.model ?? config.llm_model,
+              })
+              setLlmTestStatus('idle')
+              setLlmLatencyMs(null)
+              setModels([])
+              setTestErrorMessage(null)
+            }}
+            className="w-full px-3 py-2.5 bg-bg-secondary border border-border rounded-[10px] text-[13px] text-text-primary outline-none focus:border-border-focus transition-colors"
+          >
+            {LLM_PROVIDERS.filter((p) => H_MANAGED_CLOUD_ENABLED || p.value !== 'cloud').map(
+              (p) => (
+                <option key={p.value} value={p.value}>
+                  {t(p.labelKey)}
+                </option>
+              ),
+            )}
+          </select>
+        </FormField>
+      )}
 
       {isCloud && H_MANAGED_CLOUD_ENABLED && (
         <div className="border border-border rounded-[10px] px-3 py-3 space-y-2">
@@ -315,7 +355,7 @@ export function LlmPane() {
           )}
         </p>
       )}
-      {!isCloud && (
+      {!isCloud && !isLocal && (
         <>
           {requiresApiKey && (
             <FormField label={t('settings.apiKey')}>

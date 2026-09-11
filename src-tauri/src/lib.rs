@@ -917,6 +917,12 @@ pub fn run() {
             let dictionary_store = storage::DictionaryStore::new(db_path)
                 .map_err(|e| anyhow::anyhow!("Failed to init dictionary store: {}", e))?;
 
+            if let Err(error) = extensions::local_llm::Service::install(
+                data_dir.join("local-llm"),
+                app.path().resource_dir()?.join("local-llm"),
+            ) {
+                tracing::warn!("Built-in LLM unavailable: {error}");
+            }
             let shared_client = build_shared_http_client();
             if let Err(error) = extensions::local_stt::Service::install(
                 data_dir.join("local-stt"),
@@ -1233,6 +1239,13 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             extensions::tutorial::run_tutorial_recording,
             extensions::tutorial::control_tutorial_recording,
+            extensions::local_llm::get_local_llm_status,
+            extensions::local_llm::download_local_llm_model,
+            extensions::local_llm::cancel_local_llm_download,
+            extensions::local_llm::select_local_llm_model,
+            extensions::local_llm::delete_local_llm_model,
+            extensions::local_llm::unload_local_llm,
+            extensions::local_llm::test_local_llm,
             extensions::local_stt::get_local_stt_status,
             extensions::local_stt::set_local_stt_engine,
             extensions::local_stt::set_local_stt_preview,
@@ -1325,6 +1338,9 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|_app, _event| {
             if matches!(_event, tauri::RunEvent::Exit) {
+                if let Ok(service) = extensions::local_llm::service() {
+                    service.shutdown();
+                }
                 extensions::voice_feedback::shutdown(_app);
                 if let Ok(service) = extensions::local_stt::service() {
                     service.shutdown();

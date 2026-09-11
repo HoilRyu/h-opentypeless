@@ -3129,18 +3129,19 @@ impl PipelineHandle {
             }
         };
 
-        let llm_endpoint = if config.polish_enabled {
-            if config.llm_provider == "cloud" {
-                let base = crate::api_base_url();
-                Some((format!("{}/api/proxy/llm", base), true))
+        let llm_endpoint =
+            if config.polish_enabled && config.llm_provider != crate::extensions::local_llm::ID {
+                if config.llm_provider == "cloud" {
+                    let base = crate::api_base_url();
+                    Some((format!("{}/api/proxy/llm", base), true))
+                } else {
+                    crate::llm::protocol::chat_endpoint(&config.llm_provider, &config.llm_base_url)
+                        .ok()
+                        .map(|endpoint| (endpoint, false))
+                }
             } else {
-                crate::llm::protocol::chat_endpoint(&config.llm_provider, &config.llm_base_url)
-                    .ok()
-                    .map(|endpoint| (endpoint, false))
-            }
-        } else {
-            None
-        };
+                None
+            };
 
         let warm_stt = async {
             if let Some((endpoint, managed_cloud)) = stt_endpoint {

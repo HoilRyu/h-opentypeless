@@ -342,6 +342,7 @@ pub struct AppConfig {
     pub stt_volcengine_resource_id: String,
     pub stt_aliyun_qwen_region: String,
     pub llm_provider: String,
+    pub llm_external_provider: String,
     pub llm_api_key: String,
     pub llm_model: String,
     pub llm_base_url: String,
@@ -399,6 +400,7 @@ impl Default for AppConfig {
             stt_aliyun_qwen_region:
                 crate::stt::aliyun_qwen3_asr::ALIYUN_QWEN3_ASR_REGION_CHINA_MAINLAND.to_string(),
             llm_provider: "openrouter".to_string(),
+            llm_external_provider: "ollama".to_string(),
             llm_api_key: String::new(),
             llm_model: "google/gemini-2.5-flash".to_string(),
             llm_base_url: "https://openrouter.ai/api/v1".to_string(),

@@ -29,6 +29,7 @@ export type SttProvider =
 
 export type AliyunQwenRegion = 'china-mainland' | 'international'
 export type LlmProvider =
+  | 'builtin-llm'
   | 'zhipu'
   | 'deepseek'
   | 'siliconflow'
@@ -201,6 +202,7 @@ export interface AppConfig {
   stt_aliyun_qwen_region: AliyunQwenRegion
   stt_language: string
   llm_provider: LlmProvider
+  llm_external_provider?: LlmProvider
   llm_api_key: string
   llm_model: string
   llm_base_url: string
@@ -737,6 +739,7 @@ const defaultConfig: AppConfig = {
   stt_aliyun_qwen_region: 'china-mainland',
   stt_language: 'multi',
   llm_provider: 'openrouter',
+  llm_external_provider: 'ollama',
   llm_api_key: '',
   llm_model: 'google/gemini-2.5-flash',
   llm_base_url: 'https://openrouter.ai/api/v1',
