@@ -19,6 +19,9 @@ Node 24, Rust, Xcode Command Line Tools, CMake가 필요하다. Mac 패키지는
 빌드는 저장소 밖 `~/.local/share/h-opentypeless/build-source`에서 release 프로파일로 수행한다. worktrees/.worktrees, Git, node_modules, target, dist는 소스 복사에서 제외한다. 기본 Cargo 동시 작업은 2개다.
 
 내장 STT 엔진과 고정 버전 Python/MLX 환경을 번들에 포함한다. 모델 가중치·사용자 설정·자격 증명은 포함하지 않는다. 엔진과 실행 환경을 먼저 서명하고 앱을 최종 서명한다.
+Ollama 압축 파일의 AppleDouble 메타데이터(`._*` 중 해당 매직값을 가진 파일)는 서명 전에 제거한다.
+DMG 제작 뒤에는 이미지를 마운트해 내부 앱의 deep/strict 서명도 검사한다.
+디스크 이미지 체크섬이 정상이어도 앱 서명이 깨진 경우에는 패키지 준비를 실패 처리한다.
 
 기본 출력 폴더: `~/.local/share/h-opentypeless/releases/0.1.45-beta.3/`.
 기존 패키지는 덮어쓰지 않는다. 반복 후보는 `H_RELEASE_DIR`로 별도 폴더를 지정한다.

@@ -3,6 +3,17 @@
 import argparse, hashlib, json, pathlib, platform, subprocess, tarfile, urllib.request
 VERSION = '0.34.0'
 SHA256 = 'dd12b00bcce2d6551178e67ada90d5af9f75bdb54a118b96655250fa3e8ef734'
+def remove_appledouble(root):
+    # Archive metadata sidecars are consumed by macOS ditto during DMG copying.
+    # Do not seal them as application resources: they disappear on installation.
+    for path in root.rglob('._*'):
+        if path.is_symlink() or not path.is_file():
+            continue
+        with path.open('rb') as stream:
+            appledouble = stream.read(4) == bytes.fromhex('00051607')
+        if appledouble:
+            path.unlink()
+
 def prepare(root, config):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SystemExit('Built-in LLM currently supports macOS Apple Silicon only')
@@ -19,6 +30,7 @@ def prepare(root, config):
     bundle.mkdir(exist_ok=True)
     with tarfile.open(archive) as tar:
         tar.extractall(bundle, filter='data')
+    remove_appledouble(bundle)
     source = pathlib.Path(__file__).resolve().parent.parent
     subprocess.run(['clang', '-O2', '-Wall', '-Wextra', '-Werror', '-mmacosx-version-min=14.0', str(source/'native/local-llm/supervisor.c'), '-o', str(bundle/'h-llm-supervisor')], check=True)
     # Keep the exact upstream license alongside the runtime.

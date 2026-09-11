@@ -18,4 +18,16 @@ fi
 mkdir -p "$(dirname "$output")"
 "$venv/bin/dmgbuild" -s "$root/scripts/dmg/settings.py" -D "app=$bundle" H-OpenTypeless "$output"
 hdiutil verify "$output"
-printf 'DMG created: %s\n' "$output"
+# A valid disk-image checksum does not guarantee its copied app signature is valid.
+mount="$(mktemp -d -t h-dmg-verify)"
+cleanup() {
+  hdiutil detach "$mount" >/dev/null 2>&1 || true
+  rmdir "$mount" 2>/dev/null || true
+}
+trap cleanup EXIT
+hdiutil attach -readonly -nobrowse -mountpoint "$mount" "$output" >/dev/null
+codesign --verify --deep --strict "$mount/$(basename "$bundle")"
+hdiutil detach "$mount" >/dev/null
+rmdir "$mount"
+trap - EXIT
+printf 'DMG created: %s\n'  "$output"
